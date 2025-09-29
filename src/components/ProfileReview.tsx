@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, MapPin, Users, Instagram, Facebook, Twitter, Mail, AlertCircle, Calendar, Trophy, Target } from "lucide-react";
+import { Pencil, MapPin, Users, Instagram, Facebook, Twitter, Mail, AlertCircle, Calendar, Trophy, Target, Linkedin, Youtube, ExternalLink } from "lucide-react";
 import ProgressIndicator from "./ProgressIndicator";
 import { TeamProfile } from "@/types/flow";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +31,11 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
     season_start_date: "",
     season_end_date: "",
     organization_status: "",
+    instagram_link: "",
+    facebook_link: "",
+    linkedin_link: "",
+    youtube_link: "",
+    twitter_link: "",
     instagram_followers: 0,
     facebook_followers: 0,
     twitter_followers: 0,
@@ -79,6 +84,11 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
             season_start_date: data.season_start_date || "",
             season_end_date: data.season_end_date || "",
             organization_status: data.organization_status || "",
+            instagram_link: data.instagram_link || "",
+            facebook_link: data.facebook_link || "",
+            linkedin_link: data.linkedin_link || "",
+            youtube_link: data.youtube_link || "",
+            twitter_link: data.twitter_link || "",
             instagram_followers: data.instagram_followers || 0,
             facebook_followers: data.facebook_followers || 0,
             twitter_followers: data.twitter_followers || 0,
@@ -308,52 +318,140 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
             <h2 className="text-xl font-semibold mb-6">Social Media Presence</h2>
             
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                    <Instagram className="w-5 h-5 text-white" />
+              {currentTeam.instagram_link && (
+                <div className="flex items-center justify-between p-3 rounded-lg border bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                      <Instagram className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <div className="font-medium">Instagram</div>
+                      <a 
+                        href={currentTeam.instagram_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                      >
+                        View Profile <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
                   </div>
-                  <span className="font-medium">Instagram</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-semibold">{(currentTeam.instagram_followers || 0).toLocaleString()} followers</span>
-                  <Button variant="ghost" size="sm">
-                    <Pencil className="w-3 h-3" />
-                  </Button>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
-                    <Facebook className="w-5 h-5 text-white" />
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold">{(currentTeam.instagram_followers || 0).toLocaleString()} followers</span>
+                    <Button variant="ghost" size="sm">
+                      <Pencil className="w-3 h-3" />
+                    </Button>
                   </div>
-                  <span className="font-medium">Facebook</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-semibold">{(currentTeam.facebook_followers || 0).toLocaleString()} followers</span>
-                  <Button variant="ghost" size="sm">
-                    <Pencil className="w-3 h-3" />
-                  </Button>
-                </div>
-              </div>
+              )}
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-sky-500 flex items-center justify-center">
-                    <Twitter className="w-5 h-5 text-white" />
+              {currentTeam.facebook_link && (
+                <div className="flex items-center justify-between p-3 rounded-lg border bg-blue-50 dark:bg-blue-950/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
+                      <Facebook className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <div className="font-medium">Facebook</div>
+                      <a 
+                        href={currentTeam.facebook_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                      >
+                        View Profile <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
                   </div>
-                  <span className="font-medium">Twitter</span>
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold">{(currentTeam.facebook_followers || 0).toLocaleString()} followers</span>
+                    <Button variant="ghost" size="sm">
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-semibold">{(currentTeam.twitter_followers || 0).toLocaleString()} followers</span>
-                  <Button variant="ghost" size="sm">
-                    <Pencil className="w-3 h-3" />
-                  </Button>
-                </div>
-              </div>
+              )}
 
-              <div className="flex items-center justify-between">
+              {currentTeam.twitter_link && (
+                <div className="flex items-center justify-between p-3 rounded-lg border bg-sky-50 dark:bg-sky-950/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-sky-500 flex items-center justify-center">
+                      <Twitter className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <div className="font-medium">Twitter</div>
+                      <a 
+                        href={currentTeam.twitter_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                      >
+                        View Profile <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold">{(currentTeam.twitter_followers || 0).toLocaleString()} followers</span>
+                    <Button variant="ghost" size="sm">
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {currentTeam.linkedin_link && (
+                <div className="flex items-center justify-between p-3 rounded-lg border bg-blue-50 dark:bg-blue-950/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-blue-700 flex items-center justify-center">
+                      <Linkedin className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <div className="font-medium">LinkedIn</div>
+                      <a 
+                        href={currentTeam.linkedin_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                      >
+                        View Profile <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Button variant="ghost" size="sm">
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {currentTeam.youtube_link && (
+                <div className="flex items-center justify-between p-3 rounded-lg border bg-red-50 dark:bg-red-950/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center">
+                      <Youtube className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <div className="font-medium">YouTube</div>
+                      <a 
+                        href={currentTeam.youtube_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                      >
+                        View Channel <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Button variant="ghost" size="sm">
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between p-3 rounded-lg border bg-green-50 dark:bg-green-950/20">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center">
                     <Mail className="w-5 h-5 text-white" />
@@ -361,16 +459,25 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
                   <span className="font-medium">Email List</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Button variant="ghost" size="sm" className="text-primary">
-                    <Pencil className="w-3 h-3 mr-2" />
-                    Add
-                  </Button>
+                  {currentTeam.email_list_size && currentTeam.email_list_size > 0 ? (
+                    <>
+                      <span className="font-semibold">{currentTeam.email_list_size.toLocaleString()} subscribers</span>
+                      <Button variant="ghost" size="sm">
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                    </>
+                  ) : (
+                    <Button variant="ghost" size="sm" className="text-primary">
+                      <Pencil className="w-3 h-3 mr-2" />
+                      Add
+                    </Button>
+                  )}
                 </div>
               </div>
 
               <div className="pt-4 border-t">
                 <p className="text-sm text-muted-foreground mb-2">
-                  ⚠️ Adding your email subscriber count shows sponsors your direct reach
+                  💡 Adding your email subscriber count shows sponsors your direct reach
                 </p>
                 <div className="text-center py-6">
                   <div className="text-4xl font-bold text-primary">{totalReach.toLocaleString()}</div>

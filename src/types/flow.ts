@@ -31,6 +31,11 @@ export interface TeamProfile {
   season_start_date?: string;
   season_end_date?: string;
   organization_status: string;
+  instagram_link?: string;
+  facebook_link?: string;
+  linkedin_link?: string;
+  youtube_link?: string;
+  twitter_link?: string;
   instagram_followers?: number;
   facebook_followers?: number;
   twitter_followers?: number;

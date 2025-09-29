@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Mail, Lock } from "lucide-react";
 import ProgressIndicator from "./ProgressIndicator";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface AuthFlowProps {
   onAuthComplete: () => void;
@@ -14,22 +16,100 @@ const AuthFlow = ({ onAuthComplete, onBack }: AuthFlowProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(true);
+  const { toast } = useToast();
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   const handleAuth = async () => {
+    if (!validateEmail(email)) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!password || password.length === 0) {
+      toast({
+        title: "Password required",
+        description: "Please enter a password",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
-    // Simulate async auth
-    setTimeout(() => {
+
+    try {
+      if (isSignUp) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/`,
+          },
+        });
+
+        if (error) throw error;
+
+        if (data.user) {
+          toast({
+            title: "Account created!",
+            description: "Welcome! Let's set up your team profile.",
+          });
+          onAuthComplete();
+        }
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) throw error;
+
+        if (data.user) {
+          toast({
+            title: "Welcome back!",
+            description: "Signed in successfully.",
+          });
+          onAuthComplete();
+        }
+      }
+    } catch (error: any) {
+      toast({
+        title: "Authentication failed",
+        description: error.message || "An error occurred during authentication",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-      onAuthComplete();
-    }, 1200);
+    }
   };
 
   const handleGoogleAuth = async () => {
     setIsLoading(true);
-    setTimeout(() => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+
+      if (error) throw error;
+    } catch (error: any) {
+      toast({
+        title: "Authentication failed",
+        description: error.message || "An error occurred with Google sign-in",
+        variant: "destructive",
+      });
       setIsLoading(false);
-      onAuthComplete();
-    }, 1000);
+    }
   };
 
   return (
@@ -45,9 +125,13 @@ const AuthFlow = ({ onAuthComplete, onBack }: AuthFlowProps) => {
         </Button>
 
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Create your account</h1>
+          <h1 className="text-3xl font-bold">
+            {isSignUp ? "Create your account" : "Welcome back"}
+          </h1>
           <p className="text-muted-foreground">
-            Take sponsorships off your plate.
+            {isSignUp
+              ? "Take sponsorships off your plate."
+              : "Sign in to continue to your dashboard."}
           </p>
         </div>
 
@@ -126,14 +210,24 @@ const AuthFlow = ({ onAuthComplete, onBack }: AuthFlowProps) => {
               onClick={handleAuth}
               disabled={isLoading || !email || !password}
             >
-              {isLoading ? "Creating Account..." : "Create Account"}
+              {isLoading
+                ? isSignUp
+                  ? "Creating Account..."
+                  : "Signing In..."
+                : isSignUp
+                ? "Create Account"
+                : "Sign In"}
             </Button>
           </div>
 
           <p className="text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <button className="text-primary font-medium hover:underline">
-              Sign in
+            {isSignUp ? "Already have an account? " : "Don't have an account? "}
+            <button
+              className="text-primary font-medium hover:underline"
+              onClick={() => setIsSignUp(!isSignUp)}
+              type="button"
+            >
+              {isSignUp ? "Sign in" : "Sign up"}
             </button>
           </p>
         </div>

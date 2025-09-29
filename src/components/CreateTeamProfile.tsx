@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CheckCircle, Rocket, Link as LinkIcon } from "lucide-react";
 import ProgressIndicator from "./ProgressIndicator";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import AnalysisSpinner from "./AnalysisSpinner";
 
 interface CreateTeamProfileProps {
   onAnalyzeWebsite: (url: string) => void;
@@ -11,12 +14,121 @@ interface CreateTeamProfileProps {
 
 const CreateTeamProfile = ({ onAnalyzeWebsite, onFillManually }: CreateTeamProfileProps) => {
   const [websiteUrl, setWebsiteUrl] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const handleContinue = () => {
-    if (websiteUrl.trim()) {
-      onAnalyzeWebsite(websiteUrl);
+  const extractDomain = (url: string) => {
+    try {
+      const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
+      return urlObj.hostname;
+    } catch {
+      return url;
     }
   };
+
+  const validateUrl = (url: string) => {
+    try {
+      new URL(url.startsWith('http') ? url : `https://${url}`);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    if (!profileId || !isAnalyzing) return;
+
+    const channel = supabase
+      .channel('team-profile-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'team_profiles',
+          filter: `id=eq.${profileId}`,
+        },
+        (payload) => {
+          console.log('Profile updated:', payload);
+          const newData = payload.new as any;
+          
+          // Check if team_name has been populated (webhook updated it)
+          if (newData.team_name) {
+            setIsAnalyzing(false);
+            toast({
+              title: "Analysis complete!",
+              description: "Your team profile has been created.",
+            });
+            onAnalyzeWebsite(websiteUrl);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profileId, isAnalyzing, websiteUrl, onAnalyzeWebsite, toast]);
+
+  const handleContinue = async () => {
+    if (!websiteUrl) return;
+
+    if (!validateUrl(websiteUrl)) {
+      toast({
+        title: "Invalid URL",
+        description: "Please enter a valid website URL",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAnalyzing(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      const normalizedUrl = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
+      const domain = extractDomain(websiteUrl);
+
+      const { data, error } = await supabase
+        .from('team_profiles')
+        .insert({
+          user_id: user.id,
+          seed_url: normalizedUrl,
+          domain: domain,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setProfileId(data.id);
+      
+      toast({
+        title: "Analyzing website...",
+        description: "We're extracting information from your website.",
+      });
+
+      // The realtime subscription will handle navigation when webhook updates the profile
+    } catch (error: any) {
+      console.error('Error creating team profile:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to analyze website",
+        variant: "destructive",
+      });
+      setIsAnalyzing(false);
+    }
+  };
+
+  if (isAnalyzing) {
+    return <AnalysisSpinner type="website" />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">

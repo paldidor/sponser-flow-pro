@@ -39,6 +39,19 @@ const CreateTeamProfile = ({ onAnalyzeWebsite, onFillManually }: CreateTeamProfi
   useEffect(() => {
     if (!profileId || !isAnalyzing) return;
 
+    // Set a timeout to proceed even if webhook fails (30 seconds)
+    const timeoutId = setTimeout(() => {
+      if (isAnalyzing) {
+        console.log('Webhook timeout - proceeding to review');
+        setIsAnalyzing(false);
+        toast({
+          title: "Analysis taking longer than expected",
+          description: "You can review and edit your profile manually.",
+        });
+        onAnalyzeWebsite(websiteUrl);
+      }
+    }, 30000);
+
     const channel = supabase
       .channel('team-profile-updates')
       .on(
@@ -53,8 +66,11 @@ const CreateTeamProfile = ({ onAnalyzeWebsite, onFillManually }: CreateTeamProfi
           console.log('Profile updated:', payload);
           const newData = payload.new as any;
           
-          // Check if team_name has been populated (webhook updated it)
-          if (newData.team_name) {
+          // Check if any meaningful field has been populated (not just timestamps)
+          const hasData = newData.team_name || newData.team_bio || newData.location || newData.sport;
+          
+          if (hasData) {
+            clearTimeout(timeoutId);
             setIsAnalyzing(false);
             toast({
               title: "Analysis complete!",
@@ -67,6 +83,7 @@ const CreateTeamProfile = ({ onAnalyzeWebsite, onFillManually }: CreateTeamProfi
       .subscribe();
 
     return () => {
+      clearTimeout(timeoutId);
       supabase.removeChannel(channel);
     };
   }, [profileId, isAnalyzing, websiteUrl, onAnalyzeWebsite, toast]);

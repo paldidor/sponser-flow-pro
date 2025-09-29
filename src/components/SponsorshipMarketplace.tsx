@@ -1,0 +1,270 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Check, MapPin, Users, Calendar, TrendingUp, Mail, Globe, Heart, Share2, Instagram, Twitter } from "lucide-react";
+import { SponsorshipData, TeamProfile } from "@/types/flow";
+
+interface SponsorshipMarketplaceProps {
+  sponsorshipData: SponsorshipData;
+  teamData: TeamProfile | null;
+}
+
+const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarketplaceProps) => {
+  const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
+
+  const defaultTeam: TeamProfile = {
+    name: "Community Youth Team",
+    bio: "A passionate youth sports team dedicated to developing young athletes and building community spirit through competitive sports.",
+    location: "Your Town, USA",
+    images: [
+      "https://images.unsplash.com/photo-1606925797300-0b35e9d1794e?w=400",
+      "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=400",
+    ],
+    socialStats: {
+      instagram: 0,
+      facebook: 0,
+      twitter: 0,
+    },
+    playerCount: 24,
+    sport: "soccer",
+    emailListSize: 0,
+    competitionLevel: "local",
+    organizationStatus: "nonprofit",
+  };
+
+  const team = teamData || defaultTeam;
+  const totalReach = team.socialStats.instagram + team.socialStats.facebook + team.socialStats.twitter + (team.emailListSize || 0);
+  const selectedPkg = sponsorshipData.packages.find(pkg => pkg.id === selectedPackage);
+
+  return (
+    <div className="min-h-screen py-12 px-4 bg-background">
+      <div className="max-w-7xl mx-auto">
+        {/* Hero Section */}
+        <div className="bg-card rounded-2xl shadow-sm overflow-hidden mb-8">
+          <div className="p-8">
+            <div className="flex items-start gap-6">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <span className="text-3xl">🏆</span>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h1 className="text-3xl font-bold mb-2">{team.name}</h1>
+                    <div className="flex items-center gap-4 text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        <span>{team.location}</span>
+                      </div>
+                      <a href="#" className="flex items-center gap-1 text-primary hover:underline">
+                        <Globe className="w-4 h-4" />
+                        Visit Team Website
+                      </a>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      <Heart className="w-4 h-4 mr-2" />
+                      Save Team
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Share
+                    </Button>
+                  </div>
+                </div>
+
+                <p className="text-muted-foreground mb-6">{team.bio}</p>
+
+                {team.images.length > 0 && (
+                  <div className="grid grid-cols-2 gap-4">
+                    {team.images.slice(0, 2).map((img, idx) => (
+                      <div key={idx} className="aspect-video rounded-lg overflow-hidden bg-muted">
+                        <img src={img} alt={`Team ${idx + 1}`} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <Card className="p-6 text-center">
+            <div className="text-3xl font-bold text-primary mb-1">
+              {sponsorshipData.duration.includes("yr") || sponsorshipData.duration.toLowerCase().includes("annual") ? "1 yr" : sponsorshipData.duration}
+            </div>
+            <div className="text-sm text-muted-foreground">Sponsorship Duration</div>
+          </Card>
+
+          <Card className="p-6 text-center">
+            <div className="text-3xl font-bold text-primary mb-1">
+              ${Number(sponsorshipData.fundraisingGoal).toLocaleString()}
+            </div>
+            <div className="text-sm text-muted-foreground">Fundraising Goal</div>
+          </Card>
+
+          <Card className="p-6 text-center">
+            <div className="text-3xl font-bold text-primary mb-1">{team.playerCount}</div>
+            <div className="text-sm text-muted-foreground">Players Supported</div>
+          </Card>
+
+          <Card className="p-6 text-center">
+            <div className="text-3xl font-bold text-primary mb-1">
+              {team.competitionLevel.charAt(0).toUpperCase() + team.competitionLevel.slice(1)}
+            </div>
+            <div className="text-sm text-muted-foreground">Competition Level</div>
+          </Card>
+        </div>
+
+        {/* Engagement Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <Card className="p-6 text-center">
+            <div className="text-2xl font-bold mb-1">{team.socialStats.instagram.toLocaleString()}</div>
+            <div className="text-sm text-muted-foreground">Families Reached</div>
+          </Card>
+
+          <Card className="p-6 text-center">
+            <div className="text-2xl font-bold mb-1">24</div>
+            <div className="text-sm text-muted-foreground">Games Per Season</div>
+          </Card>
+
+          <Card className="p-6 text-center">
+            <div className="text-2xl font-bold mb-1">{totalReach.toLocaleString()}</div>
+            <div className="text-sm text-muted-foreground">Total Social Reach</div>
+          </Card>
+
+          <Card className="p-6 text-center">
+            <div className="text-2xl font-bold mb-1">340</div>
+            <div className="text-sm text-muted-foreground">Weekly Attendance</div>
+          </Card>
+        </div>
+
+        {/* Demographics Section */}
+        <Card className="p-6 mb-8">
+          <button className="w-full flex items-center justify-between text-left">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5" />
+              <h2 className="text-lg font-semibold">Town Demographics - {team.location.split(",")[0]}</h2>
+            </div>
+            <span className="text-sm text-muted-foreground">▼</span>
+          </button>
+        </Card>
+
+        {/* Two Column Layout */}
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Packages Section */}
+          <div className="lg:col-span-2 space-y-6">
+            <h2 className="text-2xl font-bold">Sponsorship Packages</h2>
+
+            {sponsorshipData.packages.map((pkg, index) => (
+              <Card
+                key={pkg.id}
+                className={`p-6 cursor-pointer transition-all ${
+                  selectedPackage === pkg.id
+                    ? "ring-2 ring-primary"
+                    : "hover:shadow-lg"
+                }`}
+                onClick={() => setSelectedPackage(pkg.id)}
+              >
+                {index === 1 && (
+                  <Badge className="mb-4 bg-accent text-accent-foreground">
+                    Most Popular
+                  </Badge>
+                )}
+
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h3 className="text-2xl font-bold mb-1">{pkg.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Perfect for {index === 0 ? "small businesses" : index === 1 ? "growing businesses" : "major brands"} wanting to support local youth sports
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-primary">
+                      ${pkg.price.toLocaleString()}
+                    </div>
+                    <div className="text-sm text-muted-foreground">one-time</div>
+                  </div>
+                </div>
+
+                {pkg.benefits.length > 0 && (
+                  <div className="space-y-2">
+                    {pkg.benefits.map((benefit, idx) => (
+                      <div key={idx} className="flex items-start gap-2">
+                        <Check className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">{benefit}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            ))}
+          </div>
+
+          {/* Checkout Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-8">
+              <Card className="p-6">
+                <h3 className="text-xl font-semibold mb-6">Complete Your Sponsorship</h3>
+
+                {selectedPkg ? (
+                  <div className="space-y-6">
+                    <div className="p-4 bg-secondary/30 rounded-lg">
+                      <p className="text-sm text-muted-foreground mb-1">Selected Package</p>
+                      <p className="font-semibold">{selectedPkg.name}</p>
+                      <p className="text-2xl font-bold text-primary mt-2">
+                        ${selectedPkg.price.toLocaleString()}
+                      </p>
+                    </div>
+
+                    <Button className="w-full py-6 text-lg">
+                      Proceed to Checkout
+                    </Button>
+
+                    <p className="text-xs text-center text-muted-foreground">
+                      Secure payment powered by Stripe
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="w-24 h-24 mx-auto mb-4">
+                      <img
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='80' font-size='80'%3E🤔%3C/text%3E%3C/svg%3E"
+                        alt="Select package"
+                        className="w-full h-full"
+                      />
+                    </div>
+                    <p className="text-muted-foreground">
+                      Select a sponsorship package to continue
+                    </p>
+                  </div>
+                )}
+              </Card>
+
+              <Card className="p-6 mt-6">
+                <h3 className="font-semibold mb-4">Questions?</h3>
+                <Button variant="outline" className="w-full mb-3">
+                  <Mail className="w-4 h-4 mr-2" />
+                  Contact Team
+                </Button>
+                <div className="flex justify-center gap-4 mt-4">
+                  <a href="#" className="text-muted-foreground hover:text-primary">
+                    <Instagram className="w-5 h-5" />
+                  </a>
+                  <a href="#" className="text-muted-foreground hover:text-primary">
+                    <Twitter className="w-5 h-5" />
+                  </a>
+                </div>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SponsorshipMarketplace;

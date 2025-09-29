@@ -1,7 +1,7 @@
 export type FlowStep =
   | "landing"
   | "auth"
-  | "congratulations"
+  | "create-profile"
   | "profile-review"
   | "create-offer"
   | "form"
@@ -20,21 +20,22 @@ export interface SocialLinks {
 }
 
 export interface TeamProfile {
-  name: string;
-  bio: string;
+  team_name: string;
+  main_values: string[];
   location: string;
-  images: string[];
-  socialStats: {
-    instagram: number;
-    facebook: number;
-    twitter: number;
-  };
-  playerCount: number;
+  team_bio: string;
   sport: string;
-  emailListSize?: number;
-  competitionLevel: "local" | "regional" | "national";
-  seasonSchedule?: string;
-  organizationStatus: "nonprofit" | "private";
+  number_of_players: string;
+  level_of_play: string;
+  competition_scope: string;
+  season_start_date?: string;
+  season_end_date?: string;
+  organization_status: string;
+  instagram_followers?: number;
+  facebook_followers?: number;
+  twitter_followers?: number;
+  email_list_size?: number;
+  images?: string[];
 }
 
 export interface SponsorshipPackage {

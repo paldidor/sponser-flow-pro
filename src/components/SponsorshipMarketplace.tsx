@@ -14,27 +14,27 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
 
   const defaultTeam: TeamProfile = {
-    name: "Community Youth Team",
-    bio: "A passionate youth sports team dedicated to developing young athletes and building community spirit through competitive sports.",
+    team_name: "Community Youth Team",
+    main_values: ["Community", "Excellence", "Growth"],
+    team_bio: "A passionate youth sports team dedicated to developing young athletes and building community spirit through competitive sports.",
     location: "Your Town, USA",
+    sport: "soccer",
+    number_of_players: "24",
+    level_of_play: "Competitive",
+    competition_scope: "Local",
+    organization_status: "nonprofit",
+    instagram_followers: 0,
+    facebook_followers: 0,
+    twitter_followers: 0,
+    email_list_size: 0,
     images: [
       "https://images.unsplash.com/photo-1606925797300-0b35e9d1794e?w=400",
       "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=400",
     ],
-    socialStats: {
-      instagram: 0,
-      facebook: 0,
-      twitter: 0,
-    },
-    playerCount: 24,
-    sport: "soccer",
-    emailListSize: 0,
-    competitionLevel: "local",
-    organizationStatus: "nonprofit",
   };
 
   const team = teamData || defaultTeam;
-  const totalReach = team.socialStats.instagram + team.socialStats.facebook + team.socialStats.twitter + (team.emailListSize || 0);
+  const totalReach = (team.instagram_followers || 0) + (team.facebook_followers || 0) + (team.twitter_followers || 0) + (team.email_list_size || 0);
   const selectedPkg = sponsorshipData.packages.find(pkg => pkg.id === selectedPackage);
 
   return (
@@ -50,7 +50,7 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
               <div className="flex-1">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h1 className="text-3xl font-bold mb-2">{team.name}</h1>
+                    <h1 className="text-3xl font-bold mb-2">{team.team_name}</h1>
                     <div className="flex items-center gap-4 text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <MapPin className="w-4 h-4" />
@@ -74,9 +74,9 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
                   </div>
                 </div>
 
-                <p className="text-muted-foreground mb-6">{team.bio}</p>
+                <p className="text-muted-foreground mb-6">{team.team_bio}</p>
 
-                {team.images.length > 0 && (
+                {team.images && team.images.length > 0 && (
                   <div className="grid grid-cols-2 gap-4">
                     {team.images.slice(0, 2).map((img, idx) => (
                       <div key={idx} className="aspect-video rounded-lg overflow-hidden bg-muted">
@@ -107,13 +107,13 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
           </Card>
 
           <Card className="p-6 text-center">
-            <div className="text-3xl font-bold text-primary mb-1">{team.playerCount}</div>
+            <div className="text-3xl font-bold text-primary mb-1">{team.number_of_players}</div>
             <div className="text-sm text-muted-foreground">Players Supported</div>
           </Card>
 
           <Card className="p-6 text-center">
             <div className="text-3xl font-bold text-primary mb-1">
-              {team.competitionLevel.charAt(0).toUpperCase() + team.competitionLevel.slice(1)}
+              {team.competition_scope.charAt(0).toUpperCase() + team.competition_scope.slice(1)}
             </div>
             <div className="text-sm text-muted-foreground">Competition Level</div>
           </Card>
@@ -122,7 +122,7 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
         {/* Engagement Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card className="p-6 text-center">
-            <div className="text-2xl font-bold mb-1">{team.socialStats.instagram.toLocaleString()}</div>
+            <div className="text-2xl font-bold mb-1">{(team.instagram_followers || 0).toLocaleString()}</div>
             <div className="text-sm text-muted-foreground">Families Reached</div>
           </Card>
 

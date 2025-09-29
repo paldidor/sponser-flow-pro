@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import LandingPage from "./components/LandingPage";
 import AuthFlow from "./components/AuthFlow";
-import CongratulationsScreen from "./components/CongratulationsScreen";
+import CreateTeamProfile from "./components/CreateTeamProfile";
 import ProfileReview from "./components/ProfileReview";
 import CreateSponsorshipOffer from "./components/CreateSponsorshipOffer";
 import SponsorshipForm from "./components/SponsorshipForm";
@@ -23,26 +23,29 @@ const App = () => {
   const [teamData, setTeamData] = useState<TeamProfile | null>(null);
   const [sponsorshipData, setSponsorshipData] = useState<SponsorshipData | null>(null);
   const [analysisFileName, setAnalysisFileName] = useState<string>("");
+  const [isManualEntry, setIsManualEntry] = useState(false);
 
-  // Mock team data after profile review
+  // Mock team data after website analysis
   const mockTeamData: TeamProfile = {
-    name: "Lightning Bolts Soccer Club",
-    bio: "The Lightning Bolts Soccer Club is a competitive youth soccer team based in downtown. We compete in the regional youth league and focus on developing both athletic skills and character in our players aged 10-14.",
+    team_name: "Lightning Bolts Soccer Club",
+    main_values: ["Teamwork", "Excellence", "Community"],
     location: "San Francisco, CA",
+    team_bio: "The Lightning Bolts Soccer Club is a competitive youth soccer team based in downtown. We compete in the regional youth league and focus on developing both athletic skills and character in our players aged 10-14.",
+    sport: "Soccer",
+    number_of_players: "18",
+    level_of_play: "Competitive",
+    competition_scope: "Regional",
+    season_start_date: "2024-03-01",
+    season_end_date: "2024-11-30",
+    organization_status: "nonprofit",
+    instagram_followers: 1250,
+    facebook_followers: 890,
+    twitter_followers: 420,
+    email_list_size: 0,
     images: [
       "https://images.unsplash.com/photo-1606925797300-0b35e9d1794e?w=400",
       "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=400",
     ],
-    socialStats: {
-      instagram: 1250,
-      facebook: 890,
-      twitter: 420,
-    },
-    playerCount: 18,
-    sport: "Soccer",
-    emailListSize: 0,
-    competitionLevel: "regional",
-    organizationStatus: "nonprofit",
   };
 
   // Mock sponsorship packages
@@ -94,11 +97,21 @@ const App = () => {
   };
 
   const handleAuthComplete = () => {
-    setCurrentStep("congratulations");
+    setCurrentStep("create-profile");
   };
 
-  const handleProfileComplete = () => {
-    setTeamData(mockTeamData);
+  const handleAnalyzeWebsite = (url: string) => {
+    // Simulate website analysis
+    setTimeout(() => {
+      setTeamData(mockTeamData);
+      setIsManualEntry(false);
+      setCurrentStep("profile-review");
+    }, 2000);
+  };
+
+  const handleFillManually = () => {
+    setTeamData(null);
+    setIsManualEntry(true);
     setCurrentStep("profile-review");
   };
 
@@ -181,7 +194,7 @@ const App = () => {
         setCurrentStep("landing");
         break;
       case "profile-review":
-        setCurrentStep("congratulations");
+        setCurrentStep("create-profile");
         break;
       case "form":
       case "website-input":
@@ -202,11 +215,6 @@ const App = () => {
     }
   };
 
-  useEffect(() => {
-    if (currentStep === "congratulations") {
-      // Profile complete is called from CongratulationsScreen after timeout
-    }
-  }, [currentStep]);
 
   const renderStep = () => {
     switch (currentStep) {
@@ -214,10 +222,10 @@ const App = () => {
         return <LandingPage onGetStarted={handleGetStarted} />;
       case "auth":
         return <AuthFlow onAuthComplete={handleAuthComplete} onBack={handleBack} />;
-      case "congratulations":
-        return <CongratulationsScreen onContinue={handleProfileComplete} />;
+      case "create-profile":
+        return <CreateTeamProfile onAnalyzeWebsite={handleAnalyzeWebsite} onFillManually={handleFillManually} />;
       case "profile-review":
-        return <ProfileReview teamData={teamData} onApprove={handleProfileApprove} />;
+        return <ProfileReview teamData={teamData} onApprove={handleProfileApprove} isManualEntry={isManualEntry} />;
       case "create-offer":
         return <CreateSponsorshipOffer onSelectMethod={handleSelectMethod} />;
       case "form":

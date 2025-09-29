@@ -8,31 +8,31 @@ import { TeamProfile } from "@/types/flow";
 interface ProfileReviewProps {
   teamData: TeamProfile | null;
   onApprove: () => void;
+  isManualEntry?: boolean;
 }
 
-const ProfileReview = ({ teamData, onApprove }: ProfileReviewProps) => {
+const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileReviewProps) => {
   const defaultTeam: TeamProfile = {
-    name: "Lightning Bolts Soccer Club",
-    bio: "The Lightning Bolts Soccer Club is a competitive youth soccer team based in downtown. We compete in the regional youth league and focus on developing both athletic skills and character in our players aged 10-14.",
-    location: "San Francisco, CA",
-    images: [
-      "https://images.unsplash.com/photo-1606925797300-0b35e9d1794e?w=400",
-      "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=400",
-    ],
-    socialStats: {
-      instagram: 1250,
-      facebook: 890,
-      twitter: 420,
-    },
-    playerCount: 18,
-    sport: "Soccer",
-    emailListSize: 0,
-    competitionLevel: "regional",
-    organizationStatus: "nonprofit",
+    team_name: "",
+    main_values: [],
+    location: "",
+    team_bio: "",
+    sport: "",
+    number_of_players: "",
+    level_of_play: "",
+    competition_scope: "Local",
+    season_start_date: "",
+    season_end_date: "",
+    organization_status: "",
+    instagram_followers: 0,
+    facebook_followers: 0,
+    twitter_followers: 0,
+    email_list_size: 0,
+    images: [],
   };
 
   const team = teamData || defaultTeam;
-  const totalReach = team.socialStats.instagram + team.socialStats.facebook + team.socialStats.twitter + (team.emailListSize || 0);
+  const totalReach = (team.instagram_followers || 0) + (team.facebook_followers || 0) + (team.twitter_followers || 0) + (team.email_list_size || 0);
 
   return (
     <div className="min-h-screen py-12 px-4">
@@ -40,24 +40,28 @@ const ProfileReview = ({ teamData, onApprove }: ProfileReviewProps) => {
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold">Review Your Team Profile</h1>
           <p className="text-muted-foreground">
-            We've automatically filled in your team details from https://www.sponsa.ai. Review and edit any details before continuing.
+            {isManualEntry 
+              ? "Fill in your team details below. All fields are editable."
+              : "We've automatically filled in your team details. Review and edit any details before continuing."}
           </p>
         </div>
 
         <ProgressIndicator currentStep={2} />
 
-        <Card className="p-6 bg-secondary/30 border-secondary">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" />
-            <div className="space-y-1 text-sm">
-              <p className="font-medium">💡 Maximize your profile appeal to sponsors:</p>
-              <ul className="space-y-1 text-muted-foreground">
-                <li>📸 Add 1 more photo to showcase your team better</li>
-                <li>📧 Add your email subscriber count to show sponsors your reach</li>
-              </ul>
+        {!isManualEntry && (
+          <Card className="p-6 bg-secondary/30 border-secondary">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" />
+              <div className="space-y-1 text-sm">
+                <p className="font-medium">💡 Maximize your profile appeal to sponsors:</p>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>📸 Add photos to showcase your team better</li>
+                  <li>📧 Add your email subscriber count to show sponsors your reach</li>
+                </ul>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        )}
 
         <Card className="p-6">
           <div className="flex items-center justify-between mb-6">
@@ -68,14 +72,16 @@ const ProfileReview = ({ teamData, onApprove }: ProfileReviewProps) => {
             </Button>
           </div>
           
-          <div className="mb-4 p-3 bg-accent/10 rounded-lg border border-accent/20">
-            <p className="text-sm text-accent-foreground">
-              ⚠️ Add 1 more photo to make your profile more appealing to sponsors
-            </p>
-          </div>
+          {team.images && team.images.length > 0 && (
+            <div className="mb-4 p-3 bg-accent/10 rounded-lg border border-accent/20">
+              <p className="text-sm text-accent-foreground">
+                💡 Add more photos to make your profile more appealing to sponsors
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-3 gap-4">
-            {team.images.map((img, idx) => (
+            {team.images?.map((img, idx) => (
               <div key={idx} className="aspect-video rounded-lg overflow-hidden bg-muted">
                 <img src={img} alt={`Team ${idx + 1}`} className="w-full h-full object-cover" />
               </div>
@@ -103,7 +109,7 @@ const ProfileReview = ({ teamData, onApprove }: ProfileReviewProps) => {
                     <Pencil className="w-3 h-3" />
                   </Button>
                 </div>
-                <p className="text-foreground">{team.name}</p>
+                <p className="text-foreground">{team.team_name || "Enter team name"}</p>
               </div>
 
               <div>
@@ -126,7 +132,7 @@ const ProfileReview = ({ teamData, onApprove }: ProfileReviewProps) => {
                     <Pencil className="w-3 h-3" />
                   </Button>
                 </div>
-                <p className="text-sm text-muted-foreground">{team.bio}</p>
+                <p className="text-sm text-muted-foreground">{team.team_bio || "Enter team bio"}</p>
               </div>
 
               <div>
@@ -136,7 +142,7 @@ const ProfileReview = ({ teamData, onApprove }: ProfileReviewProps) => {
                     <Pencil className="w-3 h-3" />
                   </Button>
                 </div>
-                <p className="text-foreground">{team.sport}</p>
+                <p className="text-foreground">{team.sport || "Enter sport"}</p>
               </div>
             </div>
           </Card>
@@ -153,7 +159,7 @@ const ProfileReview = ({ teamData, onApprove }: ProfileReviewProps) => {
                   <span className="font-medium">Instagram</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="font-semibold">{team.socialStats.instagram.toLocaleString()} followers</span>
+                  <span className="font-semibold">{(team.instagram_followers || 0).toLocaleString()} followers</span>
                   <Button variant="ghost" size="sm">
                     <Pencil className="w-3 h-3" />
                   </Button>
@@ -168,7 +174,7 @@ const ProfileReview = ({ teamData, onApprove }: ProfileReviewProps) => {
                   <span className="font-medium">Facebook</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="font-semibold">{team.socialStats.facebook.toLocaleString()} followers</span>
+                  <span className="font-semibold">{(team.facebook_followers || 0).toLocaleString()} followers</span>
                   <Button variant="ghost" size="sm">
                     <Pencil className="w-3 h-3" />
                   </Button>
@@ -183,7 +189,7 @@ const ProfileReview = ({ teamData, onApprove }: ProfileReviewProps) => {
                   <span className="font-medium">Twitter</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="font-semibold">{team.socialStats.twitter.toLocaleString()} followers</span>
+                  <span className="font-semibold">{(team.twitter_followers || 0).toLocaleString()} followers</span>
                   <Button variant="ghost" size="sm">
                     <Pencil className="w-3 h-3" />
                   </Button>

@@ -14,19 +14,24 @@ interface SponsorshipReviewProps {
 
 const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: SponsorshipReviewProps) => {
   const defaultTeam: TeamProfile = {
-    name: "Lightning Bolts Soccer Club",
-    bio: "Youth soccer team",
+    team_name: "Lightning Bolts Soccer Club",
+    main_values: ["Teamwork", "Excellence"],
+    team_bio: "Youth soccer team",
     location: "San Francisco, CA",
-    images: [],
-    socialStats: { instagram: 1250, facebook: 890, twitter: 420 },
-    playerCount: 18,
     sport: "Soccer",
-    competitionLevel: "regional",
-    organizationStatus: "nonprofit",
+    number_of_players: "18",
+    level_of_play: "Competitive",
+    competition_scope: "Regional",
+    organization_status: "nonprofit",
+    instagram_followers: 1250,
+    facebook_followers: 890,
+    twitter_followers: 420,
+    email_list_size: 0,
+    images: [],
   };
 
   const team = teamData || defaultTeam;
-  const totalReach = team.socialStats.instagram + team.socialStats.facebook + team.socialStats.twitter + (team.emailListSize || 0);
+  const totalReach = (team.instagram_followers || 0) + (team.facebook_followers || 0) + (team.twitter_followers || 0) + (team.email_list_size || 0);
   const totalPotential = sponsorshipData.packages.reduce((sum, pkg) => sum + pkg.price, 0);
 
   return (
@@ -115,7 +120,7 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
               <div className="flex items-center gap-2">
                 <span className="text-2xl">🏆</span>
                 <div>
-                  <p className="font-semibold">{team.name}</p>
+                  <p className="font-semibold">{team.team_name}</p>
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
                     <MapPin className="w-3 h-3" />
                     {team.location}
@@ -125,7 +130,7 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
 
               <div className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-muted-foreground" />
-                <span className="text-sm">{team.playerCount} Players</span>
+                <span className="text-sm">{team.number_of_players} Players</span>
               </div>
 
               <div className="pt-4 border-t">

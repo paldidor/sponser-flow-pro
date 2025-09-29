@@ -25,29 +25,6 @@ const App = () => {
   const [analysisFileName, setAnalysisFileName] = useState<string>("");
   const [isManualEntry, setIsManualEntry] = useState(false);
 
-  // Mock team data after website analysis
-  const mockTeamData: TeamProfile = {
-    team_name: "Lightning Bolts Soccer Club",
-    main_values: ["Teamwork", "Excellence", "Community"],
-    location: "San Francisco, CA",
-    team_bio: "The Lightning Bolts Soccer Club is a competitive youth soccer team based in downtown. We compete in the regional youth league and focus on developing both athletic skills and character in our players aged 10-14.",
-    sport: "Soccer",
-    number_of_players: "18",
-    level_of_play: "Competitive",
-    competition_scope: "Regional",
-    season_start_date: "2024-03-01",
-    season_end_date: "2024-11-30",
-    organization_status: "nonprofit",
-    instagram_followers: 1250,
-    facebook_followers: 890,
-    twitter_followers: 420,
-    email_list_size: 0,
-    images: [
-      "https://images.unsplash.com/photo-1606925797300-0b35e9d1794e?w=400",
-      "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=400",
-    ],
-  };
-
   // Mock sponsorship packages
   const mockSponsorshipPackages: SponsorshipPackage[] = [
     {
@@ -101,12 +78,10 @@ const App = () => {
   };
 
   const handleAnalyzeWebsite = (url: string) => {
-    // Simulate website analysis
-    setTimeout(() => {
-      setTeamData(mockTeamData);
-      setIsManualEntry(false);
-      setCurrentStep("profile-review");
-    }, 2000);
+    // Don't set mock data - let ProfileReview fetch from database
+    setTeamData(null);
+    setIsManualEntry(false);
+    setCurrentStep("profile-review");
   };
 
   const handleFillManually = () => {

@@ -71,10 +71,21 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
             variant: "destructive",
           });
         } else if (data) {
-          console.log('Fetched team profile:', data);
+          console.log('Fetched team profile (raw):', data);
+          console.log('main_values type:', typeof data.main_values, 'value:', data.main_values);
+          
+          // Handle main_values defensively - can be string or array from webhook
+          const parsedMainValues: string[] = Array.isArray(data.main_values) 
+            ? (data.main_values as string[])
+            : typeof data.main_values === 'string' 
+              ? (data.main_values as string).split(',').map(v => v.trim()).filter(Boolean)
+              : [];
+          
+          console.log('Parsed main_values:', parsedMainValues);
+          
           setTeam({
             team_name: data.team_name || "",
-            main_values: (data.main_values as string[]) || [],
+            main_values: parsedMainValues,
             location: data.location || "",
             team_bio: data.team_bio || "",
             sport: data.sport || "",

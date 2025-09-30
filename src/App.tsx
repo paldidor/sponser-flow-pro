@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import LandingPage from "./components/LandingPage";
 import AuthFlow from "./components/AuthFlow";
 import CreateTeamProfile from "./components/CreateTeamProfile";
@@ -137,21 +138,65 @@ const App = () => {
     }, 2500);
   };
 
-  const handlePDFUpload = (fileName: string) => {
+  const handlePDFUpload = async (fileName: string, fileUrl: string) => {
     setAnalysisFileName(fileName);
     setCurrentStep("pdf-analysis");
-    setTimeout(() => {
-      const mockData: SponsorshipData = {
-        fundraisingGoal: "8000",
-        duration: "Annual",
-        description: "Comprehensive sponsorship opportunities for our competitive youth sports program.",
-        packages: mockSponsorshipPackages,
+
+    try {
+      // Call the analyze-pdf edge function
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await supabase.functions.invoke('analyze-pdf', {
+        body: { pdfUrl: fileUrl },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
+
+      if (response.error) {
+        throw response.error;
+      }
+
+      const { data: analysisResult } = response;
+
+      if (!analysisResult.success) {
+        throw new Error(analysisResult.error || 'Failed to analyze PDF');
+      }
+
+      const extracted = analysisResult.data;
+
+      // Transform the extracted data into our format
+      const packages = extracted.packages.map((pkg: any, index: number) => ({
+        id: `${index + 1}`,
+        name: pkg.name,
+        price: pkg.price,
+        benefits: pkg.benefits,
+        placements: pkg.placements,
+      }));
+
+      setSponsorshipData({
+        fundraisingGoal: extracted.funding_goal.toString(),
+        duration: extracted.duration,
+        description: extracted.impact,
+        packages,
         source: "pdf",
-        fileName: fileName,
-      };
-      setSponsorshipData(mockData);
+        fileName,
+      });
+
       setCurrentStep("sponsorship-review");
-    }, 3000);
+    } catch (error) {
+      console.error('PDF analysis error:', error);
+      // Fallback to review step with empty data so user can manually edit
+      setSponsorshipData({
+        fundraisingGoal: "0",
+        duration: "Annual",
+        description: "Failed to extract data from PDF. Please review and edit manually.",
+        packages: [],
+        source: "pdf",
+        fileName,
+      });
+      setCurrentStep("sponsorship-review");
+    }
   };
 
   const handleFormComplete = (data: SponsorshipData) => {

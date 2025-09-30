@@ -45,7 +45,9 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
     twitter_link: "",
     instagram_followers: 0,
     facebook_followers: 0,
+    linkedin_followers: 0,
     twitter_followers: 0,
+    youtube_followers: 0,
     email_list_size: 0,
     images: [],
   };
@@ -301,7 +303,7 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
   };
 
   const currentTeam = team || defaultTeam;
-  const totalReach = (currentTeam.instagram_followers || 0) + (currentTeam.facebook_followers || 0) + (currentTeam.twitter_followers || 0) + (currentTeam.email_list_size || 0);
+  const totalReach = (currentTeam.instagram_followers || 0) + (currentTeam.facebook_followers || 0) + (currentTeam.linkedin_followers || 0) + (currentTeam.twitter_followers || 0) + (currentTeam.youtube_followers || 0) + (currentTeam.email_list_size || 0);
 
   return (
     <div className="min-h-screen py-12 px-4">
@@ -761,218 +763,500 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
             <h2 className="text-xl font-semibold mb-6">Social Media Presence</h2>
             
             <div className="space-y-4">
-              {currentTeam.instagram_link && (
-                <div className="flex items-center justify-between p-3 rounded-lg border bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                      <Instagram className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <div className="font-medium">Instagram</div>
-                      <a 
-                        href={currentTeam.instagram_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
-                      >
-                        View Profile <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
+              {/* Instagram */}
+              <div className="flex items-center justify-between p-3 rounded-lg border bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                    <Instagram className="w-5 h-5 text-white" />
                   </div>
-                  {editingField === 'instagram_followers' ? (
-                    <div className="flex gap-2">
-                      <Input
-                        type="number"
-                        value={editValue}
-                        onChange={(e) => setEditValue(Number(e.target.value))}
-                        placeholder="Followers"
-                        className="w-32"
-                      />
-                      <Button 
-                        size="sm" 
-                        onClick={() => handleSave('instagram_followers')}
-                        disabled={isSaving}
-                      >
-                        <Check className="w-4 h-4 mr-1" />
-                        Save
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      <span className="font-semibold">{(currentTeam.instagram_followers || 0).toLocaleString()} followers</span>
+                  <div>
+                    <div className="font-medium">Instagram</div>
+                    {editingField === 'instagram_link' ? (
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          placeholder="https://instagram.com/..."
+                          className="w-64"
+                        />
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleSave('instagram_link')}
+                          disabled={isSaving}
+                        >
+                          <Check className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : currentTeam.instagram_link ? (
+                      <div className="flex items-center gap-2">
+                        <a 
+                          href={currentTeam.instagram_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                        >
+                          View Profile <ExternalLink className="w-3 h-3" />
+                        </a>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEdit('instagram_link', currentTeam.instagram_link)}
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ) : (
                       <Button 
                         variant="ghost" 
-                        size="sm"
-                        onClick={() => handleEdit('instagram_followers', currentTeam.instagram_followers)}
-                      >
-                        <Pencil className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {currentTeam.facebook_link && (
-                <div className="flex items-center justify-between p-3 rounded-lg border bg-blue-50 dark:bg-blue-950/20">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
-                      <Facebook className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <div className="font-medium">Facebook</div>
-                      <a 
-                        href={currentTeam.facebook_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
-                      >
-                        View Profile <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
-                  </div>
-                  {editingField === 'facebook_followers' ? (
-                    <div className="flex gap-2">
-                      <Input
-                        type="number"
-                        value={editValue}
-                        onChange={(e) => setEditValue(Number(e.target.value))}
-                        placeholder="Followers"
-                        className="w-32"
-                      />
-                      <Button 
                         size="sm" 
-                        onClick={() => handleSave('facebook_followers')}
-                        disabled={isSaving}
+                        className="text-primary h-6 px-2 text-xs"
+                        onClick={() => handleEdit('instagram_link', '')}
                       >
-                        <Check className="w-4 h-4 mr-1" />
-                        Save
+                        <Pencil className="w-3 h-3 mr-1" />
+                        Add Link
                       </Button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      <span className="font-semibold">{(currentTeam.facebook_followers || 0).toLocaleString()} followers</span>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleEdit('facebook_followers', currentTeam.facebook_followers)}
-                      >
-                        <Pencil className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {currentTeam.twitter_link && (
-                <div className="flex items-center justify-between p-3 rounded-lg border bg-sky-50 dark:bg-sky-950/20">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-sky-500 flex items-center justify-center">
-                      <Twitter className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <div className="font-medium">Twitter</div>
-                      <a 
-                        href={currentTeam.twitter_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
-                      >
-                        View Profile <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
+                    )}
                   </div>
-                  {editingField === 'twitter_followers' ? (
-                    <div className="flex gap-2">
-                      <Input
-                        type="number"
-                        value={editValue}
-                        onChange={(e) => setEditValue(Number(e.target.value))}
-                        placeholder="Followers"
-                        className="w-32"
-                      />
-                      <Button 
-                        size="sm" 
-                        onClick={() => handleSave('twitter_followers')}
-                        disabled={isSaving}
-                      >
-                        <Check className="w-4 h-4 mr-1" />
-                        Save
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      <span className="font-semibold">{(currentTeam.twitter_followers || 0).toLocaleString()} followers</span>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleEdit('twitter_followers', currentTeam.twitter_followers)}
-                      >
-                        <Pencil className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  )}
                 </div>
-              )}
-
-              {currentTeam.linkedin_link && (
-                <div className="flex items-center justify-between p-3 rounded-lg border bg-blue-50 dark:bg-blue-950/20">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-700 flex items-center justify-center">
-                      <Linkedin className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <div className="font-medium">LinkedIn</div>
-                      <a 
-                        href={currentTeam.linkedin_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
-                      >
-                        View Profile <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
+                {editingField === 'instagram_followers' ? (
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      value={editValue}
+                      onChange={(e) => setEditValue(Number(e.target.value))}
+                      placeholder="Followers"
+                      className="w-32"
+                    />
                     <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleEdit('linkedin_link', currentTeam.linkedin_link)}
+                      size="sm" 
+                      onClick={() => handleSave('instagram_followers')}
+                      disabled={isSaving}
                     >
-                      <Pencil className="w-3 h-3" />
+                      <Check className="w-4 h-4" />
                     </Button>
                   </div>
-                </div>
-              )}
-
-              {currentTeam.youtube_link && (
-                <div className="flex items-center justify-between p-3 rounded-lg border bg-red-50 dark:bg-red-950/20">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center">
-                      <Youtube className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <div className="font-medium">YouTube</div>
-                      <a 
-                        href={currentTeam.youtube_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {currentTeam.instagram_followers && currentTeam.instagram_followers > 0 ? (
+                      <>
+                        <span className="font-semibold">{currentTeam.instagram_followers.toLocaleString()} followers</span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEdit('instagram_followers', currentTeam.instagram_followers)}
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                      </>
+                    ) : (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEdit('instagram_followers', 0)}
                       >
-                        View Channel <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
+                        <Pencil className="w-3 h-3 mr-1" />
+                        Add Followers
+                      </Button>
+                    )}
                   </div>
-                  <div className="flex items-center gap-3">
+                )}
+              </div>
+
+              {/* Facebook */}
+              <div className="flex items-center justify-between p-3 rounded-lg border bg-blue-50 dark:bg-blue-950/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
+                    <Facebook className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <div className="font-medium">Facebook</div>
+                    {editingField === 'facebook_link' ? (
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          placeholder="https://facebook.com/..."
+                          className="w-64"
+                        />
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleSave('facebook_link')}
+                          disabled={isSaving}
+                        >
+                          <Check className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : currentTeam.facebook_link ? (
+                      <div className="flex items-center gap-2">
+                        <a 
+                          href={currentTeam.facebook_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                        >
+                          View Profile <ExternalLink className="w-3 h-3" />
+                        </a>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEdit('facebook_link', currentTeam.facebook_link)}
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-primary h-6 px-2 text-xs"
+                        onClick={() => handleEdit('facebook_link', '')}
+                      >
+                        <Pencil className="w-3 h-3 mr-1" />
+                        Add Link
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                {editingField === 'facebook_followers' ? (
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      value={editValue}
+                      onChange={(e) => setEditValue(Number(e.target.value))}
+                      placeholder="Followers"
+                      className="w-32"
+                    />
                     <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleEdit('youtube_link', currentTeam.youtube_link)}
+                      size="sm" 
+                      onClick={() => handleSave('facebook_followers')}
+                      disabled={isSaving}
                     >
-                      <Pencil className="w-3 h-3" />
+                      <Check className="w-4 h-4" />
                     </Button>
                   </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {currentTeam.facebook_followers && currentTeam.facebook_followers > 0 ? (
+                      <>
+                        <span className="font-semibold">{currentTeam.facebook_followers.toLocaleString()} followers</span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEdit('facebook_followers', currentTeam.facebook_followers)}
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                      </>
+                    ) : (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEdit('facebook_followers', 0)}
+                      >
+                        <Pencil className="w-3 h-3 mr-1" />
+                        Add Followers
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* LinkedIn */}
+              <div className="flex items-center justify-between p-3 rounded-lg border bg-blue-50 dark:bg-blue-950/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-700 flex items-center justify-center">
+                    <Linkedin className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <div className="font-medium">LinkedIn</div>
+                    {editingField === 'linkedin_link' ? (
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          placeholder="https://linkedin.com/..."
+                          className="w-64"
+                        />
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleSave('linkedin_link')}
+                          disabled={isSaving}
+                        >
+                          <Check className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : currentTeam.linkedin_link ? (
+                      <div className="flex items-center gap-2">
+                        <a 
+                          href={currentTeam.linkedin_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                        >
+                          View Profile <ExternalLink className="w-3 h-3" />
+                        </a>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEdit('linkedin_link', currentTeam.linkedin_link)}
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-primary h-6 px-2 text-xs"
+                        onClick={() => handleEdit('linkedin_link', '')}
+                      >
+                        <Pencil className="w-3 h-3 mr-1" />
+                        Add Link
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              )}
+                {editingField === 'linkedin_followers' ? (
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      value={editValue}
+                      onChange={(e) => setEditValue(Number(e.target.value))}
+                      placeholder="Followers"
+                      className="w-32"
+                    />
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleSave('linkedin_followers')}
+                      disabled={isSaving}
+                    >
+                      <Check className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {currentTeam.linkedin_followers && currentTeam.linkedin_followers > 0 ? (
+                      <>
+                        <span className="font-semibold">{currentTeam.linkedin_followers.toLocaleString()} followers</span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEdit('linkedin_followers', currentTeam.linkedin_followers)}
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                      </>
+                    ) : (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEdit('linkedin_followers', 0)}
+                      >
+                        <Pencil className="w-3 h-3 mr-1" />
+                        Add Followers
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Twitter */}
+              <div className="flex items-center justify-between p-3 rounded-lg border bg-sky-50 dark:bg-sky-950/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-sky-500 flex items-center justify-center">
+                    <Twitter className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <div className="font-medium">Twitter</div>
+                    {editingField === 'twitter_link' ? (
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          placeholder="https://twitter.com/..."
+                          className="w-64"
+                        />
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleSave('twitter_link')}
+                          disabled={isSaving}
+                        >
+                          <Check className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : currentTeam.twitter_link ? (
+                      <div className="flex items-center gap-2">
+                        <a 
+                          href={currentTeam.twitter_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                        >
+                          View Profile <ExternalLink className="w-3 h-3" />
+                        </a>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEdit('twitter_link', currentTeam.twitter_link)}
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-primary h-6 px-2 text-xs"
+                        onClick={() => handleEdit('twitter_link', '')}
+                      >
+                        <Pencil className="w-3 h-3 mr-1" />
+                        Add Link
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                {editingField === 'twitter_followers' ? (
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      value={editValue}
+                      onChange={(e) => setEditValue(Number(e.target.value))}
+                      placeholder="Followers"
+                      className="w-32"
+                    />
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleSave('twitter_followers')}
+                      disabled={isSaving}
+                    >
+                      <Check className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {currentTeam.twitter_followers && currentTeam.twitter_followers > 0 ? (
+                      <>
+                        <span className="font-semibold">{currentTeam.twitter_followers.toLocaleString()} followers</span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEdit('twitter_followers', currentTeam.twitter_followers)}
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                      </>
+                    ) : (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEdit('twitter_followers', 0)}
+                      >
+                        <Pencil className="w-3 h-3 mr-1" />
+                        Add Followers
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* YouTube */}
+              <div className="flex items-center justify-between p-3 rounded-lg border bg-red-50 dark:bg-red-950/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center">
+                    <Youtube className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <div className="font-medium">YouTube</div>
+                    {editingField === 'youtube_link' ? (
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          placeholder="https://youtube.com/..."
+                          className="w-64"
+                        />
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleSave('youtube_link')}
+                          disabled={isSaving}
+                        >
+                          <Check className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : currentTeam.youtube_link ? (
+                      <div className="flex items-center gap-2">
+                        <a 
+                          href={currentTeam.youtube_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                        >
+                          View Channel <ExternalLink className="w-3 h-3" />
+                        </a>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEdit('youtube_link', currentTeam.youtube_link)}
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-primary h-6 px-2 text-xs"
+                        onClick={() => handleEdit('youtube_link', '')}
+                      >
+                        <Pencil className="w-3 h-3 mr-1" />
+                        Add Link
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                {editingField === 'youtube_followers' ? (
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      value={editValue}
+                      onChange={(e) => setEditValue(Number(e.target.value))}
+                      placeholder="Subscribers"
+                      className="w-32"
+                    />
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleSave('youtube_followers')}
+                      disabled={isSaving}
+                    >
+                      <Check className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {currentTeam.youtube_followers && currentTeam.youtube_followers > 0 ? (
+                      <>
+                        <span className="font-semibold">{currentTeam.youtube_followers.toLocaleString()} subscribers</span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEdit('youtube_followers', currentTeam.youtube_followers)}
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                      </>
+                    ) : (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEdit('youtube_followers', 0)}
+                      >
+                        <Pencil className="w-3 h-3 mr-1" />
+                        Add Subscribers
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
 
               <div className="flex items-center justify-between p-3 rounded-lg border bg-green-50 dark:bg-green-950/20">
                 <div className="flex items-center gap-3">

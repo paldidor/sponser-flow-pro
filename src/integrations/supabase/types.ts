@@ -254,6 +254,7 @@ export type Database = {
           instagram_followers: number | null
           instagram_link: string | null
           level_of_play: string | null
+          linkedin_followers: number | null
           linkedin_link: string | null
           location: string | null
           main_values: Json
@@ -270,6 +271,7 @@ export type Database = {
           twitter_link: string | null
           updated_at: string
           user_id: string
+          youtube_followers: number | null
           youtube_link: string | null
         }
         Insert: {
@@ -283,6 +285,7 @@ export type Database = {
           instagram_followers?: number | null
           instagram_link?: string | null
           level_of_play?: string | null
+          linkedin_followers?: number | null
           linkedin_link?: string | null
           location?: string | null
           main_values?: Json
@@ -299,6 +302,7 @@ export type Database = {
           twitter_link?: string | null
           updated_at?: string
           user_id: string
+          youtube_followers?: number | null
           youtube_link?: string | null
         }
         Update: {
@@ -312,6 +316,7 @@ export type Database = {
           instagram_followers?: number | null
           instagram_link?: string | null
           level_of_play?: string | null
+          linkedin_followers?: number | null
           linkedin_link?: string | null
           location?: string | null
           main_values?: Json
@@ -328,6 +333,7 @@ export type Database = {
           twitter_link?: string | null
           updated_at?: string
           user_id?: string
+          youtube_followers?: number | null
           youtube_link?: string | null
         }
         Relationships: []

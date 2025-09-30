@@ -38,7 +38,9 @@ export interface TeamProfile {
   twitter_link?: string;
   instagram_followers?: number;
   facebook_followers?: number;
+  linkedin_followers?: number;
   twitter_followers?: number;
+  youtube_followers?: number;
   email_list_size?: number;
   images?: string[];
 }

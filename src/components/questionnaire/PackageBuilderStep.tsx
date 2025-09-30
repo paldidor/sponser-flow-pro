@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, Package, DollarSign } from "lucide-react";
+import { Plus, Trash2, Package, DollarSign, CheckCircle2 } from "lucide-react";
 import { EnhancedSponsorshipPackage } from "@/types/flow";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -160,11 +160,16 @@ const PackageBuilderStep = ({
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="space-y-3">
-        <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
-          Create your packages
-        </h1>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Package className="w-6 h-6 text-primary" />
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
+            Build Your Packages
+          </h1>
+        </div>
         <p className="text-base sm:text-lg text-muted-foreground">
-          Build sponsorship packages with names, prices, and placements
+          Create tiered sponsorship options with specific benefits and visibility placements
         </p>
       </div>
 
@@ -177,17 +182,25 @@ const PackageBuilderStep = ({
       ) : (
         <div className="space-y-4">
           {packages.map((pkg, index) => (
-            <Card key={pkg.id} className="p-6 space-y-4">
+            <Card key={pkg.id} className="p-6 space-y-4 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Package className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Package {index + 1}</h3>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Package className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold">Package {index + 1}</h3>
+                    {pkg.name && (
+                      <p className="text-sm text-muted-foreground">{pkg.name}</p>
+                    )}
+                  </div>
                 </div>
                 {packages.length > 1 && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => removePackage(pkg.id)}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -308,10 +321,17 @@ const PackageBuilderStep = ({
                   </div>
                 </div>
 
-                {pkg.placementIds.length > 0 && (
+                {pkg.placementIds.length > 0 ? (
+                  <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
+                    <p className="text-sm font-medium text-primary flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" />
+                      {pkg.placementIds.length} placement
+                      {pkg.placementIds.length !== 1 ? "s" : ""} selected
+                    </p>
+                  </div>
+                ) : (
                   <p className="text-sm text-muted-foreground">
-                    {pkg.placementIds.length} placement
-                    {pkg.placementIds.length !== 1 ? "s" : ""} selected
+                    Select at least one placement
                   </p>
                 )}
               </div>

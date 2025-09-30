@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { X, Plus } from "lucide-react";
+import { X, Plus, TrendingUp, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ImpactSelectionStepProps {
@@ -57,20 +57,29 @@ const ImpactSelectionStep = ({
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="space-y-3">
-        <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
-          What will sponsorship support?
-        </h1>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <TrendingUp className="w-6 h-6 text-primary" />
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
+            Define Your Impact
+          </h1>
+        </div>
         <p className="text-base sm:text-lg text-muted-foreground">
-          Select all areas where sponsorship funds will make an impact
+          Show sponsors exactly where their investment makes a difference
         </p>
       </div>
 
       <Card className="p-6 sm:p-8 space-y-6">
         {/* Predefined Tags */}
         <div className="space-y-3">
-          <label className="text-sm font-medium text-foreground">
-            Common Impact Areas
+          <label className="text-sm font-medium text-foreground flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-primary" />
+            Select Impact Areas
           </label>
+          <p className="text-xs text-muted-foreground">
+            Choose all that apply - the more specific, the better for sponsors
+          </p>
           <div className="flex flex-wrap gap-2">
             {predefinedImpacts.map((impact) => {
               const isSelected = selectedImpacts.includes(impact);
@@ -78,11 +87,15 @@ const ImpactSelectionStep = ({
                 <Badge
                   key={impact}
                   variant={isSelected ? "default" : "outline"}
-                  className="cursor-pointer px-4 py-2 text-sm hover:scale-105 transition-transform"
+                  className={`cursor-pointer px-4 py-2.5 text-sm transition-all ${
+                    isSelected
+                      ? "hover:bg-primary/80 scale-105 shadow-md"
+                      : "hover:scale-105 hover:border-primary/50"
+                  }`}
                   onClick={() => toggleImpact(impact)}
                 >
+                  {isSelected && <CheckCircle2 className="w-3 h-3 mr-1" />}
                   {impact}
-                  {isSelected && <X className="w-3 h-3 ml-1" />}
                 </Badge>
               );
             })}
@@ -146,12 +159,22 @@ const ImpactSelectionStep = ({
         )}
       </Card>
 
-      {selectedImpacts.length === 0 && (
-        <div className="bg-muted/50 rounded-lg p-4">
-          <p className="text-sm text-muted-foreground">
-            Select at least one impact area to continue
+      {selectedImpacts.length === 0 ? (
+        <Card className="p-4 bg-muted/30 border-dashed">
+          <p className="text-sm text-muted-foreground text-center">
+            👆 Select at least one impact area to continue
           </p>
-        </div>
+        </Card>
+      ) : (
+        <Card className="p-4 bg-primary/5 border-primary/20">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-primary" />
+            <p className="text-sm font-medium text-primary">
+              Great! You've selected {selectedImpacts.length} impact{" "}
+              {selectedImpacts.length === 1 ? "area" : "areas"}
+            </p>
+          </div>
+        </Card>
       )}
     </div>
   );

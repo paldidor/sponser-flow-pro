@@ -1,11 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense, memo } from "react";
 import { MultiStepOfferData, EnhancedSponsorshipPackage } from "@/types/flow";
 import MultiStepContainer from "./MultiStepContainer";
-import FundraisingGoalStep from "./FundraisingGoalStep";
-import ImpactSelectionStep from "./ImpactSelectionStep";
-import SupportedPlayersStep from "./SupportedPlayersStep";
-import DurationSelectionStep from "./DurationSelectionStep";
-import PackageBuilderStep from "./PackageBuilderStep";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -16,6 +11,14 @@ import {
 } from "@/lib/questionnaireService";
 import { Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Lazy load step components for better performance
+const FundraisingGoalStep = lazy(() => import("./FundraisingGoalStep"));
+const ImpactSelectionStep = lazy(() => import("./ImpactSelectionStep"));
+const SupportedPlayersStep = lazy(() => import("./SupportedPlayersStep"));
+const DurationSelectionStep = lazy(() => import("./DurationSelectionStep"));
+const PackageBuilderStep = lazy(() => import("./PackageBuilderStep"));
 
 interface QuestionnaireFlowProps {
   onComplete: (data: MultiStepOfferData) => void;
@@ -203,61 +206,84 @@ const QuestionnaireFlow = ({ onComplete, onBack }: QuestionnaireFlowProps) => {
     }
   };
 
+  // Loading fallback for lazy-loaded components
+  const StepLoadingFallback = () => (
+    <div className="space-y-6 animate-fade-in">
+      <div className="space-y-3">
+        <Skeleton className="h-12 w-3/4" />
+        <Skeleton className="h-6 w-full" />
+      </div>
+      <Card className="p-6 space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </Card>
+    </div>
+  );
+
   const renderCurrentStep = () => {
-    switch (currentStepIndex) {
-      case 0:
-        return (
-          <FundraisingGoalStep
-            initialValue={formData.fundraisingGoal}
-            onValueChange={(value) =>
-              setFormData({ ...formData, fundraisingGoal: value })
-            }
-            onValidityChange={setCanProceed}
-          />
-        );
-      case 1:
-        return (
-          <ImpactSelectionStep
-            initialValues={formData.impactTags}
-            onValueChange={(values) =>
-              setFormData({ ...formData, impactTags: values })
-            }
-            onValidityChange={setCanProceed}
-          />
-        );
-      case 2:
-        return (
-          <SupportedPlayersStep
-            initialValue={formData.supportedPlayers}
-            onValueChange={(value) =>
-              setFormData({ ...formData, supportedPlayers: value })
-            }
-            onValidityChange={setCanProceed}
-          />
-        );
-      case 3:
-        return (
-          <DurationSelectionStep
-            initialValue={formData.duration}
-            onValueChange={(value) =>
-              setFormData({ ...formData, duration: value })
-            }
-            onValidityChange={setCanProceed}
-          />
-        );
-      case 4:
-        return (
-          <PackageBuilderStep
-            initialPackages={formData.packages}
-            onValueChange={(packages) =>
-              setFormData({ ...formData, packages })
-            }
-            onValidityChange={setCanProceed}
-          />
-        );
-      default:
-        return null;
-    }
+    const stepContent = (() => {
+      switch (currentStepIndex) {
+        case 0:
+          return (
+            <FundraisingGoalStep
+              initialValue={formData.fundraisingGoal}
+              onValueChange={(value) =>
+                setFormData({ ...formData, fundraisingGoal: value })
+              }
+              onValidityChange={setCanProceed}
+            />
+          );
+        case 1:
+          return (
+            <ImpactSelectionStep
+              initialValues={formData.impactTags}
+              onValueChange={(values) =>
+                setFormData({ ...formData, impactTags: values })
+              }
+              onValidityChange={setCanProceed}
+            />
+          );
+        case 2:
+          return (
+            <SupportedPlayersStep
+              initialValue={formData.supportedPlayers}
+              onValueChange={(value) =>
+                setFormData({ ...formData, supportedPlayers: value })
+              }
+              onValidityChange={setCanProceed}
+            />
+          );
+        case 3:
+          return (
+            <DurationSelectionStep
+              initialValue={formData.duration}
+              onValueChange={(value) =>
+                setFormData({ ...formData, duration: value })
+              }
+              onValidityChange={setCanProceed}
+            />
+          );
+        case 4:
+          return (
+            <PackageBuilderStep
+              initialPackages={formData.packages}
+              onValueChange={(packages) =>
+                setFormData({ ...formData, packages })
+              }
+              onValidityChange={setCanProceed}
+            />
+          );
+        default:
+          return null;
+      }
+    })();
+
+    return (
+      <Suspense fallback={<StepLoadingFallback />}>
+        {stepContent}
+      </Suspense>
+    );
   };
 
   if (isInitializing) {

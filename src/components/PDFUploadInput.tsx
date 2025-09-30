@@ -26,11 +26,19 @@ const PDFUploadInput = ({ onUpload, onBack }: PDFUploadInputProps) => {
         });
         return;
       }
+      if (file.size < 1024) {
+        toast({
+          title: "File too small",
+          description: "The PDF file appears to be empty or corrupted",
+          variant: "destructive",
+        });
+        return;
+      }
       setSelectedFile(file);
     } else {
       toast({
         title: "Invalid file type",
-        description: "Please select a PDF file",
+        description: "Please select a PDF file (.pdf extension)",
         variant: "destructive",
       });
     }
@@ -41,10 +49,17 @@ const PDFUploadInput = ({ onUpload, onBack }: PDFUploadInputProps) => {
 
     setIsUploading(true);
     try {
+      // Validate file before upload
+      if (!selectedFile.name.toLowerCase().endsWith('.pdf')) {
+        throw new Error('File must have a .pdf extension');
+      }
+
       // Generate unique filename with timestamp
       const timestamp = Date.now();
       const sanitizedName = selectedFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
       const uniqueFileName = `${timestamp}_${sanitizedName}`;
+
+      console.log('Uploading PDF to storage:', uniqueFileName);
 
       // Upload to Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -55,17 +70,22 @@ const PDFUploadInput = ({ onUpload, onBack }: PDFUploadInputProps) => {
         });
 
       if (uploadError) {
-        throw uploadError;
+        console.error('Upload error:', uploadError);
+        throw new Error(uploadError.message || 'Failed to upload file to storage');
       }
+
+      console.log('Upload successful:', uploadData);
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('sponsorship-pdfs')
         .getPublicUrl(uniqueFileName);
 
+      console.log('Public URL generated:', publicUrl);
+
       toast({
         title: "Upload successful",
-        description: "Analyzing your sponsorship PDF...",
+        description: "Starting AI analysis...",
       });
 
       // Pass the public URL and filename to parent
@@ -74,7 +94,7 @@ const PDFUploadInput = ({ onUpload, onBack }: PDFUploadInputProps) => {
       console.error('Upload error:', error);
       toast({
         title: "Upload failed",
-        description: error instanceof Error ? error.message : "Failed to upload PDF",
+        description: error instanceof Error ? error.message : "Failed to upload PDF. Please try again.",
         variant: "destructive",
       });
       setIsUploading(false);

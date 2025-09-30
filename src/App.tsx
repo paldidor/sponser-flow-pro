@@ -201,8 +201,9 @@ const App = () => {
   };
 
   const pollAnalysisStatus = async (offerId: string, fileName: string) => {
-    const maxAttempts = 60; // Poll for up to 60 seconds
+    const maxAttempts = 90; // Poll for up to 90 seconds (increased for large PDFs)
     let attempts = 0;
+    const pollInterval = 1500; // Check every 1.5 seconds
 
     const checkStatus = async () => {
       try {
@@ -212,9 +213,13 @@ const App = () => {
           .eq('id', offerId)
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Failed to fetch offer status:', error);
+          throw error;
+        }
 
         attempts++;
+        console.log(`Polling attempt ${attempts}/${maxAttempts}, status: ${(offerData as any).analysis_status}`);
 
         const analysisStatus = (offerData as any).analysis_status;
 
@@ -273,23 +278,29 @@ const App = () => {
           
           toast({
             title: "Analysis complete",
-            description: `Successfully extracted ${transformedPackages.length} sponsorship packages`,
+            description: `Successfully extracted ${transformedPackages.length} sponsorship package${transformedPackages.length !== 1 ? 's' : ''}`,
           });
         } else if (analysisStatus === 'error') {
-          throw new Error('PDF analysis failed');
+          const errorMessage = offerData.impact?.includes('Analysis failed') 
+            ? offerData.impact.replace('Analysis failed: ', '')
+            : 'PDF analysis failed';
+          throw new Error(errorMessage);
         } else if (attempts >= maxAttempts) {
-          throw new Error('Analysis timeout - taking too long');
+          throw new Error('Analysis is taking longer than expected. The PDF may be too complex. Please try a simpler document or contact support.');
         } else {
           // Continue polling
-          setTimeout(checkStatus, 1000);
+          setTimeout(checkStatus, pollInterval);
         }
       } catch (error) {
         console.error('Poll error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Failed to analyze PDF';
+        
         toast({
           title: "Analysis failed",
-          description: error instanceof Error ? error.message : "Failed to analyze PDF",
+          description: errorMessage,
           variant: "destructive",
         });
+        
         setCurrentStep("pdf-input");
         setCurrentOfferId(null);
       }

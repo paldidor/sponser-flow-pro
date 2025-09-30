@@ -4,7 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Pencil, MapPin, Users, Instagram, Facebook, Twitter, Mail, AlertCircle, Calendar, Trophy, Target, Linkedin, Youtube, ExternalLink, Check } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Pencil, MapPin, Users, Instagram, Facebook, Twitter, Mail, AlertCircle, Calendar, Trophy, Target, Linkedin, Youtube, ExternalLink, Check, X } from "lucide-react";
 import ProgressIndicator from "./ProgressIndicator";
 import { TeamProfile } from "@/types/flow";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +23,7 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<any>("");
   const [isSaving, setIsSaving] = useState(false);
+  const [newTagValue, setNewTagValue] = useState<string>("");
   const { toast } = useToast();
 
   const defaultTeam: TeamProfile = {
@@ -127,6 +129,92 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
   const handleEdit = (field: string, currentValue: any) => {
     setEditingField(field);
     setEditValue(currentValue);
+    setNewTagValue("");
+  };
+
+  const handleRemoveTag = async (tagToRemove: string) => {
+    const updatedValues = currentTeam.main_values.filter(v => v !== tagToRemove);
+    setIsSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to save changes",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('team_profiles')
+        .update({ main_values: updatedValues })
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error updating profile:', error);
+        toast({
+          title: "Error saving changes",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        setTeam(prev => prev ? { ...prev, main_values: updatedValues } : null);
+        toast({
+          title: "Tag removed",
+          description: "Your profile has been updated",
+        });
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAddTag = async () => {
+    if (!newTagValue.trim()) return;
+    
+    const updatedValues = [...currentTeam.main_values, newTagValue.trim()];
+    setIsSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to save changes",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('team_profiles')
+        .update({ main_values: updatedValues })
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error updating profile:', error);
+        toast({
+          title: "Error saving changes",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        setTeam(prev => prev ? { ...prev, main_values: updatedValues } : null);
+        setNewTagValue("");
+        toast({
+          title: "Tag added",
+          description: "Your profile has been updated",
+        });
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSave = async (field: string) => {
@@ -303,31 +391,59 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => handleEdit('main_values', currentTeam.main_values.join(', '))}
+                      onClick={() => handleEdit('main_values', currentTeam.main_values)}
                     >
                       <Pencil className="w-3 h-3" />
                     </Button>
                   )}
                 </div>
                 {editingField === 'main_values' ? (
-                  <div className="flex gap-2">
-                    <Input
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      placeholder="Enter values separated by commas"
-                    />
-                    <Button 
-                      size="sm" 
-                      onClick={() => {
-                        const valuesArray = editValue.split(',').map((v: string) => v.trim()).filter(Boolean);
-                        setEditValue(valuesArray);
-                        handleSave('main_values');
-                      }}
-                      disabled={isSaving}
-                    >
-                      <Check className="w-4 h-4 mr-1" />
-                      Save
-                    </Button>
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      {currentTeam.main_values && currentTeam.main_values.length > 0 ? (
+                        currentTeam.main_values.map((value, idx) => (
+                          <Badge key={idx} variant="secondary" className="pl-3 pr-1 py-1">
+                            {value}
+                            <button
+                              onClick={() => handleRemoveTag(value)}
+                              disabled={isSaving}
+                              className="ml-2 hover:bg-secondary-foreground/20 rounded-full p-0.5 transition-colors"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-sm text-muted-foreground">No values added yet</span>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        value={newTagValue}
+                        onChange={(e) => setNewTagValue(e.target.value)}
+                        placeholder="Add a new value"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddTag();
+                          }
+                        }}
+                      />
+                      <Button 
+                        size="sm" 
+                        onClick={handleAddTag}
+                        disabled={isSaving || !newTagValue.trim()}
+                      >
+                        Add
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => setEditingField(null)}
+                      >
+                        Done
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
@@ -429,11 +545,26 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
                 </div>
                 {editingField === 'sport' ? (
                   <div className="flex gap-2">
-                    <Input
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      placeholder="Enter sport"
-                    />
+                    <Select value={editValue} onValueChange={setEditValue}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a sport" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Soccer">Soccer</SelectItem>
+                        <SelectItem value="Baseball/Softball">Baseball/Softball</SelectItem>
+                        <SelectItem value="Football">Football</SelectItem>
+                        <SelectItem value="Basketball">Basketball</SelectItem>
+                        <SelectItem value="Tackle Football">Tackle Football</SelectItem>
+                        <SelectItem value="Flag Football">Flag Football</SelectItem>
+                        <SelectItem value="Gymnastic">Gymnastic</SelectItem>
+                        <SelectItem value="Dance">Dance</SelectItem>
+                        <SelectItem value="Track & Field">Track & Field</SelectItem>
+                        <SelectItem value="Futsal">Futsal</SelectItem>
+                        <SelectItem value="Volleyball">Volleyball</SelectItem>
+                        <SelectItem value="Lacrosse">Lacrosse</SelectItem>
+                        <SelectItem value="Multi-Sport">Multi-Sport</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <Button 
                       size="sm" 
                       onClick={() => handleSave('sport')}
@@ -444,7 +575,7 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
                     </Button>
                   </div>
                 ) : (
-                  <p className="text-foreground">{currentTeam.sport || "Enter sport"}</p>
+                  <p className="text-foreground">{currentTeam.sport || "Select sport"}</p>
                 )}
               </div>
 
@@ -571,11 +702,15 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
                 </div>
                 {editingField === 'organization_status' ? (
                   <div className="flex gap-2">
-                    <Input
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      placeholder="Enter organization status"
-                    />
+                    <Select value={editValue} onValueChange={setEditValue}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select organization status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="501(C)">501(C)</SelectItem>
+                        <SelectItem value="For-Profit">For-Profit</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <Button 
                       size="sm" 
                       onClick={() => handleSave('organization_status')}
@@ -588,7 +723,7 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
                 ) : (
                   <div className="flex items-center gap-2 text-foreground">
                     <Target className="w-4 h-4" />
-                    <span>{currentTeam.organization_status || "Enter organization status"}</span>
+                    <span>{currentTeam.organization_status || "Select organization status"}</span>
                   </div>
                 )}
               </div>

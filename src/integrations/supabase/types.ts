@@ -112,6 +112,7 @@ export type Database = {
           analysis_status: string | null
           created_at: string
           description: string | null
+          draft_data: Json | null
           duration: string
           fundraising_goal: number
           id: string
@@ -130,6 +131,7 @@ export type Database = {
           analysis_status?: string | null
           created_at?: string
           description?: string | null
+          draft_data?: Json | null
           duration: string
           fundraising_goal: number
           id?: string
@@ -148,6 +150,7 @@ export type Database = {
           analysis_status?: string | null
           created_at?: string
           description?: string | null
+          draft_data?: Json | null
           duration?: string
           fundraising_goal?: number
           id?: string

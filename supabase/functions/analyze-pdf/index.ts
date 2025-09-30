@@ -28,14 +28,14 @@ serve(async (req) => {
     // Initialize Supabase client
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Download the PDF from storage
-    const pdfPath = pdfUrl.split('/').pop();
+    // Download the PDF from storage using the full path
+    console.log('Downloading PDF from path:', pdfUrl);
     const { data: pdfData, error: downloadError } = await supabase.storage
       .from('sponsorship-pdfs')
-      .download(pdfPath);
+      .download(pdfUrl);
 
     if (downloadError) {
-      console.error('Error downloading PDF:', downloadError);
+      console.error('Error downloading PDF from path:', pdfUrl, downloadError);
       throw new Error(`Failed to download PDF: ${downloadError.message}`);
     }
 

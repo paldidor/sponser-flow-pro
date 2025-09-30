@@ -138,59 +138,54 @@ const App = () => {
     }, 2500);
   };
 
-  const handlePDFUpload = async (fileName: string, fileUrl: string) => {
+  const handlePDFUpload = async (fileName: string, publicUrl: string) => {
     setAnalysisFileName(fileName);
-    setCurrentStep("pdf-analysis");
 
     try {
-      // Call the analyze-pdf edge function
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      const response = await supabase.functions.invoke('analyze-pdf', {
-        body: { pdfUrl: fileUrl },
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-      });
-
-      if (response.error) {
-        throw response.error;
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("You must be logged in");
       }
 
-      const { data: analysisResult } = response;
+      // Store PDF reference in database for Make.com to process
+      const { error: insertError } = await supabase
+        .from('sponsorship_offers')
+        .insert({
+          user_id: user.id,
+          team_profile_id: null,
+          title: `Sponsorship from ${fileName}`,
+          fundraising_goal: 0,
+          impact: 'Pending analysis from PDF',
+          supported_players: 0,
+          duration: 'Pending',
+          description: 'This sponsorship offer will be analyzed from the uploaded PDF',
+          status: 'draft',
+          source: 'pdf',
+          source_file_name: fileName,
+          pdf_public_url: publicUrl,
+          analysis_status: 'pending'
+        });
 
-      if (!analysisResult.success) {
-        throw new Error(analysisResult.error || 'Failed to analyze PDF');
-      }
+      if (insertError) throw insertError;
 
-      const extracted = analysisResult.data;
-
-      // Transform the extracted data into our format
-      const packages = extracted.packages.map((pkg: any, index: number) => ({
-        id: `${index + 1}`,
-        name: pkg.name,
-        price: pkg.price,
-        benefits: pkg.benefits,
-        placements: pkg.placements,
-      }));
-
+      // Set placeholder data for review - Make.com will update this later
       setSponsorshipData({
-        fundraisingGoal: extracted.funding_goal.toString(),
-        duration: extracted.duration,
-        description: extracted.impact,
-        packages,
+        fundraisingGoal: "0",
+        duration: "Pending Analysis",
+        description: "PDF uploaded successfully. Make.com will analyze this file and populate the sponsorship details.",
+        packages: [],
         source: "pdf",
         fileName,
       });
 
       setCurrentStep("sponsorship-review");
     } catch (error) {
-      console.error('PDF analysis error:', error);
-      // Fallback to review step with empty data so user can manually edit
+      console.error('PDF upload error:', error);
       setSponsorshipData({
         fundraisingGoal: "0",
         duration: "Annual",
-        description: "Failed to extract data from PDF. Please review and edit manually.",
+        description: "Failed to save PDF reference. Please try again.",
         packages: [],
         source: "pdf",
         fileName,

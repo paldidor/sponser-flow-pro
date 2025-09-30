@@ -109,12 +109,14 @@ export type Database = {
       }
       sponsorship_offers: {
         Row: {
+          analysis_status: string | null
           created_at: string
           description: string | null
           duration: string
           fundraising_goal: number
           id: string
           impact: string
+          pdf_public_url: string | null
           source: string
           source_file_name: string | null
           status: string
@@ -125,12 +127,14 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          analysis_status?: string | null
           created_at?: string
           description?: string | null
           duration: string
           fundraising_goal: number
           id?: string
           impact: string
+          pdf_public_url?: string | null
           source?: string
           source_file_name?: string | null
           status?: string
@@ -141,12 +145,14 @@ export type Database = {
           user_id: string
         }
         Update: {
+          analysis_status?: string | null
           created_at?: string
           description?: string | null
           duration?: string
           fundraising_goal?: number
           id?: string
           impact?: string
+          pdf_public_url?: string | null
           source?: string
           source_file_name?: string | null
           status?: string

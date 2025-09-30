@@ -69,11 +69,11 @@ const PDFUploadInput = ({ onUpload, onBack }: PDFUploadInputProps) => {
 
       toast({
         title: "Upload successful",
-        description: "Analyzing your sponsorship deck...",
+        description: "PDF uploaded successfully. Ready for analysis via Make.com",
       });
 
-      // Pass the file name and URL to parent
-      onUpload(selectedFile.name, data.path);
+      // Pass the file name and public URL to parent
+      onUpload(selectedFile.name, publicUrl);
     } catch (error) {
       console.error("Upload error:", error);
       toast({
@@ -181,7 +181,7 @@ const PDFUploadInput = ({ onUpload, onBack }: PDFUploadInputProps) => {
                 onClick={handleUpload}
                 disabled={isUploading}
               >
-                {isUploading ? "Uploading..." : "Analyze PDF"}
+                {isUploading ? "Uploading..." : "Upload PDF"}
               </Button>
             </div>
           )}

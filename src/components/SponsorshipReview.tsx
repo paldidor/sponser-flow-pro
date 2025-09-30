@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Pencil, MapPin, Users, DollarSign, Calendar, Target } from "lucide-react";
 import ProgressIndicator from "./ProgressIndicator";
 import { SponsorshipData, TeamProfile } from "@/types/flow";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SponsorshipReviewProps {
   sponsorshipData: SponsorshipData;
@@ -13,33 +15,64 @@ interface SponsorshipReviewProps {
 }
 
 const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: SponsorshipReviewProps) => {
-  const defaultTeam: TeamProfile = {
-    team_name: "Lightning Bolts Soccer Club",
-    main_values: ["Teamwork", "Excellence"],
-    team_bio: "Youth soccer team",
-    location: "San Francisco, CA",
-    sport: "Soccer",
-    number_of_players: "18",
-    level_of_play: "Competitive",
-    competition_scope: "Regional",
-    organization_status: "nonprofit",
-    instagram_followers: 1250,
-    facebook_followers: 890,
-    twitter_followers: 420,
-    linkedin_followers: 0,
-    youtube_followers: 0,
-    email_list_size: 0,
-    images: [],
-  };
+  const [team, setTeam] = useState<TeamProfile | null>(teamData);
+  const [isLoading, setIsLoading] = useState(!teamData);
 
-  const team = teamData || defaultTeam;
-  const totalReach = (team.instagram_followers || 0) + 
-                     (team.facebook_followers || 0) + 
-                     (team.twitter_followers || 0) + 
-                     (team.linkedin_followers || 0) + 
-                     (team.youtube_followers || 0) + 
-                     (team.email_list_size || 0);
+  useEffect(() => {
+    const fetchTeamProfile = async () => {
+      if (teamData) {
+        setTeam(teamData);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setIsLoading(false);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('team_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error fetching team profile:', error);
+        } else if (data) {
+          setTeam(data as TeamProfile);
+        }
+      } catch (error) {
+        console.error('Error fetching team profile:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTeamProfile();
+  }, [teamData]);
+  const totalReach = team ? (
+    (team.instagram_followers || 0) + 
+    (team.facebook_followers || 0) + 
+    (team.twitter_followers || 0) + 
+    (team.linkedin_followers || 0) + 
+    (team.youtube_followers || 0) + 
+    (team.email_list_size || 0)
+  ) : 0;
   const totalPotential = sponsorshipData.packages.reduce((sum, pkg) => sum + pkg.price, 0);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen py-12 px-4 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading team profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen py-12 px-4">
@@ -123,30 +156,37 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-6">Team Overview</h2>
             
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🏆</span>
-                <div>
-                  <p className="font-semibold">{team.team_name}</p>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <MapPin className="w-3 h-3" />
-                    {team.location}
+            {team ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🏆</span>
+                  <div>
+                    <p className="font-semibold">{team.team_name || "Team Name"}</p>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <MapPin className="w-3 h-3" />
+                      {team.location || "Location"}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-muted-foreground" />
+                  <span className="text-sm">{team.number_of_players || "0"} Players</span>
+                </div>
+
+                <div className="pt-4 border-t">
+                  <div className="text-center py-4">
+                    <div className="text-3xl font-bold text-primary">{totalReach.toLocaleString()}</div>
+                    <p className="text-sm text-muted-foreground mt-1">Total Audience Reach</p>
                   </div>
                 </div>
               </div>
-
-              <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-muted-foreground" />
-                <span className="text-sm">{team.number_of_players} Players</span>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p className="text-sm">No team profile found</p>
+                <p className="text-xs mt-2">Please create a team profile first</p>
               </div>
-
-              <div className="pt-4 border-t">
-                <div className="text-center py-4">
-                  <div className="text-3xl font-bold text-primary">{totalReach.toLocaleString()}</div>
-                  <p className="text-sm text-muted-foreground mt-1">Total Audience Reach</p>
-                </div>
-              </div>
-            </div>
+            )}
           </Card>
         </div>
 

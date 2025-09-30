@@ -5,12 +5,33 @@ export type FlowStep =
   | "profile-review"
   | "create-offer"
   | "form"
+  | "fundraising-goal"
+  | "impact-selection"
+  | "supported-players"
+  | "duration-selection"
+  | "package-builder"
   | "website-input"
   | "website-analysis"
   | "pdf-input"
   | "pdf-analysis"
   | "sponsorship-review"
   | "marketplace";
+
+export interface MultiStepOfferData {
+  fundraisingGoal?: string;
+  impactTags?: string[];
+  supportedPlayers?: number;
+  duration?: string;
+  packages?: EnhancedSponsorshipPackage[];
+  currentStep: number;
+}
+
+export interface EnhancedSponsorshipPackage {
+  id: string;
+  name: string;
+  price: number;
+  placementIds: string[];
+}
 
 export interface SocialLinks {
   website: string;

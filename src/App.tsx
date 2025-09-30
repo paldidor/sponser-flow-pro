@@ -11,13 +11,14 @@ import CreateTeamProfile from "./components/CreateTeamProfile";
 import ProfileReview from "./components/ProfileReview";
 import CreateSponsorshipOffer from "./components/CreateSponsorshipOffer";
 import SponsorshipForm from "./components/SponsorshipForm";
+import QuestionnaireFlow from "./components/questionnaire/QuestionnaireFlow";
 import WebsiteAnalysisInput from "./components/WebsiteAnalysisInput";
 import AnalysisSpinner from "./components/AnalysisSpinner";
 import PDFUploadInput from "./components/PDFUploadInput";
 import PDFAnalysisProgress from "./components/PDFAnalysisProgress";
 import SponsorshipReview from "./components/SponsorshipReview";
 import SponsorshipMarketplace from "./components/SponsorshipMarketplace";
-import { FlowStep, TeamProfile, SponsorshipData, SponsorshipPackage } from "./types/flow";
+import { FlowStep, TeamProfile, SponsorshipData, SponsorshipPackage, MultiStepOfferData } from "./types/flow";
 
 const queryClient = new QueryClient();
 
@@ -101,7 +102,7 @@ const App = () => {
 
   const handleSelectMethod = (method: "form" | "website" | "pdf", url?: string) => {
     if (method === "form") {
-      setCurrentStep("form");
+      setCurrentStep("fundraising-goal");
     } else if (method === "website") {
       if (url && url.trim()) {
         // If URL provided, go straight to analysis
@@ -344,6 +345,25 @@ const App = () => {
     setCurrentStep("sponsorship-review");
   };
 
+  const handleQuestionnaireComplete = (data: MultiStepOfferData) => {
+    // Transform MultiStepOfferData to SponsorshipData format
+    const transformedData: SponsorshipData = {
+      fundraisingGoal: data.fundraisingGoal || "0",
+      duration: data.duration || "",
+      description: data.impactTags?.join(", ") || "",
+      packages: (data.packages || []).map(pkg => ({
+        id: pkg.id,
+        name: pkg.name,
+        price: pkg.price,
+        benefits: [],
+        placements: pkg.placementIds,
+      })),
+      source: "form",
+    };
+    setSponsorshipData(transformedData);
+    setCurrentStep("sponsorship-review");
+  };
+
   const handleReviewApprove = () => {
     setCurrentStep("marketplace");
   };
@@ -357,13 +377,14 @@ const App = () => {
         setCurrentStep("create-profile");
         break;
       case "form":
+      case "fundraising-goal":
       case "website-input":
       case "pdf-input":
         setCurrentStep("create-offer");
         break;
       case "sponsorship-review":
         if (sponsorshipData?.source === "form") {
-          setCurrentStep("form");
+          setCurrentStep("fundraising-goal");
         } else if (sponsorshipData?.source === "website") {
           setCurrentStep("website-input");
         } else {
@@ -390,6 +411,12 @@ const App = () => {
         return <CreateSponsorshipOffer onSelectMethod={handleSelectMethod} />;
       case "form":
         return <SponsorshipForm onComplete={handleFormComplete} onBack={handleBack} />;
+      case "fundraising-goal":
+      case "impact-selection":
+      case "supported-players":
+      case "duration-selection":
+      case "package-builder":
+        return <QuestionnaireFlow onComplete={handleQuestionnaireComplete} onBack={handleBack} />;
       case "website-input":
         return <WebsiteAnalysisInput onAnalyze={handleWebsiteAnalyze} onBack={handleBack} />;
       case "website-analysis":

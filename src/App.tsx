@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import LandingPage from "./components/LandingPage";
 import AuthFlow from "./components/AuthFlow";
 import CreateTeamProfile from "./components/CreateTeamProfile";
@@ -137,21 +138,71 @@ const App = () => {
     }, 2500);
   };
 
-  const handlePDFUpload = (fileName: string) => {
+  const handlePDFUpload = async (fileUrl: string, fileName: string) => {
     setAnalysisFileName(fileName);
     setCurrentStep("pdf-analysis");
-    setTimeout(() => {
-      const mockData: SponsorshipData = {
-        fundraisingGoal: "8000",
-        duration: "Annual",
-        description: "Comprehensive sponsorship opportunities for our competitive youth sports program.",
-        packages: mockSponsorshipPackages,
+
+    try {
+      // Create sponsorship offer record first
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      const { data: offerData, error: offerError } = await supabase
+        .from('sponsorship_offers')
+        .insert({
+          user_id: user.id,
+          title: `Sponsorship from ${fileName}`,
+          fundraising_goal: 0,
+          duration: 'TBD',
+          impact: 'Analysis in progress...',
+          pdf_public_url: fileUrl,
+          source_file_name: fileName,
+          analysis_status: 'pending',
+          source: 'pdf',
+          status: 'draft'
+        })
+        .select()
+        .single();
+
+      if (offerError) throw offerError;
+
+      // Call edge function to analyze PDF
+      const { data: analysisData, error: analysisError } = await supabase.functions.invoke(
+        'analyze-pdf-sponsorship',
+        {
+          body: {
+            pdfUrl: fileUrl,
+            offerId: offerData.id,
+            userId: user.id
+          }
+        }
+      );
+
+      if (analysisError) throw analysisError;
+
+      // Transform the analysis data to SponsorshipData format
+      const transformedData: SponsorshipData = {
+        fundraisingGoal: analysisData.data.funding_goal.toString(),
+        duration: analysisData.data.sponsorship_term,
+        description: analysisData.data.sponsorship_impact,
+        packages: analysisData.data.packages.map((pkg: any, index: number) => ({
+          id: `${index + 1}`,
+          name: pkg.name,
+          price: pkg.cost,
+          benefits: [],
+          placements: pkg.placements || []
+        })),
         source: "pdf",
         fileName: fileName,
       };
-      setSponsorshipData(mockData);
+
+      setSponsorshipData(transformedData);
       setCurrentStep("sponsorship-review");
-    }, 3000);
+    } catch (error) {
+      console.error('PDF analysis error:', error);
+      // Show error and go back to PDF input
+      setCurrentStep("pdf-input");
+    }
   };
 
   const handleFormComplete = (data: SponsorshipData) => {

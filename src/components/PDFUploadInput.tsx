@@ -1,20 +1,83 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Upload, FileText, ArrowLeft, X } from "lucide-react";
+import { Upload, FileText, ArrowLeft, X, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface PDFUploadInputProps {
-  onUpload: (fileName: string) => void;
+  onUpload: (fileUrl: string, fileName: string) => void;
   onBack: () => void;
 }
 
 const PDFUploadInput = ({ onUpload, onBack }: PDFUploadInputProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
 
   const handleFileSelect = (file: File) => {
     if (file.type === "application/pdf") {
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select a PDF file smaller than 10MB",
+          variant: "destructive",
+        });
+        return;
+      }
       setSelectedFile(file);
+    } else {
+      toast({
+        title: "Invalid file type",
+        description: "Please select a PDF file",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUploadAndAnalyze = async () => {
+    if (!selectedFile) return;
+
+    setIsUploading(true);
+    try {
+      // Generate unique filename with timestamp
+      const timestamp = Date.now();
+      const sanitizedName = selectedFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const uniqueFileName = `${timestamp}_${sanitizedName}`;
+
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('sponsorship-pdfs')
+        .upload(uniqueFileName, selectedFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('sponsorship-pdfs')
+        .getPublicUrl(uniqueFileName);
+
+      toast({
+        title: "Upload successful",
+        description: "Analyzing your sponsorship PDF...",
+      });
+
+      // Pass the public URL and filename to parent
+      onUpload(publicUrl, selectedFile.name);
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Failed to upload PDF",
+        variant: "destructive",
+      });
+      setIsUploading(false);
     }
   };
 
@@ -111,9 +174,17 @@ const PDFUploadInput = ({ onUpload, onBack }: PDFUploadInputProps) => {
 
               <Button
                 className="w-full"
-                onClick={() => onUpload(selectedFile.name)}
+                onClick={handleUploadAndAnalyze}
+                disabled={isUploading}
               >
-                Analyze PDF
+                {isUploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  "Analyze PDF"
+                )}
               </Button>
             </div>
           )}

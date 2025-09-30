@@ -47,16 +47,39 @@ serve(async (req) => {
     }
 
     const pdfBuffer = await pdfResponse.arrayBuffer();
-    const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfBuffer)));
-
     console.log(`PDF downloaded, size: ${pdfBuffer.byteLength} bytes`);
 
-    // For now, we'll use a placeholder for PDF text extraction
-    // In Phase 2, we'll implement proper PDF text extraction using pdfjs-dist
-    const extractedText = `[PDF Content - Text extraction will be implemented in Phase 2]
-Size: ${pdfBuffer.byteLength} bytes`;
+    // Extract text from PDF using pdfjs-dist
+    console.log('Extracting text from PDF...');
+    const pdfjsLib = await import('https://esm.sh/pdfjs-dist@4.0.379/build/pdf.mjs');
+    
+    // Set worker path
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://esm.sh/pdfjs-dist@4.0.379/build/pdf.worker.mjs';
 
-    console.log('PDF text extraction placeholder ready');
+    // Load PDF document
+    const loadingTask = pdfjsLib.getDocument({ data: pdfBuffer });
+    const pdfDoc = await loadingTask.promise;
+    
+    console.log(`PDF loaded, ${pdfDoc.numPages} pages`);
+
+    // Extract text from all pages
+    let extractedText = '';
+    for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+      const page = await pdfDoc.getPage(pageNum);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items
+        .map((item: any) => item.str)
+        .join(' ');
+      extractedText += `\n--- Page ${pageNum} ---\n${pageText}\n`;
+    }
+
+    console.log(`Text extraction completed, ${extractedText.length} characters extracted`);
+
+    // Clean and preprocess text
+    extractedText = extractedText
+      .replace(/\s+/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
 
     // Prepare the AI analysis prompt
     const prompt = `You are a sponsorship manager with over 20 years of experience crafting sponsorship offers and packages for youth sports teams. Your task is to act as a Sponsorship Agent that converts the content of an uploaded PDF deck into structured sponsorship package data.

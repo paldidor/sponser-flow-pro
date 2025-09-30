@@ -80,12 +80,39 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
         console.log('Fetched team profile (raw):', data);
         console.log('main_values type:', typeof data.main_values, 'value:', data.main_values);
         
-        // Handle main_values defensively - can be string or array from webhook
-        const parsedMainValues: string[] = Array.isArray(data.main_values) 
-          ? (data.main_values as string[])
-          : typeof data.main_values === 'string' 
-            ? (data.main_values as string).split(',').map(v => v.trim()).filter(Boolean)
-            : [];
+        // Parse main_values with robust cleaning
+        const parseMainValues = (value: any): string[] => {
+          if (Array.isArray(value)) {
+            return value.map(v => String(v).replace(/^["'\[\]]+|["'\[\]]+$/g, '').trim()).filter(Boolean);
+          }
+          
+          if (typeof value === 'string') {
+            const trimmed = value.trim();
+            
+            // Try to parse as JSON if it looks like a JSON array
+            if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+              try {
+                const parsed = JSON.parse(trimmed);
+                if (Array.isArray(parsed)) {
+                  return parsed.map(v => String(v).trim()).filter(Boolean);
+                }
+              } catch (e) {
+                // If JSON parsing fails, fall through to comma-splitting
+                console.log('JSON parse failed, using comma-split fallback');
+              }
+            }
+            
+            // Fallback: split by comma and clean up each value
+            return trimmed
+              .split(',')
+              .map(v => v.replace(/^["'\[\]]+|["'\[\]]+$/g, '').trim())
+              .filter(Boolean);
+          }
+          
+          return [];
+        };
+        
+        const parsedMainValues = parseMainValues(data.main_values);
         
         console.log('Parsed main_values:', parsedMainValues);
         

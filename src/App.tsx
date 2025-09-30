@@ -3,7 +3,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import LandingPage from "./components/LandingPage";
 import AuthFlow from "./components/AuthFlow";
 import CreateTeamProfile from "./components/CreateTeamProfile";
@@ -138,60 +137,21 @@ const App = () => {
     }, 2500);
   };
 
-  const handlePDFUpload = async (fileName: string, publicUrl: string) => {
+  const handlePDFUpload = (fileName: string) => {
     setAnalysisFileName(fileName);
-
-    try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error("You must be logged in");
-      }
-
-      // Store PDF reference in database for Make.com to process
-      const { error: insertError } = await supabase
-        .from('sponsorship_offers')
-        .insert({
-          user_id: user.id,
-          team_profile_id: null,
-          title: `Sponsorship from ${fileName}`,
-          fundraising_goal: 0,
-          impact: 'Pending analysis from PDF',
-          supported_players: 0,
-          duration: 'Pending',
-          description: 'This sponsorship offer will be analyzed from the uploaded PDF',
-          status: 'draft',
-          source: 'pdf',
-          source_file_name: fileName,
-          pdf_public_url: publicUrl,
-          analysis_status: 'pending'
-        });
-
-      if (insertError) throw insertError;
-
-      // Set placeholder data for review - Make.com will update this later
-      setSponsorshipData({
-        fundraisingGoal: "0",
-        duration: "Pending Analysis",
-        description: "PDF uploaded successfully. Make.com will analyze this file and populate the sponsorship details.",
-        packages: [],
-        source: "pdf",
-        fileName,
-      });
-
-      setCurrentStep("sponsorship-review");
-    } catch (error) {
-      console.error('PDF upload error:', error);
-      setSponsorshipData({
-        fundraisingGoal: "0",
+    setCurrentStep("pdf-analysis");
+    setTimeout(() => {
+      const mockData: SponsorshipData = {
+        fundraisingGoal: "8000",
         duration: "Annual",
-        description: "Failed to save PDF reference. Please try again.",
-        packages: [],
+        description: "Comprehensive sponsorship opportunities for our competitive youth sports program.",
+        packages: mockSponsorshipPackages,
         source: "pdf",
-        fileName,
-      });
+        fileName: fileName,
+      };
+      setSponsorshipData(mockData);
       setCurrentStep("sponsorship-review");
-    }
+    }, 3000);
   };
 
   const handleFormComplete = (data: SponsorshipData) => {

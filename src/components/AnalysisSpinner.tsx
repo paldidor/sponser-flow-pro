@@ -7,24 +7,15 @@ interface AnalysisSpinnerProps {
   fileName?: string;
 }
 
-const websiteSteps = [
-  { label: "Scanning website structure", duration: 2000 },
-  { label: "Analyzing team information", duration: 2500 },
-  { label: "Extracting social media data", duration: 2000 },
-  { label: "Processing content", duration: 2500 },
-  { label: "Generating team profile", duration: 2000 },
-];
-
-const pdfSteps = [
-  { label: "Uploading your sponsorship deck", duration: 2000 },
-  { label: "Exploring and optimizing your deck", duration: 2500 },
-  { label: "Extracting funding goals and packages", duration: 2500 },
-  { label: "Analyzing sponsorship placements", duration: 2000 },
-  { label: "Creating emotional effective offer", duration: 2500 },
+const steps = [
+  { label: "Connecting to website", duration: 2000 },
+  { label: "Analyzing content", duration: 3000 },
+  { label: "Extracting team information", duration: 3000 },
+  { label: "Processing social media data", duration: 2000 },
+  { label: "Finalizing profile", duration: 2000 },
 ];
 
 const AnalysisSpinner = ({ type, fileName }: AnalysisSpinnerProps) => {
-  const steps = type === "pdf" ? pdfSteps : websiteSteps;
   const [currentStep, setCurrentStep] = useState(0);
   const [progress, setProgress] = useState(0);
 
@@ -56,12 +47,12 @@ const AnalysisSpinner = ({ type, fileName }: AnalysisSpinnerProps) => {
         <Loader2 className="w-16 h-16 animate-spin text-primary mx-auto" />
         <div className="space-y-4">
           <h2 className="text-2xl font-bold">
-            {type === "website" ? "Analyzing Website" : "Analyzing Sponsorship Deck"}
+            {type === "website" ? "Analyzing Website..." : "Analyzing PDF..."}
           </h2>
           <p className="text-muted-foreground">
             {type === "website"
-              ? "We're extracting your team information from the website..."
-              : "Exploring and optimizing your sponsorship deck to create an emotionally effective offer..."}
+              ? "We're extracting sponsorship information from your website"
+              : `Processing ${fileName || "your document"}...`}
           </p>
           
           <div className="space-y-3 mt-6">

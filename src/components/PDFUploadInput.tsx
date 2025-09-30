@@ -2,86 +2,19 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Upload, FileText, ArrowLeft, X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 
 interface PDFUploadInputProps {
-  onUpload: (fileName: string, fileUrl: string) => void;
+  onUpload: (fileName: string) => void;
   onBack: () => void;
 }
 
 const PDFUploadInput = ({ onUpload, onBack }: PDFUploadInputProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const { toast } = useToast();
 
   const handleFileSelect = (file: File) => {
     if (file.type === "application/pdf") {
-      if (file.size > 10 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Please select a PDF file smaller than 10MB",
-          variant: "destructive",
-        });
-        return;
-      }
       setSelectedFile(file);
-    } else {
-      toast({
-        title: "Invalid file type",
-        description: "Please select a PDF file",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile) return;
-
-    setIsUploading(true);
-
-    try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error("You must be logged in to upload files");
-      }
-
-      // Create a unique file path
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-
-      // Upload to Supabase Storage
-      const { data, error } = await supabase.storage
-        .from('sponsorship-pdfs')
-        .upload(fileName, selectedFile, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (error) throw error;
-
-      // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('sponsorship-pdfs')
-        .getPublicUrl(data.path);
-
-      toast({
-        title: "Upload successful",
-        description: "PDF uploaded successfully. Ready for analysis via Make.com",
-      });
-
-      // Pass the file name and public URL to parent
-      onUpload(selectedFile.name, publicUrl);
-    } catch (error) {
-      console.error("Upload error:", error);
-      toast({
-        title: "Upload failed",
-        description: error instanceof Error ? error.message : "Failed to upload PDF",
-        variant: "destructive",
-      });
-      setIsUploading(false);
     }
   };
 
@@ -178,10 +111,9 @@ const PDFUploadInput = ({ onUpload, onBack }: PDFUploadInputProps) => {
 
               <Button
                 className="w-full"
-                onClick={handleUpload}
-                disabled={isUploading}
+                onClick={() => onUpload(selectedFile.name)}
               >
-                {isUploading ? "Uploading..." : "Upload PDF"}
+                Analyze PDF
               </Button>
             </div>
           )}

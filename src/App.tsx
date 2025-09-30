@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import LandingPage from "./components/LandingPage";
 import AuthFlow from "./components/AuthFlow";
 import CreateTeamProfile from "./components/CreateTeamProfile";
@@ -25,6 +26,8 @@ const App = () => {
   const [sponsorshipData, setSponsorshipData] = useState<SponsorshipData | null>(null);
   const [analysisFileName, setAnalysisFileName] = useState<string>("");
   const [isManualEntry, setIsManualEntry] = useState(false);
+  const [currentOfferId, setCurrentOfferId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   // Mock sponsorship packages
   const mockSponsorshipPackages: SponsorshipPackage[] = [
@@ -145,7 +148,9 @@ const App = () => {
     try {
       // Create sponsorship offer record first
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
 
       const { data: offerData, error: offerError } = await supabase
         .from('sponsorship_offers')
@@ -166,43 +171,94 @@ const App = () => {
 
       if (offerError) throw offerError;
 
-      // Call edge function to analyze PDF
-      const { data: analysisData, error: analysisError } = await supabase.functions.invoke(
-        'analyze-pdf-sponsorship',
-        {
-          body: {
-            pdfUrl: fileUrl,
-            offerId: offerData.id,
-            userId: user.id
-          }
+      setCurrentOfferId(offerData.id);
+
+      // Call edge function to analyze PDF (async - doesn't wait for completion)
+      supabase.functions.invoke('analyze-pdf-sponsorship', {
+        body: {
+          pdfUrl: fileUrl,
+          offerId: offerData.id,
+          userId: user.id
         }
-      );
+      }).then(({ error }) => {
+        if (error) {
+          console.error('Edge function invocation error:', error);
+        }
+      });
 
-      if (analysisError) throw analysisError;
-
-      // Transform the analysis data to SponsorshipData format
-      const transformedData: SponsorshipData = {
-        fundraisingGoal: analysisData.data.funding_goal.toString(),
-        duration: analysisData.data.sponsorship_term,
-        description: analysisData.data.sponsorship_impact,
-        packages: analysisData.data.packages.map((pkg: any, index: number) => ({
-          id: `${index + 1}`,
-          name: pkg.name,
-          price: pkg.cost,
-          benefits: [],
-          placements: pkg.placements || []
-        })),
-        source: "pdf",
-        fileName: fileName,
-      };
-
-      setSponsorshipData(transformedData);
-      setCurrentStep("sponsorship-review");
+      // Start polling for analysis status
+      pollAnalysisStatus(offerData.id, fileName);
     } catch (error) {
-      console.error('PDF analysis error:', error);
-      // Show error and go back to PDF input
+      console.error('PDF upload error:', error);
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Failed to start PDF analysis",
+        variant: "destructive",
+      });
       setCurrentStep("pdf-input");
+      setCurrentOfferId(null);
     }
+  };
+
+  const pollAnalysisStatus = async (offerId: string, fileName: string) => {
+    const maxAttempts = 60; // Poll for up to 60 seconds
+    let attempts = 0;
+
+    const checkStatus = async () => {
+      try {
+        const { data: offerData, error } = await supabase
+          .from('sponsorship_offers')
+          .select('*')
+          .eq('id', offerId)
+          .single();
+
+        if (error) throw error;
+
+        attempts++;
+
+        const analysisStatus = (offerData as any).analysis_status;
+
+        if (analysisStatus === 'completed') {
+          // Analysis complete - transform and display
+          const transformedData: SponsorshipData = {
+            fundraisingGoal: offerData.fundraising_goal?.toString() || '0',
+            duration: offerData.duration || 'TBD',
+            description: offerData.impact || 'No description available',
+            packages: [], // Packages will be loaded separately if needed
+            source: "pdf",
+            fileName: fileName,
+          };
+
+          setSponsorshipData(transformedData);
+          setCurrentStep("sponsorship-review");
+          setCurrentOfferId(null);
+          
+          toast({
+            title: "Analysis complete",
+            description: "Your sponsorship PDF has been analyzed successfully",
+          });
+        } else if (analysisStatus === 'error') {
+          throw new Error('PDF analysis failed');
+        } else if (attempts >= maxAttempts) {
+          throw new Error('Analysis timeout - taking too long');
+        } else {
+          // Continue polling
+          setTimeout(checkStatus, 1000);
+        }
+      } catch (error) {
+        console.error('Poll error:', error);
+        toast({
+          title: "Analysis failed",
+          description: error instanceof Error ? error.message : "Failed to analyze PDF",
+          variant: "destructive",
+        });
+        setCurrentStep("pdf-input");
+        setCurrentOfferId(null);
+      }
+    };
+
+    // Start the polling
+    checkStatus();
   };
 
   const handleFormComplete = (data: SponsorshipData) => {

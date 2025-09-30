@@ -26,12 +26,19 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
     instagram_followers: 1250,
     facebook_followers: 890,
     twitter_followers: 420,
+    linkedin_followers: 0,
+    youtube_followers: 0,
     email_list_size: 0,
     images: [],
   };
 
   const team = teamData || defaultTeam;
-  const totalReach = (team.instagram_followers || 0) + (team.facebook_followers || 0) + (team.twitter_followers || 0) + (team.email_list_size || 0);
+  const totalReach = (team.instagram_followers || 0) + 
+                     (team.facebook_followers || 0) + 
+                     (team.twitter_followers || 0) + 
+                     (team.linkedin_followers || 0) + 
+                     (team.youtube_followers || 0) + 
+                     (team.email_list_size || 0);
   const totalPotential = sponsorshipData.packages.reduce((sum, pkg) => sum + pkg.price, 0);
 
   return (

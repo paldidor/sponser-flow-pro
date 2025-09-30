@@ -100,12 +100,12 @@ async function performAnalysis(
     const pdfBuffer = await pdfResponse.arrayBuffer();
     console.log(`PDF downloaded, size: ${pdfBuffer.byteLength} bytes`);
 
-    // Extract text from PDF using pdfjs-dist
+    // Extract text from PDF using pdfjs-serverless (designed for Deno/Edge Functions)
     console.log('Extracting text from PDF...');
-    const pdfjsLib = await import('https://esm.sh/pdfjs-dist@4.0.379/build/pdf.mjs');
+    const pdfjsServerless = await import('https://esm.sh/pdfjs-serverless@0.5.0');
     
-    // Set worker path
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://esm.sh/pdfjs-dist@4.0.379/build/pdf.worker.mjs';
+    // Resolve the PDF.js library (no worker setup needed with pdfjs-serverless)
+    const pdfjsLib = await pdfjsServerless.resolvePDFJS();
 
     // Load PDF document
     const loadingTask = pdfjsLib.getDocument({ data: pdfBuffer });

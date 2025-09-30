@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, MapPin, Users, Instagram, Facebook, Twitter, Mail, AlertCircle, Calendar, Trophy, Target, Linkedin, Youtube, ExternalLink } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Pencil, MapPin, Users, Instagram, Facebook, Twitter, Mail, AlertCircle, Calendar, Trophy, Target, Linkedin, Youtube, ExternalLink, Check } from "lucide-react";
 import ProgressIndicator from "./ProgressIndicator";
 import { TeamProfile } from "@/types/flow";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +19,9 @@ interface ProfileReviewProps {
 const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileReviewProps) => {
   const [team, setTeam] = useState<TeamProfile | null>(teamData);
   const [isLoading, setIsLoading] = useState(false);
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState<any>("");
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   const defaultTeam: TeamProfile = {
@@ -43,81 +48,142 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
     images: [],
   };
 
-  useEffect(() => {
-    const fetchTeamProfile = async () => {
-      setIsLoading(true);
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          console.log('No authenticated user');
-          setIsLoading(false);
-          return;
-        }
-
-        const { data, error } = await supabase
-          .from('team_profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (error) {
-          console.error('Error fetching team profile:', error);
-          toast({
-            title: "Error loading profile",
-            description: error.message,
-            variant: "destructive",
-          });
-        } else if (data) {
-          console.log('Fetched team profile (raw):', data);
-          console.log('main_values type:', typeof data.main_values, 'value:', data.main_values);
-          
-          // Handle main_values defensively - can be string or array from webhook
-          const parsedMainValues: string[] = Array.isArray(data.main_values) 
-            ? (data.main_values as string[])
-            : typeof data.main_values === 'string' 
-              ? (data.main_values as string).split(',').map(v => v.trim()).filter(Boolean)
-              : [];
-          
-          console.log('Parsed main_values:', parsedMainValues);
-          
-          setTeam({
-            team_name: data.team_name || "",
-            main_values: parsedMainValues,
-            location: data.location || "",
-            team_bio: data.team_bio || "",
-            sport: data.sport || "",
-            number_of_players: data.number_of_players || "",
-            level_of_play: data.level_of_play || "",
-            competition_scope: data.competition_scope || "Local",
-            season_start_date: data.season_start_date || "",
-            season_end_date: data.season_end_date || "",
-            organization_status: data.organization_status || "",
-            instagram_link: data.instagram_link || "",
-            facebook_link: data.facebook_link || "",
-            linkedin_link: data.linkedin_link || "",
-            youtube_link: data.youtube_link || "",
-            twitter_link: data.twitter_link || "",
-            instagram_followers: data.instagram_followers || 0,
-            facebook_followers: data.facebook_followers || 0,
-            twitter_followers: data.twitter_followers || 0,
-            email_list_size: data.email_list_size || 0,
-            images: [],
-          });
-        }
-      } catch (err) {
-        console.error('Unexpected error:', err);
-      } finally {
+  const fetchTeamProfile = async () => {
+    setIsLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        console.log('No authenticated user');
         setIsLoading(false);
+        return;
       }
-    };
 
+      const { data, error } = await supabase
+        .from('team_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching team profile:', error);
+        toast({
+          title: "Error loading profile",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else if (data) {
+        console.log('Fetched team profile (raw):', data);
+        console.log('main_values type:', typeof data.main_values, 'value:', data.main_values);
+        
+        // Handle main_values defensively - can be string or array from webhook
+        const parsedMainValues: string[] = Array.isArray(data.main_values) 
+          ? (data.main_values as string[])
+          : typeof data.main_values === 'string' 
+            ? (data.main_values as string).split(',').map(v => v.trim()).filter(Boolean)
+            : [];
+        
+        console.log('Parsed main_values:', parsedMainValues);
+        
+        setTeam({
+          team_name: data.team_name || "",
+          main_values: parsedMainValues,
+          location: data.location || "",
+          team_bio: data.team_bio || "",
+          sport: data.sport || "",
+          number_of_players: data.number_of_players || "",
+          level_of_play: data.level_of_play || "",
+          competition_scope: data.competition_scope || "Local",
+          season_start_date: data.season_start_date || "",
+          season_end_date: data.season_end_date || "",
+          organization_status: data.organization_status || "",
+          instagram_link: data.instagram_link || "",
+          facebook_link: data.facebook_link || "",
+          linkedin_link: data.linkedin_link || "",
+          youtube_link: data.youtube_link || "",
+          twitter_link: data.twitter_link || "",
+          instagram_followers: data.instagram_followers || 0,
+          facebook_followers: data.facebook_followers || 0,
+          twitter_followers: data.twitter_followers || 0,
+          email_list_size: data.email_list_size || 0,
+          images: [],
+        });
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (!teamData) {
       fetchTeamProfile();
     }
   }, [teamData, toast]);
+
+  const handleEdit = (field: string, currentValue: any) => {
+    setEditingField(field);
+    setEditValue(currentValue);
+  };
+
+  const handleSave = async (field: string) => {
+    setIsSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to save changes",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Prepare the update object
+      const updateData: any = { [field]: editValue };
+
+      const { error } = await supabase
+        .from('team_profiles')
+        .update(updateData)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error updating profile:', error);
+        toast({
+          title: "Error saving changes",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        // Update local state
+        setTeam(prev => prev ? { ...prev, [field]: editValue } : null);
+        setEditingField(null);
+        toast({
+          title: "Changes saved",
+          description: "Your profile has been updated successfully",
+        });
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      toast({
+        title: "Error",
+        description: "Failed to save changes",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleApprove = async () => {
+    // Ensure all data is saved before continuing
+    await fetchTeamProfile();
+    onApprove();
+  };
 
   const currentTeam = team || defaultTeam;
   const totalReach = (currentTeam.instagram_followers || 0) + (currentTeam.facebook_followers || 0) + (currentTeam.twitter_followers || 0) + (currentTeam.email_list_size || 0);
@@ -199,128 +265,332 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-medium">Team Name</h3>
-                  <Button variant="ghost" size="sm">
-                    <Pencil className="w-3 h-3" />
-                  </Button>
+                  {editingField !== 'team_name' && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEdit('team_name', currentTeam.team_name)}
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                  )}
                 </div>
-                <p className="text-foreground">{currentTeam.team_name || "Enter team name"}</p>
+                {editingField === 'team_name' ? (
+                  <div className="flex gap-2">
+                    <Input
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      placeholder="Enter team name"
+                    />
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleSave('team_name')}
+                      disabled={isSaving}
+                    >
+                      <Check className="w-4 h-4 mr-1" />
+                      Save
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-foreground">{currentTeam.team_name || "Enter team name"}</p>
+                )}
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-medium">Main Values</h3>
-                  <Button variant="ghost" size="sm">
-                    <Pencil className="w-3 h-3" />
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {currentTeam.main_values && currentTeam.main_values.length > 0 ? (
-                    currentTeam.main_values.map((value, idx) => (
-                      <Badge key={idx} variant="secondary">{value}</Badge>
-                    ))
-                  ) : (
-                    <span className="text-sm text-muted-foreground">Add team values</span>
+                  {editingField !== 'main_values' && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEdit('main_values', currentTeam.main_values.join(', '))}
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </Button>
                   )}
                 </div>
+                {editingField === 'main_values' ? (
+                  <div className="flex gap-2">
+                    <Input
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      placeholder="Enter values separated by commas"
+                    />
+                    <Button 
+                      size="sm" 
+                      onClick={() => {
+                        const valuesArray = editValue.split(',').map((v: string) => v.trim()).filter(Boolean);
+                        setEditValue(valuesArray);
+                        handleSave('main_values');
+                      }}
+                      disabled={isSaving}
+                    >
+                      <Check className="w-4 h-4 mr-1" />
+                      Save
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {currentTeam.main_values && currentTeam.main_values.length > 0 ? (
+                      currentTeam.main_values.map((value, idx) => (
+                        <Badge key={idx} variant="secondary">{value}</Badge>
+                      ))
+                    ) : (
+                      <span className="text-sm text-muted-foreground">Add team values</span>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-medium">Location</h3>
-                  <Button variant="ghost" size="sm">
-                    <Pencil className="w-3 h-3" />
-                  </Button>
+                  {editingField !== 'location' && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEdit('location', currentTeam.location)}
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                  )}
                 </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <MapPin className="w-4 h-4" />
-                  <span>{currentTeam.location || "Enter location"}</span>
-                </div>
+                {editingField === 'location' ? (
+                  <div className="flex gap-2">
+                    <Input
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      placeholder="Enter location"
+                    />
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleSave('location')}
+                      disabled={isSaving}
+                    >
+                      <Check className="w-4 h-4 mr-1" />
+                      Save
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <MapPin className="w-4 h-4" />
+                    <span>{currentTeam.location || "Enter location"}</span>
+                  </div>
+                )}
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-medium">Team Bio</h3>
-                  <Button variant="ghost" size="sm">
-                    <Pencil className="w-3 h-3" />
-                  </Button>
+                  {editingField !== 'team_bio' && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEdit('team_bio', currentTeam.team_bio)}
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                  )}
                 </div>
-                <p className="text-sm text-muted-foreground">{currentTeam.team_bio || "Enter team bio"}</p>
+                {editingField === 'team_bio' ? (
+                  <div className="flex gap-2">
+                    <Textarea
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      placeholder="Enter team bio"
+                      rows={3}
+                    />
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleSave('team_bio')}
+                      disabled={isSaving}
+                    >
+                      <Check className="w-4 h-4 mr-1" />
+                      Save
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">{currentTeam.team_bio || "Enter team bio"}</p>
+                )}
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-medium">Sport</h3>
-                  <Button variant="ghost" size="sm">
-                    <Pencil className="w-3 h-3" />
-                  </Button>
+                  {editingField !== 'sport' && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEdit('sport', currentTeam.sport)}
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                  )}
                 </div>
-                <p className="text-foreground">{currentTeam.sport || "Enter sport"}</p>
+                {editingField === 'sport' ? (
+                  <div className="flex gap-2">
+                    <Input
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      placeholder="Enter sport"
+                    />
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleSave('sport')}
+                      disabled={isSaving}
+                    >
+                      <Check className="w-4 h-4 mr-1" />
+                      Save
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-foreground">{currentTeam.sport || "Enter sport"}</p>
+                )}
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-medium">Number of Players</h3>
-                  <Button variant="ghost" size="sm">
-                    <Pencil className="w-3 h-3" />
-                  </Button>
+                  {editingField !== 'number_of_players' && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEdit('number_of_players', currentTeam.number_of_players)}
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                  )}
                 </div>
-                <div className="flex items-center gap-2 text-foreground">
-                  <Users className="w-4 h-4" />
-                  <span>{currentTeam.number_of_players || "Enter number of players"}</span>
-                </div>
+                {editingField === 'number_of_players' ? (
+                  <div className="flex gap-2">
+                    <Input
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      placeholder="Enter number of players"
+                    />
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleSave('number_of_players')}
+                      disabled={isSaving}
+                    >
+                      <Check className="w-4 h-4 mr-1" />
+                      Save
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-foreground">
+                    <Users className="w-4 h-4" />
+                    <span>{currentTeam.number_of_players || "Enter number of players"}</span>
+                  </div>
+                )}
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-medium">Level of Play</h3>
-                  <Button variant="ghost" size="sm">
-                    <Pencil className="w-3 h-3" />
-                  </Button>
+                  {editingField !== 'level_of_play' && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEdit('level_of_play', currentTeam.level_of_play)}
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                  )}
                 </div>
-                <div className="flex items-center gap-2 text-foreground">
-                  <Trophy className="w-4 h-4" />
-                  <span>{currentTeam.level_of_play || "Enter level of play"}</span>
-                </div>
+                {editingField === 'level_of_play' ? (
+                  <div className="flex gap-2">
+                    <Input
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      placeholder="Enter level of play"
+                    />
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleSave('level_of_play')}
+                      disabled={isSaving}
+                    >
+                      <Check className="w-4 h-4 mr-1" />
+                      Save
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-foreground">
+                    <Trophy className="w-4 h-4" />
+                    <span>{currentTeam.level_of_play || "Enter level of play"}</span>
+                  </div>
+                )}
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-medium">Competition Scope</h3>
-                  <Button variant="ghost" size="sm">
-                    <Pencil className="w-3 h-3" />
-                  </Button>
+                  {editingField !== 'competition_scope' && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEdit('competition_scope', currentTeam.competition_scope)}
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                  )}
                 </div>
-                <Badge variant="outline">{currentTeam.competition_scope || "Local"}</Badge>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium">Season Dates</h3>
-                  <Button variant="ghost" size="sm">
-                    <Pencil className="w-3 h-3" />
-                  </Button>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="w-4 h-4" />
-                  <span>
-                    {currentTeam.season_start_date && currentTeam.season_end_date
-                      ? `${currentTeam.season_start_date} - ${currentTeam.season_end_date}`
-                      : "Enter season dates"}
-                  </span>
-                </div>
+                {editingField === 'competition_scope' ? (
+                  <div className="flex gap-2">
+                    <Input
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      placeholder="Enter competition scope"
+                    />
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleSave('competition_scope')}
+                      disabled={isSaving}
+                    >
+                      <Check className="w-4 h-4 mr-1" />
+                      Save
+                    </Button>
+                  </div>
+                ) : (
+                  <Badge variant="outline">{currentTeam.competition_scope || "Local"}</Badge>
+                )}
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-medium">Organization Status</h3>
-                  <Button variant="ghost" size="sm">
-                    <Pencil className="w-3 h-3" />
-                  </Button>
+                  {editingField !== 'organization_status' && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEdit('organization_status', currentTeam.organization_status)}
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                  )}
                 </div>
-                <div className="flex items-center gap-2 text-foreground">
-                  <Target className="w-4 h-4" />
-                  <span>{currentTeam.organization_status || "Enter organization status"}</span>
-                </div>
+                {editingField === 'organization_status' ? (
+                  <div className="flex gap-2">
+                    <Input
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      placeholder="Enter organization status"
+                    />
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleSave('organization_status')}
+                      disabled={isSaving}
+                    >
+                      <Check className="w-4 h-4 mr-1" />
+                      Save
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-foreground">
+                    <Target className="w-4 h-4" />
+                    <span>{currentTeam.organization_status || "Enter organization status"}</span>
+                  </div>
+                )}
               </div>
             </div>
           </Card>
@@ -347,12 +617,36 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
                       </a>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-semibold">{(currentTeam.instagram_followers || 0).toLocaleString()} followers</span>
-                    <Button variant="ghost" size="sm">
-                      <Pencil className="w-3 h-3" />
-                    </Button>
-                  </div>
+                  {editingField === 'instagram_followers' ? (
+                    <div className="flex gap-2">
+                      <Input
+                        type="number"
+                        value={editValue}
+                        onChange={(e) => setEditValue(Number(e.target.value))}
+                        placeholder="Followers"
+                        className="w-32"
+                      />
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleSave('instagram_followers')}
+                        disabled={isSaving}
+                      >
+                        <Check className="w-4 h-4 mr-1" />
+                        Save
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <span className="font-semibold">{(currentTeam.instagram_followers || 0).toLocaleString()} followers</span>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEdit('instagram_followers', currentTeam.instagram_followers)}
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -374,12 +668,36 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
                       </a>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-semibold">{(currentTeam.facebook_followers || 0).toLocaleString()} followers</span>
-                    <Button variant="ghost" size="sm">
-                      <Pencil className="w-3 h-3" />
-                    </Button>
-                  </div>
+                  {editingField === 'facebook_followers' ? (
+                    <div className="flex gap-2">
+                      <Input
+                        type="number"
+                        value={editValue}
+                        onChange={(e) => setEditValue(Number(e.target.value))}
+                        placeholder="Followers"
+                        className="w-32"
+                      />
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleSave('facebook_followers')}
+                        disabled={isSaving}
+                      >
+                        <Check className="w-4 h-4 mr-1" />
+                        Save
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <span className="font-semibold">{(currentTeam.facebook_followers || 0).toLocaleString()} followers</span>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEdit('facebook_followers', currentTeam.facebook_followers)}
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -401,12 +719,36 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
                       </a>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-semibold">{(currentTeam.twitter_followers || 0).toLocaleString()} followers</span>
-                    <Button variant="ghost" size="sm">
-                      <Pencil className="w-3 h-3" />
-                    </Button>
-                  </div>
+                  {editingField === 'twitter_followers' ? (
+                    <div className="flex gap-2">
+                      <Input
+                        type="number"
+                        value={editValue}
+                        onChange={(e) => setEditValue(Number(e.target.value))}
+                        placeholder="Followers"
+                        className="w-32"
+                      />
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleSave('twitter_followers')}
+                        disabled={isSaving}
+                      >
+                        <Check className="w-4 h-4 mr-1" />
+                        Save
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <span className="font-semibold">{(currentTeam.twitter_followers || 0).toLocaleString()} followers</span>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEdit('twitter_followers', currentTeam.twitter_followers)}
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -429,7 +771,11 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEdit('linkedin_link', currentTeam.linkedin_link)}
+                    >
                       <Pencil className="w-3 h-3" />
                     </Button>
                   </div>
@@ -455,7 +801,11 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEdit('youtube_link', currentTeam.youtube_link)}
+                    >
                       <Pencil className="w-3 h-3" />
                     </Button>
                   </div>
@@ -469,21 +819,50 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
                   </div>
                   <span className="font-medium">Email List</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  {currentTeam.email_list_size && currentTeam.email_list_size > 0 ? (
-                    <>
-                      <span className="font-semibold">{currentTeam.email_list_size.toLocaleString()} subscribers</span>
-                      <Button variant="ghost" size="sm">
-                        <Pencil className="w-3 h-3" />
-                      </Button>
-                    </>
-                  ) : (
-                    <Button variant="ghost" size="sm" className="text-primary">
-                      <Pencil className="w-3 h-3 mr-2" />
-                      Add
+                {editingField === 'email_list_size' ? (
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      value={editValue}
+                      onChange={(e) => setEditValue(Number(e.target.value))}
+                      placeholder="Subscribers"
+                      className="w-32"
+                    />
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleSave('email_list_size')}
+                      disabled={isSaving}
+                    >
+                      <Check className="w-4 h-4 mr-1" />
+                      Save
                     </Button>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    {currentTeam.email_list_size && currentTeam.email_list_size > 0 ? (
+                      <>
+                        <span className="font-semibold">{currentTeam.email_list_size.toLocaleString()} subscribers</span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEdit('email_list_size', currentTeam.email_list_size)}
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                      </>
+                    ) : (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-primary"
+                        onClick={() => handleEdit('email_list_size', 0)}
+                      >
+                        <Pencil className="w-3 h-3 mr-2" />
+                        Add
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="pt-4 border-t">
@@ -500,7 +879,7 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
         </div>
 
         <div className="flex justify-center">
-          <Button size="lg" className="px-12" onClick={onApprove}>
+          <Button size="lg" className="px-12" onClick={handleApprove}>
             Approve & Continue
           </Button>
         </div>

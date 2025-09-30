@@ -177,6 +177,7 @@ ${extractedText}`;
         impact: parsedData.sponsorship_impact,
         supported_players: parsedData.total_players_supported || null,
         analysis_status: 'completed',
+        title: `Sponsorship Offer - ${parsedData.funding_goal} Goal`,
       })
       .eq('id', offerId)
       .eq('user_id', userId);
@@ -184,6 +185,74 @@ ${extractedText}`;
     if (updateError) {
       console.error('Database update error:', updateError);
       throw new Error(`Failed to update offer: ${updateError.message}`);
+    }
+
+    // Fetch all available placement options to match against
+    console.log('Fetching placement options...');
+    const { data: placementOptions, error: placementError } = await supabase
+      .from('placement_options')
+      .select('id, name, category');
+
+    if (placementError) {
+      console.error('Failed to fetch placement options:', placementError);
+      throw new Error(`Failed to fetch placement options: ${placementError.message}`);
+    }
+
+    // Create sponsorship packages and their placements
+    console.log('Creating sponsorship packages...');
+    if (parsedData.packages && Array.isArray(parsedData.packages)) {
+      for (let i = 0; i < parsedData.packages.length; i++) {
+        const pkg = parsedData.packages[i];
+        
+        // Insert package
+        const { data: packageData, error: packageError } = await supabase
+          .from('sponsorship_packages')
+          .insert({
+            sponsorship_offer_id: offerId,
+            name: pkg.name,
+            price: pkg.cost,
+            description: `Package includes: ${pkg.placements?.join(', ') || 'various benefits'}`,
+            benefits: pkg.placements || [],
+            package_order: i + 1,
+          })
+          .select()
+          .single();
+
+        if (packageError) {
+          console.error(`Failed to create package ${pkg.name}:`, packageError);
+          continue; // Continue with other packages
+        }
+
+        console.log(`Created package: ${pkg.name}`);
+
+        // Match placements to placement_options and create links
+        if (pkg.placements && Array.isArray(pkg.placements)) {
+          for (const placementName of pkg.placements) {
+            // Find matching placement option (case-insensitive partial match)
+            const matchedOption = placementOptions?.find(opt => 
+              opt.name.toLowerCase().includes(placementName.toLowerCase()) ||
+              placementName.toLowerCase().includes(opt.name.toLowerCase())
+            );
+
+            if (matchedOption) {
+              const { error: linkError } = await supabase
+                .from('package_placements')
+                .insert({
+                  package_id: packageData.id,
+                  placement_option_id: matchedOption.id,
+                });
+
+              if (linkError) {
+                console.error(`Failed to link placement ${placementName}:`, linkError);
+              } else {
+                console.log(`Linked placement: ${placementName} -> ${matchedOption.name}`);
+              }
+            } else {
+              console.log(`No matching placement option found for: ${placementName}`);
+            }
+          }
+        }
+      }
     }
 
     console.log('Analysis completed successfully');

@@ -219,12 +219,50 @@ const App = () => {
         const analysisStatus = (offerData as any).analysis_status;
 
         if (analysisStatus === 'completed') {
+          // Fetch associated packages with their placements
+          const { data: packagesData, error: packagesError } = await supabase
+            .from('sponsorship_packages')
+            .select(`
+              id,
+              name,
+              price,
+              description,
+              benefits,
+              package_order,
+              package_placements (
+                placement_option_id,
+                placement_options (
+                  id,
+                  name,
+                  category,
+                  description
+                )
+              )
+            `)
+            .eq('sponsorship_offer_id', offerId)
+            .order('package_order');
+
+          if (packagesError) {
+            console.error('Failed to load packages:', packagesError);
+          }
+
+          // Transform packages to SponsorshipPackage format
+          const transformedPackages: SponsorshipPackage[] = (packagesData || []).map(pkg => ({
+            id: pkg.id,
+            name: pkg.name,
+            price: pkg.price,
+            benefits: pkg.benefits || [],
+            placements: pkg.package_placements?.map((pp: any) => 
+              pp.placement_options?.name || ''
+            ).filter(Boolean) || [],
+          }));
+
           // Analysis complete - transform and display
           const transformedData: SponsorshipData = {
             fundraisingGoal: offerData.fundraising_goal?.toString() || '0',
             duration: offerData.duration || 'TBD',
             description: offerData.impact || 'No description available',
-            packages: [], // Packages will be loaded separately if needed
+            packages: transformedPackages,
             source: "pdf",
             fileName: fileName,
           };
@@ -235,7 +273,7 @@ const App = () => {
           
           toast({
             title: "Analysis complete",
-            description: "Your sponsorship PDF has been analyzed successfully",
+            description: `Successfully extracted ${transformedPackages.length} sponsorship packages`,
           });
         } else if (analysisStatus === 'error') {
           throw new Error('PDF analysis failed');

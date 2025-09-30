@@ -345,23 +345,53 @@ const App = () => {
     setCurrentStep("sponsorship-review");
   };
 
-  const handleQuestionnaireComplete = (data: MultiStepOfferData) => {
-    // Transform MultiStepOfferData to SponsorshipData format
-    const transformedData: SponsorshipData = {
-      fundraisingGoal: data.fundraisingGoal || "0",
-      duration: data.duration || "",
-      description: data.impactTags?.join(", ") || "",
-      packages: (data.packages || []).map(pkg => ({
-        id: pkg.id,
-        name: pkg.name,
-        price: pkg.price,
-        benefits: [],
-        placements: pkg.placementIds,
-      })),
-      source: "form",
-    };
-    setSponsorshipData(transformedData);
-    setCurrentStep("sponsorship-review");
+  const handleQuestionnaireComplete = async (data: MultiStepOfferData) => {
+    try {
+      // Fetch placement names for display
+      const placementIds = data.packages?.flatMap(pkg => pkg.placementIds) || [];
+      const uniquePlacementIds = [...new Set(placementIds)];
+      
+      let placementMap: Record<string, string> = {};
+      
+      if (uniquePlacementIds.length > 0) {
+        const { data: placements, error } = await supabase
+          .from('placement_options')
+          .select('id, name')
+          .in('id', uniquePlacementIds);
+
+        if (!error && placements) {
+          placementMap = placements.reduce((acc, p) => {
+            acc[p.id] = p.name;
+            return acc;
+          }, {} as Record<string, string>);
+        }
+      }
+
+      // Transform MultiStepOfferData to SponsorshipData format
+      const transformedData: SponsorshipData = {
+        fundraisingGoal: data.fundraisingGoal || "0",
+        duration: data.duration || "",
+        description: data.impactTags?.join(", ") || "",
+        packages: (data.packages || []).map(pkg => ({
+          id: pkg.id,
+          name: pkg.name,
+          price: pkg.price,
+          benefits: [],
+          placements: pkg.placementIds.map(id => placementMap[id] || id),
+        })),
+        source: "form",
+      };
+      
+      setSponsorshipData(transformedData);
+      setCurrentStep("sponsorship-review");
+    } catch (error) {
+      console.error('Error completing questionnaire:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load placement details",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleReviewApprove = () => {

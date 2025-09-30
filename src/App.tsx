@@ -14,6 +14,7 @@ import SponsorshipForm from "./components/SponsorshipForm";
 import WebsiteAnalysisInput from "./components/WebsiteAnalysisInput";
 import AnalysisSpinner from "./components/AnalysisSpinner";
 import PDFUploadInput from "./components/PDFUploadInput";
+import PDFAnalysisProgress from "./components/PDFAnalysisProgress";
 import SponsorshipReview from "./components/SponsorshipReview";
 import SponsorshipMarketplace from "./components/SponsorshipMarketplace";
 import { FlowStep, TeamProfile, SponsorshipData, SponsorshipPackage } from "./types/flow";
@@ -152,6 +153,7 @@ const App = () => {
         throw new Error("User not authenticated");
       }
 
+      console.log('Creating sponsorship offer record...');
       const { data: offerData, error: offerError } = await supabase
         .from('sponsorship_offers')
         .insert({
@@ -169,22 +171,29 @@ const App = () => {
         .select()
         .single();
 
-      if (offerError) throw offerError;
+      if (offerError) {
+        console.error('Failed to create offer:', offerError);
+        throw offerError;
+      }
 
+      console.log('Offer created, starting analysis:', offerData.id);
       setCurrentOfferId(offerData.id);
 
-      // Call edge function to analyze PDF (async - doesn't wait for completion)
-      supabase.functions.invoke('analyze-pdf-sponsorship', {
+      // Call edge function asynchronously (will run in background)
+      const { error: invokeError } = await supabase.functions.invoke('analyze-pdf-sponsorship', {
         body: {
           pdfUrl: fileUrl,
           offerId: offerData.id,
           userId: user.id
         }
-      }).then(({ error }) => {
-        if (error) {
-          console.error('Edge function invocation error:', error);
-        }
       });
+
+      if (invokeError) {
+        console.error('Failed to invoke edge function:', invokeError);
+        throw new Error('Failed to start analysis: ' + invokeError.message);
+      }
+
+      console.log('Analysis started, beginning polling...');
 
       // Start polling for analysis status
       pollAnalysisStatus(offerData.id, fileName);
@@ -197,6 +206,26 @@ const App = () => {
       });
       setCurrentStep("pdf-input");
       setCurrentOfferId(null);
+    }
+  };
+
+  const handleCancelAnalysis = () => {
+    if (currentOfferId) {
+      // Mark as cancelled in database
+      supabase
+        .from('sponsorship_offers')
+        .update({ analysis_status: 'error', impact: 'Analysis cancelled by user' })
+        .eq('id', currentOfferId)
+        .then(() => {
+          setCurrentOfferId(null);
+          setCurrentStep("pdf-input");
+          toast({
+            title: "Analysis cancelled",
+            description: "You can upload a different PDF to try again",
+          });
+        });
+    } else {
+      setCurrentStep("pdf-input");
     }
   };
 
@@ -368,7 +397,7 @@ const App = () => {
       case "pdf-input":
         return <PDFUploadInput onUpload={handlePDFUpload} onBack={handleBack} />;
       case "pdf-analysis":
-        return <AnalysisSpinner type="pdf" fileName={analysisFileName} />;
+        return <PDFAnalysisProgress fileName={analysisFileName} onCancel={handleCancelAnalysis} />;
       case "sponsorship-review":
         return (
           <SponsorshipReview

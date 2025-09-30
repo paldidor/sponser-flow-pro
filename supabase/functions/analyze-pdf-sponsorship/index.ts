@@ -32,16 +32,67 @@ serve(async (req) => {
     // Initialize Supabase client
     const supabase = createClient(supabaseUrl!, supabaseServiceRoleKey!);
 
-    // Update status to analyzing
+    // Update status to analyzing immediately
     await supabase
       .from('sponsorship_offers')
       .update({ analysis_status: 'analyzing' })
       .eq('id', offerId)
       .eq('user_id', userId);
 
-    // Download PDF content
+    // Start background task for heavy processing
+    const analysisPromise = performAnalysis(pdfUrl, offerId, userId, supabase);
+    
+    // Start analysis asynchronously (fire and forget)
+    analysisPromise.catch((err) => {
+      console.error('Background analysis error:', err);
+    });
+
+    // Return immediate response
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: 'Analysis started',
+        offerId: offerId
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
+
+  } catch (error) {
+    console.error('Error starting PDF analysis:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to start analysis';
+    
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: errorMessage
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
+  }
+});
+
+// Main analysis function that runs in background
+async function performAnalysis(
+  pdfUrl: string,
+  offerId: string,
+  userId: string,
+  supabase: any
+) {
+
+  try {
+    // Download PDF content with timeout
     console.log('Downloading PDF content...');
-    const pdfResponse = await fetch(pdfUrl);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+    
+    const pdfResponse = await fetch(pdfUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    
     if (!pdfResponse.ok) {
       throw new Error(`Failed to download PDF: ${pdfResponse.statusText}`);
     }
@@ -95,7 +146,22 @@ serve(async (req) => {
       throw new Error('PDF appears to contain little to no text. Please ensure your PDF has extractable text content, not just images.');
     }
 
-    extractedText = cleanedText;
+    // Chunk text for large PDFs to optimize token usage
+    const maxChunkSize = 8000; // Conservative limit for context window
+    let textToAnalyze = cleanedText;
+    
+    if (cleanedText.length > maxChunkSize) {
+      console.log(`Large PDF detected (${cleanedText.length} chars), chunking for optimization`);
+      
+      // Extract the most relevant sections (first 60% and last 20%)
+      const firstPart = cleanedText.substring(0, Math.floor(cleanedText.length * 0.6));
+      const lastPart = cleanedText.substring(Math.floor(cleanedText.length * 0.8));
+      
+      textToAnalyze = firstPart + '\n\n[... content truncated for analysis ...]\n\n' + lastPart;
+      console.log(`Chunked to ${textToAnalyze.length} characters for analysis`);
+    }
+
+    extractedText = textToAnalyze;
 
     // Prepare the AI analysis prompt
     const prompt = `You are a sponsorship manager with over 20 years of experience crafting sponsorship offers and packages for youth sports teams. Your task is to act as a Sponsorship Agent that converts the content of an uploaded PDF deck into structured sponsorship package data.
@@ -313,7 +379,7 @@ ${extractedText}`;
         if (pkg.placements && Array.isArray(pkg.placements)) {
           for (const placementName of pkg.placements) {
             // Find matching placement option (case-insensitive partial match)
-            const matchedOption = placementOptions?.find(opt => 
+            const matchedOption = placementOptions?.find((opt: any) => 
               opt.name.toLowerCase().includes(placementName.toLowerCase()) ||
               placementName.toLowerCase().includes(opt.name.toLowerCase())
             );
@@ -341,19 +407,10 @@ ${extractedText}`;
 
     console.log('Analysis completed successfully');
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: parsedData,
-        message: 'PDF analysis completed successfully'
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return { success: true, data: parsedData };
 
   } catch (error) {
-    console.error('Error in analyze-pdf-sponsorship function:', error);
+    console.error('Error in performAnalysis:', error);
 
     // Determine error type for better user messages
     let errorMessage = 'An error occurred during PDF analysis';
@@ -363,8 +420,10 @@ ${extractedText}`;
       errorMessage = error.message;
       errorDetails = error.stack || '';
       
-      // Provide specific guidance based on error type
-      if (errorMessage.includes('text content')) {
+      // Handle specific error types
+      if (errorMessage.includes('abort')) {
+        errorMessage = 'PDF download timed out. Please try with a smaller file.';
+      } else if (errorMessage.includes('text content')) {
         errorMessage = 'PDF contains no extractable text. Please ensure your PDF is text-based, not scanned images.';
       } else if (errorMessage.includes('Rate limit') || errorMessage.includes('429')) {
         errorMessage = 'AI service is temporarily busy. Please try again in a moment.';
@@ -377,36 +436,25 @@ ${extractedText}`;
 
     console.error('Error details:', errorDetails);
 
-    // Try to update status to error if we have the offerId
+    // Update status to error
     try {
-      const requestData = await req.clone().json();
-      const { offerId, userId } = requestData;
-      
-      if (offerId && userId && supabaseUrl && supabaseServiceRoleKey) {
-        const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
-        await supabase
-          .from('sponsorship_offers')
-          .update({ 
-            analysis_status: 'error',
-            impact: `Analysis failed: ${errorMessage}`
-          })
-          .eq('id', offerId)
-          .eq('user_id', userId);
-      }
-    } catch (statusUpdateError) {
-      console.error('Failed to update error status:', statusUpdateError);
+      await supabase
+        .from('sponsorship_offers')
+        .update({ 
+          analysis_status: 'error',
+          impact: `Analysis failed: ${errorMessage}`
+        })
+        .eq('id', offerId)
+        .eq('user_id', userId);
+    } catch (updateError) {
+      console.error('Failed to update error status:', updateError);
     }
 
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: errorMessage,
-        details: Deno.env.get('ENV') === 'development' ? errorDetails : undefined
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return { success: false, error: errorMessage };
   }
+}
+
+// Handle function shutdown
+addEventListener('beforeunload', (ev) => {
+  console.log('Function shutdown');
 });

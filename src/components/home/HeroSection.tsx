@@ -26,79 +26,88 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative min-h-[600px] lg:min-h-[700px] bg-gradient-to-b from-primary/10 via-primary/5 to-background overflow-hidden">
-      {/* Animated clouds */}
+    <section className="relative w-full min-h-[700px] overflow-hidden" style={{
+      background: 'linear-gradient(180deg, #B8E6FE 0%, #DFF2FE 50%, #EFF6FF 100%)'
+    }}>
+      {/* Animated clouds moving left to right */}
       <div className="absolute inset-0 pointer-events-none">
         <img 
           src="/images/cloud-animation.png" 
           alt="" 
-          className="absolute top-20 left-10 w-24 lg:w-32 opacity-60 animate-[float_6s_ease-in-out_infinite]"
+          className="absolute top-12 w-28 opacity-70 animate-[drift-slow_40s_linear_infinite]"
+          style={{ left: '-10%' }}
         />
         <img 
           src="/images/cloud-animation.png" 
           alt="" 
-          className="absolute top-32 right-20 w-20 lg:w-28 opacity-50 animate-[float_8s_ease-in-out_infinite_2s]"
+          className="absolute top-24 w-24 opacity-60 animate-[drift-moderate_25s_linear_infinite]"
+          style={{ left: '-8%' }}
         />
         <img 
           src="/images/cloud-animation.png" 
           alt="" 
-          className="absolute top-10 right-1/4 w-16 lg:w-24 opacity-40 animate-[float_7s_ease-in-out_infinite_1s]"
+          className="absolute top-16 w-20 opacity-50 animate-[drift-very-slow_60s_linear_infinite]"
+          style={{ left: '-5%' }}
         />
       </div>
 
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center py-12 lg:py-20">
+        <div className="flex items-end justify-between py-16 lg:py-20 min-h-[700px]">
           {/* Left Content */}
-          <div className="space-y-6 lg:space-y-8">
-            <h1 className="text-4xl lg:text-6xl font-extrabold leading-tight">
-              <span className="text-foreground">Sponsor </span>
-              <span className="text-primary">Youth Teams</span>
-              <span className="text-accent">.</span>
+          <div className="space-y-6 max-w-2xl">
+            <h1 className="text-5xl lg:text-6xl font-extrabold leading-tight">
+              <span className="text-[#5A5A5A]">Sponsor </span>
+              <span className="text-[#00A3E0]">Youth Teams</span>
+              <span className="text-[#FF9500]">.</span>
               <br />
-              <span className="text-foreground">Boost Your </span>
-              <span className="text-primary">Brand</span>
-              <span className="text-accent">.</span>
+              <span className="text-[#5A5A5A]">Boost Your </span>
+              <span className="text-[#00A3E0]">Brand</span>
+              <span className="text-[#FF9500]">.</span>
             </h1>
 
-            <p className="text-lg lg:text-xl text-muted-foreground max-w-xl">
+            <p className="text-base lg:text-lg text-[#5A5A5A] max-w-lg leading-relaxed">
               Get and manage all your youth sports sponsorships in one place. Support local communities while driving measurable results for your brand or business.
             </p>
 
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md">
+            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md pt-2">
               <div className="relative flex-1">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
                   type="email"
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 h-12"
+                  className="pl-10 h-12 bg-white border-gray-200"
                   required
                 />
               </div>
               <Button 
                 type="submit" 
                 size="lg"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-8"
+                className="bg-[#00A3E0] text-white hover:bg-[#0092CC] h-12 px-8 font-medium"
               >
                 Learn More
               </Button>
             </form>
           </div>
 
-          {/* Right Image */}
-          <div className="relative">
+          {/* Right Image - positioned to stand on grass */}
+          <div className="relative hidden lg:block" style={{ 
+            width: '504px', 
+            height: '336px',
+            marginBottom: '-60px' // Overlaps with grass to appear standing on it
+          }}>
             <img 
               src="/images/hero-coach-players-banner.png" 
               alt="Coach and youth players with sponsorship banner" 
-              className="w-full h-auto"
+              className="w-full h-full object-contain"
             />
           </div>
         </div>
       </div>
 
       {/* Grass bottom */}
-      <div className="absolute bottom-0 left-0 right-0 h-16 lg:h-20">
+      <div className="absolute bottom-0 left-0 right-0 h-24 lg:h-28 z-20">
         <img 
           src="/images/grass-background.png" 
           alt="" 
@@ -107,12 +116,30 @@ const HeroSection = () => {
       </div>
 
       <style>{`
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0px);
+        @keyframes drift-very-slow {
+          0% {
+            transform: translateX(0);
           }
-          50% {
-            transform: translateY(-20px);
+          100% {
+            transform: translateX(calc(100vw + 10%));
+          }
+        }
+        
+        @keyframes drift-slow {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(calc(100vw + 10%));
+          }
+        }
+        
+        @keyframes drift-moderate {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(calc(100vw + 10%));
           }
         }
       `}</style>

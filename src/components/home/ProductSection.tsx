@@ -294,27 +294,12 @@ const ProductSection = () => {
                 </p>
               </div>
 
-              <div className="w-full relative">
-                <div 
-                  className="relative overflow-hidden rounded-[14px]"
-                  style={{
-                    boxShadow: '0px 4px 6px -4px rgba(0, 0, 0, 0.10)',
-                    outline: '1px solid #E5E7EB',
-                    outlineOffset: '-1px'
-                  }}
-                >
-                  <img 
-                    src={feature.image} 
-                    alt={feature.title} 
-                    className="w-full h-auto"
-                  />
-                  <div 
-                    className="absolute inset-0 pointer-events-none"
-                    style={{
-                      background: 'linear-gradient(0deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0) 100%)'
-                    }}
-                  />
-                </div>
+              <div className="w-full flex justify-center">
+                <img 
+                  src={feature.image} 
+                  alt={feature.title} 
+                  className="max-w-[240px] h-auto"
+                />
               </div>
             </div>
           ))}

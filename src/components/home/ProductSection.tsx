@@ -9,7 +9,7 @@ const ProductSection = () => {
     {
       title: "Manage Sponsorships with Ease",
       description: "Manage activation, brand elements and partnership docs from a single point. Get team approval and complete the required tasks like uploading logos, creative assets and content to complete activations.",
-      image: "/images/product-tasks.png",
+      image: "/images/activation-tasks.png",
       reverse: true
     },
     {

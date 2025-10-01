@@ -1,0 +1,81 @@
+import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ActivationTask } from "@/types/dashboard";
+import { cn } from "@/lib/utils";
+
+interface TaskRowProps {
+  task: ActivationTask;
+  onStatusChange: (taskId: string, status: string) => void;
+}
+
+export const TaskRow = ({ task, onStatusChange }: TaskRowProps) => {
+  const statusConfig = {
+    "in-progress": { label: "In Progress", color: "bg-dashboard-orange text-white" },
+    stuck: { label: "Stuck", color: "bg-destructive text-white" },
+    complete: { label: "Complete", color: "bg-dashboard-green text-white" },
+  };
+
+  const status = statusConfig[task.status];
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-6 gap-4 p-4 border-b last:border-b-0 hover:bg-muted/50 transition-colors">
+      {/* Task Name */}
+      <div className="md:col-span-1">
+        <div className="text-xs text-muted-foreground md:hidden mb-1">Task Name</div>
+        <div className="font-medium text-foreground">{task.task_name}</div>
+      </div>
+
+      {/* Due Date */}
+      <div className="md:col-span-1">
+        <div className="text-xs text-muted-foreground md:hidden mb-1">Due Date</div>
+        <div className="text-sm text-foreground">
+          {format(new Date(task.due_date), "MMM dd, yyyy")}
+        </div>
+      </div>
+
+      {/* Package */}
+      <div className="md:col-span-1">
+        <div className="text-xs text-muted-foreground md:hidden mb-1">Package</div>
+        <div className="text-sm text-foreground">{task.package_name}</div>
+      </div>
+
+      {/* Sponsor */}
+      <div className="md:col-span-1">
+        <div className="text-xs text-muted-foreground md:hidden mb-1">Sponsor</div>
+        <div className="text-sm text-foreground">{task.sponsor_name}</div>
+      </div>
+
+      {/* Description */}
+      <div className="md:col-span-1">
+        <div className="text-xs text-muted-foreground md:hidden mb-1">Description</div>
+        <div className="text-sm text-muted-foreground truncate">{task.description}</div>
+      </div>
+
+      {/* Status */}
+      <div className="md:col-span-1">
+        <div className="text-xs text-muted-foreground md:hidden mb-1">Status</div>
+        <Select value={task.status} onValueChange={(value) => onStatusChange(task.id, value)}>
+          <SelectTrigger className="w-full">
+            <SelectValue>
+              <Badge className={cn("font-medium", status.color)}>
+                {status.label}
+              </Badge>
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="in-progress">
+              <Badge className="bg-dashboard-orange text-white font-medium">In Progress</Badge>
+            </SelectItem>
+            <SelectItem value="stuck">
+              <Badge className="bg-destructive text-white font-medium">Stuck</Badge>
+            </SelectItem>
+            <SelectItem value="complete">
+              <Badge className="bg-dashboard-green text-white font-medium">Complete</Badge>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+};

@@ -14,6 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
+      activation_tasks: {
+        Row: {
+          created_at: string
+          description: string | null
+          due_date: string
+          id: string
+          package_id: string | null
+          sponsor_name: string | null
+          status: string
+          task_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          due_date: string
+          id?: string
+          package_id?: string | null
+          sponsor_name?: string | null
+          status?: string
+          task_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          due_date?: string
+          id?: string
+          package_id?: string | null
+          sponsor_name?: string | null
+          status?: string
+          task_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activation_tasks_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "sponsorship_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_posts: {
+        Row: {
+          author_id: string | null
+          content: string | null
+          cover_image_alt: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          id: string | null
+          preview_text: string | null
+          published_at: string | null
+          slug: string | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          author_id?: string | null
+          content?: string | null
+          cover_image_alt?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          id?: string | null
+          preview_text?: string | null
+          published_at?: string | null
+          slug?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          author_id?: string | null
+          content?: string | null
+          cover_image_alt?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          id?: string | null
+          preview_text?: string | null
+          published_at?: string | null
+          slug?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       package_placements: {
         Row: {
           created_at: string

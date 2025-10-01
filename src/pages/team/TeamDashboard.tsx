@@ -1,6 +1,7 @@
 import { DashboardHeader } from "@/components/team/DashboardHeader";
 import { OverviewSection } from "@/components/team/OverviewSection";
 import { SponsorshipOffersSection } from "@/components/team/SponsorshipOffersSection";
+import { ActivationTasksSection } from "@/components/team/ActivationTasksSection";
 
 const TeamDashboard = () => {
   return (
@@ -17,10 +18,12 @@ const TeamDashboard = () => {
         
         <SponsorshipOffersSection />
         
-        {/* Activation Tasks Section - Coming in Phase 4 */}
+        <ActivationTasksSection />
+        
+        {/* Active Sponsors Section - Coming in Phase 5 */}
         <div className="bg-muted/30 rounded-lg p-12 text-center mb-8">
           <p className="text-muted-foreground">
-            Activation tasks section coming next...
+            Active sponsors section coming next...
           </p>
         </div>
       </main>

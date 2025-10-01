@@ -24,19 +24,17 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative w-full overflow-hidden flex justify-center" style={{ fontFamily: 'Poppins, sans-serif' }}>
-      {/* Fixed width container matching Figma design */}
-      <div className="relative" style={{ width: '1359px', height: '760px' }}>
-        {/* Background gradient */}
-        <div 
-          className="absolute inset-0" 
-          style={{ 
-            background: 'linear-gradient(180deg, #B8E6FE 0%, #DFF2FE 50%, #EFF6FF 100%)' 
-          }}
-        />
+    <section className="relative w-full overflow-hidden" style={{ fontFamily: 'Poppins, sans-serif', minHeight: '760px' }}>
+      {/* Background gradient - full width */}
+      <div 
+        className="absolute inset-0 w-full" 
+        style={{ 
+          background: 'linear-gradient(180deg, #B8E6FE 0%, #DFF2FE 50%, #EFF6FF 100%)' 
+        }}
+      />
 
-        {/* Animated clouds */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {/* Animated clouds - full width */}
+      <div className="absolute inset-0 w-full pointer-events-none overflow-hidden">
           <img 
             src="/images/cloud-animation.png" 
             alt="" 
@@ -75,22 +73,23 @@ const HeroSection = () => {
           />
         </div>
 
-        {/* Grass footer */}
-        <div 
-          className="absolute left-0 overflow-hidden" 
-          style={{ 
-            width: '1359px', 
-            height: '84px', 
-            top: '676px' 
-          }}
-        >
-          <img 
-            src="/images/grass-background.png" 
-            alt="" 
-            className="w-full h-full object-cover"
-          />
-        </div>
+      {/* Grass footer - full width */}
+      <div 
+        className="absolute left-0 w-full overflow-hidden" 
+        style={{ 
+          height: '84px', 
+          bottom: '0px' 
+        }}
+      >
+        <img 
+          src="/images/grass-background.png" 
+          alt="" 
+          className="w-full h-full object-cover"
+        />
+      </div>
 
+      {/* Centered content container */}
+      <div className="container mx-auto px-4 lg:px-8 relative" style={{ maxWidth: '1359px', minHeight: '760px' }}>
         {/* Hero image - coach and players */}
         <img 
           src="/images/hero-coach-players-banner.png" 
@@ -99,7 +98,7 @@ const HeroSection = () => {
           style={{ 
             width: '504px', 
             height: '336px', 
-            left: '791.50px', 
+            right: '63.50px', 
             top: '392px',
             boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.15)'
           }}
@@ -110,7 +109,7 @@ const HeroSection = () => {
           className="absolute" 
           style={{ 
             width: '539px', 
-            left: '119.50px', 
+            left: '0px', 
             top: '140px' 
           }}
         >

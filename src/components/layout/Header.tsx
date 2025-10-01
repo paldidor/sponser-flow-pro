@@ -1,16 +1,16 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Rocket, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { Menu, X } from "lucide-react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
 
-  // Check auth state
-  useState(() => {
+  useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
@@ -19,8 +19,17 @@ const Header = () => {
       setUser(session?.user ?? null);
     });
 
-    return () => subscription.unsubscribe();
-  });
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -28,37 +37,65 @@ const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <nav className="container flex h-16 items-center justify-between px-4">
+    <header className={`sticky top-0 z-50 w-full transition-all duration-200 ${
+      scrolled ? 'bg-primary shadow-md' : 'bg-primary'
+    }`}>
+      <nav className="container mx-auto flex h-14 items-center justify-between px-4 lg:px-8">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 font-bold text-xl">
-          <Rocket className="h-6 w-6 text-primary" />
-          <span>Sponsorship Flow</span>
+        <Link to="/" className="flex items-center gap-2">
+          <img 
+            src="/logos/sponsa-logo.png" 
+            alt="Sponsa" 
+            className="h-8 w-auto"
+          />
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-6">
-          <Link to="/marketplace" className="text-sm font-medium transition-colors hover:text-primary">
-            Marketplace
+        <div className="hidden md:flex items-center gap-8">
+          <a href="#teams" className="text-sm font-medium text-white transition-colors hover:text-accent">
+            Teams
+          </a>
+          <a href="#sponsors" className="text-sm font-medium text-white transition-colors hover:text-accent">
+            Sponsors
+          </a>
+          <a href="#local-champs" className="text-sm font-medium text-white transition-colors hover:text-accent">
+            Local Champs
+          </a>
+          <Link to="/marketplace" className="text-sm font-medium text-white transition-colors hover:text-accent">
+            Blog
           </Link>
+        </div>
+
+        {/* Desktop Actions */}
+        <div className="hidden md:flex items-center gap-3">
           {user ? (
             <>
-              <Link to="/team/dashboard" className="text-sm font-medium transition-colors hover:text-primary">
-                Dashboard
+              <Link to="/team/dashboard">
+                <Button variant="ghost" size="sm" className="text-white hover:text-accent hover:bg-white/10">
+                  Dashboard
+                </Button>
               </Link>
-              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleSignOut}
+                className="text-white hover:text-accent hover:bg-white/10"
+              >
                 Sign Out
               </Button>
             </>
           ) : (
             <>
               <Link to="/auth">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="text-white hover:text-accent hover:bg-white/10">
                   Sign In
                 </Button>
               </Link>
               <Link to="/auth">
-                <Button size="sm">
+                <Button 
+                  size="sm"
+                  className="bg-accent text-foreground hover:bg-accent/90 font-semibold"
+                >
                   Get Started
                 </Button>
               </Link>
@@ -68,7 +105,7 @@ const Header = () => {
 
         {/* Mobile Menu Button */}
         <button
-          className="md:hidden p-2"
+          className="md:hidden p-2 text-white"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="Toggle menu"
         >
@@ -78,37 +115,61 @@ const Header = () => {
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t bg-background">
+        <div className="md:hidden border-t border-white/10 bg-primary">
           <div className="container py-4 px-4 flex flex-col gap-4">
-            <Link 
-              to="/marketplace" 
-              className="text-sm font-medium transition-colors hover:text-primary py-2"
+            <a 
+              href="#teams" 
+              className="text-sm font-medium text-white transition-colors hover:text-accent py-2"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Marketplace
+              Teams
+            </a>
+            <a 
+              href="#sponsors" 
+              className="text-sm font-medium text-white transition-colors hover:text-accent py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Sponsors
+            </a>
+            <a 
+              href="#local-champs" 
+              className="text-sm font-medium text-white transition-colors hover:text-accent py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Local Champs
+            </a>
+            <Link 
+              to="/marketplace" 
+              className="text-sm font-medium text-white transition-colors hover:text-accent py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Blog
             </Link>
             {user ? (
               <>
-                <Link 
-                  to="/team/dashboard" 
-                  className="text-sm font-medium transition-colors hover:text-primary py-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Dashboard
+                <Link to="/team/dashboard" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="ghost" size="sm" className="w-full text-white hover:text-accent hover:bg-white/10">
+                    Dashboard
+                  </Button>
                 </Link>
-                <Button variant="ghost" size="sm" onClick={() => { handleSignOut(); setMobileMenuOpen(false); }}>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => { handleSignOut(); setMobileMenuOpen(false); }}
+                  className="w-full text-white hover:text-accent hover:bg-white/10"
+                >
                   Sign Out
                 </Button>
               </>
             ) : (
               <>
                 <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="ghost" size="sm" className="w-full">
+                  <Button variant="ghost" size="sm" className="w-full text-white hover:text-accent hover:bg-white/10">
                     Sign In
                   </Button>
                 </Link>
                 <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
-                  <Button size="sm" className="w-full">
+                  <Button size="sm" className="w-full bg-accent text-foreground hover:bg-accent/90">
                     Get Started
                   </Button>
                 </Link>

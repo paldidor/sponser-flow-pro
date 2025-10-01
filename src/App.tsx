@@ -39,7 +39,7 @@ const App = () => {
               <Route
                 path="/team/dashboard"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiresProfile={true}>
                     <TeamDashboard />
                   </ProtectedRoute>
                 }

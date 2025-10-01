@@ -1,29 +1,18 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 import AuthFlow from "@/components/AuthFlow";
+import { useSmartAuth } from "@/hooks/useSmartAuth";
 
 const Auth = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const { loading, user, redirectPath } = useSmartAuth();
 
   useEffect(() => {
-    // Check if user is already authenticated
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate('/team/onboarding');
-      }
-      setLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        navigate('/team/onboarding');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    // Redirect authenticated users to appropriate destination
+    if (!loading && user) {
+      navigate(redirectPath);
+    }
+  }, [loading, user, redirectPath, navigate]);
 
   if (loading) {
     return (
@@ -36,7 +25,7 @@ const Auth = () => {
   return (
     <div className="min-h-[calc(100vh-4rem)]">
       <AuthFlow 
-        onAuthComplete={() => navigate('/team/onboarding')} 
+        onAuthComplete={() => navigate(redirectPath)} 
         onBack={() => navigate('/')}
       />
     </div>

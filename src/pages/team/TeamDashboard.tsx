@@ -1,17 +1,21 @@
+import { DashboardHeader } from "@/components/team/DashboardHeader";
+
 const TeamDashboard = () => {
   return (
-    <div className="container py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold mb-4">Team Dashboard</h1>
-        <p className="text-xl text-muted-foreground mb-8">
-          Manage your sponsorship offers and track performance.
-        </p>
-        <div className="bg-muted/50 rounded-lg p-12 text-center">
-          <p className="text-muted-foreground">
-            Dashboard coming soon. Your sponsorship offers and analytics will appear here.
-          </p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background">
+      <DashboardHeader teamName="Thunder Youth Soccer" notificationCount={3} />
+      
+      <main className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Overview Section - Coming in Phase 2 */}
+        <section className="mb-8">
+          <h2 className="text-2xl font-semibold mb-6">Overview</h2>
+          <div className="bg-muted/30 rounded-lg p-12 text-center">
+            <p className="text-muted-foreground">
+              Dashboard metrics and sections coming soon...
+            </p>
+          </div>
+        </section>
+      </main>
     </div>
   );
 };

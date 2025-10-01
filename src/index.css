@@ -8,8 +8,8 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 0 0% 20%;
+    --background: 210 17% 98%; /* #f8f9fa */
+    --foreground: 0 0% 33%; /* #545454 */
 
     --card: 0 0% 100%;
     --card-foreground: 0 0% 20%;
@@ -17,14 +17,15 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 20%;
 
-    --primary: 199 100% 50%;
+    --primary: 197 100% 50%; /* #00aafe - Sponsa Blue */
     --primary-foreground: 0 0% 100%;
+    --primary-dark: 197 100% 40%; /* #0088cc - Hover state */
 
     --secondary: 199 100% 96%;
     --secondary-foreground: 199 100% 40%;
 
     --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 33%;
+    --muted-foreground: 235 8% 45%; /* #717182 - Secondary text */
 
     --accent: 40 100% 59%;
     --accent-foreground: 0 0% 20%;
@@ -34,9 +35,13 @@ All colors MUST be HSL.
 
     --border: 0 0% 90%;
     --input: 0 0% 95%;
-    --ring: 199 100% 50%;
+    --ring: 197 100% 50%;
 
     --radius: 0.75rem;
+    
+    /* Dashboard specific colors */
+    --dashboard-orange: 38 100% 59%; /* #ffb82d - Activation tasks */
+    --dashboard-green: 142 71% 45%; /* #22c55e - Success states */
 
     --sidebar-background: 0 0% 98%;
 
@@ -65,8 +70,9 @@ All colors MUST be HSL.
     --popover: 0 0% 12%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 199 100% 50%;
+    --primary: 197 100% 50%;
     --primary-foreground: 0 0% 100%;
+    --primary-dark: 197 100% 40%;
 
     --secondary: 199 100% 20%;
     --secondary-foreground: 199 100% 90%;
@@ -82,15 +88,20 @@ All colors MUST be HSL.
 
     --border: 0 0% 20%;
     --input: 0 0% 20%;
-    --ring: 199 100% 50%;
+    --ring: 197 100% 50%;
+    
+    /* Dashboard specific colors - dark mode */
+    --dashboard-orange: 38 100% 59%;
+    --dashboard-green: 142 71% 45%;
+    
     --sidebar-background: 0 0% 10%;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 199 100% 50%;
+    --sidebar-primary: 197 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 15%;
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 199 100% 50%;
+    --sidebar-ring: 197 100% 50%;
   }
 }
 

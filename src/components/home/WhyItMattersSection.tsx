@@ -48,7 +48,7 @@ const WhyItMattersSection = () => {
             {reasons.map((reason, index) => (
               <div 
                 key={index}
-                className="w-full h-[100px] bg-white rounded-[14px] border border-[#F3F4F6] px-[29px] py-[29px] flex items-start"
+                className="w-full h-[100px] bg-white rounded-[14px] border border-[#F3F4F6] px-[29px] py-[29px] flex items-start hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-1 hover:border-gray-300 transition-all duration-300 ease-out cursor-pointer"
               >
                 <div className="flex items-center gap-[14px]">
                   {/* Icon Container */}

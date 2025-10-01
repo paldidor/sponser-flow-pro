@@ -115,13 +115,13 @@ const HeroSection = () => {
         <img 
           src="/images/hero-coach-players-banner.png" 
           alt="Coach and youth players with sponsorship banner" 
-          className="absolute w-[200px] sm:w-[280px] lg:w-[350px] xl:w-[504px] h-auto bottom-[60px] md:bottom-[70px] xl:bottom-[84px] right-4 sm:right-8 xl:right-[63.50px]"
+          className="absolute w-[200px] sm:w-[280px] lg:w-[350px] xl:w-[504px] h-auto bottom-[60px] md:bottom-[70px] xl:bottom-[84px] left-1/2 -translate-x-1/2 sm:left-auto sm:right-8 sm:translate-x-0 xl:right-[63.50px]"
         />
 
         {/* Main content - responsive layout with proper max-width to accommodate image */}
-        <div className="relative pt-16 md:pt-24 xl:pt-[140px] pb-24 md:pb-32 xl:pb-0 max-w-[calc(100%-220px)] sm:max-w-[calc(100%-300px)] lg:max-w-[calc(100%-370px)] xl:max-w-[539px]">
+        <div className="relative pt-16 md:pt-24 xl:pt-[140px] pb-24 md:pb-32 xl:pb-0 w-full flex flex-col items-center sm:items-start sm:max-w-[calc(100%-300px)] lg:max-w-[calc(100%-370px)] xl:max-w-[539px]">
           {/* Heading - responsive typography */}
-          <div className="relative mb-4 md:mb-5 xl:mb-[21px]">
+          <div className="relative mb-4 md:mb-5 xl:mb-[21px] text-center sm:text-left">
             {/* Line 1: Sponsor Youth Teams. */}
             <h1 className="text-[28px] leading-[36px] sm:text-[36px] sm:leading-[45px] md:text-[48px] md:leading-[60px] xl:text-[60px] xl:leading-[75px] font-bold mb-0">
               <span style={{ color: '#545454' }}>
@@ -150,7 +150,7 @@ const HeroSection = () => {
           </div>
 
           {/* Paragraph - responsive typography */}
-          <div className="mb-6 md:mb-7 xl:mb-[27px]">
+          <div className="mb-6 md:mb-7 xl:mb-[27px] text-center sm:text-left">
             <p className="text-sm leading-6 sm:text-base sm:leading-7 md:text-lg md:leading-8 xl:text-[20px] xl:leading-[32.5px] font-normal max-w-full xl:max-w-[533px]" 
                style={{ color: '#545454' }}>
               Get and manage all your youth sports sponsorships in one place. Support local communities while driving measurable results for your brand or business.
@@ -159,7 +159,7 @@ const HeroSection = () => {
 
           {/* Form - responsive layout */}
           <form onSubmit={handleSubmit} className="w-full max-w-full sm:max-w-[448px]">
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-0 sm:relative">
+            <div className="flex flex-col items-center sm:items-start sm:flex-row gap-3 sm:gap-0 sm:relative">
               {/* Input field */}
               <div className="relative flex-1 sm:flex-none sm:w-[316.88px]">
                 <input

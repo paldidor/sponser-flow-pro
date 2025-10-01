@@ -111,32 +111,15 @@ const HeroSection = () => {
 
       {/* Content container - responsive */}
       <div className="container mx-auto px-4 md:px-6 lg:px-8 relative min-h-[500px] md:min-h-[600px] xl:min-h-[760px]">
-        {/* Hero image - coach and players - hidden on mobile, visible on tablet/desktop */}
+        {/* Hero image - coach and players - SINGLE responsive image sitting on grass */}
         <img 
           src="/images/hero-coach-players-banner.png" 
           alt="Coach and youth players with sponsorship banner" 
-          className="hidden md:block absolute bottom-[80px] md:bottom-[90px] xl:bottom-[84px] right-0 md:right-4 xl:right-[63.50px]"
-          style={{ 
-            width: 'min(350px, 35vw)',
-            height: 'auto',
-          }}
-        />
-        
-        {/* Desktop specific positioning */}
-        <img 
-          src="/images/hero-coach-players-banner.png" 
-          alt="Coach and youth players with sponsorship banner" 
-          className="hidden xl:block absolute"
-          style={{ 
-            width: '504px', 
-            height: '336px', 
-            right: '63.50px', 
-            top: '392px'
-          }}
+          className="absolute w-[200px] sm:w-[280px] lg:w-[350px] xl:w-[504px] h-auto bottom-[60px] md:bottom-[70px] xl:bottom-[84px] right-4 sm:right-8 xl:right-[63.50px]"
         />
 
-        {/* Main content - responsive layout */}
-        <div className="relative pt-16 md:pt-24 xl:pt-[140px] pb-24 md:pb-32 xl:pb-0 max-w-full md:max-w-[600px] xl:max-w-[539px]">
+        {/* Main content - responsive layout with proper max-width to accommodate image */}
+        <div className="relative pt-16 md:pt-24 xl:pt-[140px] pb-24 md:pb-32 xl:pb-0 max-w-[calc(100%-220px)] sm:max-w-[calc(100%-300px)] lg:max-w-[calc(100%-370px)] xl:max-w-[539px]">
           {/* Heading - responsive typography */}
           <div className="relative mb-4 md:mb-5 xl:mb-[21px]">
             {/* Line 1: Sponsor Youth Teams. */}

@@ -99,8 +99,7 @@ const HeroSection = () => {
             width: '504px', 
             height: '336px', 
             right: '63.50px', 
-            top: '392px',
-            boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.15)'
+            top: '392px'
           }}
         />
 
@@ -114,62 +113,42 @@ const HeroSection = () => {
           }}
         >
           {/* Heading */}
-          <div className="relative" style={{ height: '150px', marginBottom: '21px' }}>
+          <div className="relative" style={{ marginBottom: '21px' }}>
             {/* Line 1: Sponsor Youth Teams. */}
-            <div style={{ height: '84px', position: 'relative', marginBottom: '-4.5px' }}>
-              <span style={{ 
-                color: '#545454', 
-                fontSize: '60px', 
-                fontWeight: 700, 
-                lineHeight: '75px' 
-              }}>
+            <h1 style={{ 
+              fontSize: '60px', 
+              fontWeight: 700, 
+              lineHeight: '75px',
+              marginBottom: '0px'
+            }}>
+              <span style={{ color: '#545454' }}>
                 Sponsor{' '}
               </span>
-              <span style={{ 
-                color: '#00AAFE', 
-                fontSize: '60px', 
-                fontWeight: 700, 
-                lineHeight: '75px' 
-              }}>
+              <span style={{ color: '#00AAFE' }}>
                 Youth Teams
               </span>
-              <span style={{ 
-                color: '#FFB82D', 
-                fontSize: '60px', 
-                fontWeight: 700, 
-                lineHeight: '75px' 
-              }}>
+              <span style={{ color: '#FFB82D' }}>
                 .
               </span>
-            </div>
+            </h1>
 
             {/* Line 2: Boost Your Brand. */}
-            <div style={{ height: '84px', position: 'relative' }}>
-              <span style={{ 
-                color: '#545454', 
-                fontSize: '60px', 
-                fontWeight: 700, 
-                lineHeight: '75px' 
-              }}>
+            <h2 style={{ 
+              fontSize: '60px', 
+              fontWeight: 700, 
+              lineHeight: '75px',
+              marginTop: '0px'
+            }}>
+              <span style={{ color: '#545454' }}>
                 Boost Your{' '}
               </span>
-              <span style={{ 
-                color: '#00AAFE', 
-                fontSize: '60px', 
-                fontWeight: 700, 
-                lineHeight: '75px' 
-              }}>
+              <span style={{ color: '#00AAFE' }}>
                 Brand
               </span>
-              <span style={{ 
-                color: '#FFB82D', 
-                fontSize: '60px', 
-                fontWeight: 700, 
-                lineHeight: '75px' 
-              }}>
+              <span style={{ color: '#FFB82D' }}>
                 .
               </span>
-            </div>
+            </h2>
           </div>
 
           {/* Paragraph */}

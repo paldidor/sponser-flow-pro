@@ -109,8 +109,8 @@ const HowItWorksSection = () => {
         {/* Mascot */}
         <div className="flex justify-center">
           <img 
-            src="/images/how-it-works-mascot.png" 
-            alt="Sponsa mascot" 
+            src="/images/community-player-celebrating.png" 
+            alt="Happy youth sports player celebrating with Sponsa cap and water bottle" 
             className="w-full max-w-[252px] h-auto"
           />
         </div>

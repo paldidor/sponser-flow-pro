@@ -2,10 +2,10 @@ import HeroSection from "@/components/home/HeroSection";
 import WhyItMattersSection from "@/components/home/WhyItMattersSection";
 import HowItWorksSection from "@/components/home/HowItWorksSection";
 import ProductSection from "@/components/home/ProductSection";
-import CommunitySection from "@/components/home/CommunitySection";
-import CTASection from "@/components/home/CTASection";
 import BlogSection from "@/components/home/BlogSection";
 import FAQSection from "@/components/home/FAQSection";
+import CommunitySection from "@/components/home/CommunitySection";
+import CTASection from "@/components/home/CTASection";
 
 const Index = () => {
   return (
@@ -14,10 +14,10 @@ const Index = () => {
       <WhyItMattersSection />
       <HowItWorksSection />
       <ProductSection />
-      <CommunitySection />
-      <CTASection />
       <BlogSection />
       <FAQSection />
+      <CommunitySection />
+      <CTASection />
     </div>
   );
 };

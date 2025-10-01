@@ -12,6 +12,7 @@ import Marketplace from "@/pages/Marketplace";
 import BlogDetail from "@/pages/BlogDetail";
 import TeamOnboarding from "@/pages/team/TeamOnboarding";
 import TeamDashboard from "@/pages/team/TeamDashboard";
+import CreateOffer from "@/pages/team/CreateOffer";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -52,6 +53,14 @@ const App = () => {
                   element={
                     <ProtectedRoute requiresProfile={true}>
                       <TeamDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/team/create-offer"
+                  element={
+                    <ProtectedRoute requiresProfile={true}>
+                      <CreateOffer />
                     </ProtectedRoute>
                   }
                 />

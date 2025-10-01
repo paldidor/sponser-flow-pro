@@ -212,7 +212,7 @@ const TeamOnboarding = () => {
         description: "Your sponsorship offer has been published.",
       });
 
-      navigate('/marketplace');
+      navigate('/team/dashboard');
     } catch (error) {
       console.error('Error publishing offer:', error);
       toast({

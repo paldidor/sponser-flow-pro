@@ -280,9 +280,7 @@ const ProductSection = () => {
           {features.map((feature, index) => (
             <div 
               key={index}
-              className={`flex flex-col gap-8 items-center ${
-                feature.reverse ? 'flex-col-reverse' : ''
-              }`}
+            className="flex flex-col gap-8 items-center"
             >
               <div className="w-full flex flex-col gap-3.5">
                 <h3 style={{ color: '#545454', fontSize: '26.25px', fontWeight: 700, lineHeight: '31.50px' }}>

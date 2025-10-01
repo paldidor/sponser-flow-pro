@@ -115,7 +115,7 @@ const HeroSection = () => {
         <img 
           src="/images/hero-coach-players-banner.png" 
           alt="Coach and youth players with sponsorship banner" 
-          className="absolute w-[200px] sm:w-[280px] lg:w-[350px] xl:w-[504px] h-auto bottom-[60px] md:bottom-[70px] xl:bottom-[84px] left-1/2 -translate-x-1/2 sm:left-auto sm:right-8 sm:translate-x-0 xl:right-[63.50px]"
+          className="absolute w-[200px] sm:w-[280px] lg:w-[350px] xl:w-[504px] h-auto bottom-[20px] md:bottom-[25px] xl:bottom-[30px] left-1/2 -translate-x-1/2 sm:left-auto sm:right-8 sm:translate-x-0 xl:right-[63.50px] z-10"
         />
 
         {/* Main content - responsive layout with proper max-width to accommodate image */}

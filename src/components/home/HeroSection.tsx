@@ -122,31 +122,19 @@ const HeroSection = () => {
         <div className="relative pt-16 md:pt-24 xl:pt-[140px] pb-24 md:pb-32 xl:pb-0 w-full flex flex-col items-center sm:items-start sm:max-w-[calc(100%-300px)] lg:max-w-[calc(100%-370px)] xl:max-w-[539px]">
           {/* Heading - responsive typography */}
           <div className="relative mb-4 md:mb-5 xl:mb-[21px] text-center sm:text-left">
-            {/* Line 1: Sponsor Youth Teams. */}
-            <h1 className="text-[28px] leading-[36px] sm:text-[36px] sm:leading-[45px] md:text-[48px] md:leading-[60px] xl:text-[60px] xl:leading-[75px] font-bold mb-0">
-              <span style={{ color: '#545454' }}>
-                Sponsor{' '}
-              </span>
-              <span style={{ color: '#00AAFE' }}>
-                Youth Teams
-              </span>
-              <span style={{ color: '#FFB82D' }}>
-                .
-              </span>
-            </h1>
+            {/* Line 1: Sponsor Youth Teams (single line) */}
+<h1 className="whitespace-nowrap text-[28px] leading-[36px] sm:text-[36px] sm:leading-[45px] md:text-[48px] md:leading-[60px] xl:text-[60px] xl:leading-[75px] font-bold mb-0">
+  <span style={{ color: '#545454' }}>Sponsor</span>{'\u00A0'}
+  <span style={{ color: '#00AAFE' }}>Youth Teams</span>
+  <span style={{ color: '#FFB82D' }}>.</span>
+</h1>
 
-            {/* Line 2: Boost Your Brand. */}
-            <h2 className="text-[28px] leading-[36px] sm:text-[36px] sm:leading-[45px] md:text-[48px] md:leading-[60px] xl:text-[60px] xl:leading-[75px] font-bold mt-0">
-              <span style={{ color: '#545454' }}>
-                Boost Your{' '}
-              </span>
-              <span style={{ color: '#00AAFE' }}>
-                Brand
-              </span>
-              <span style={{ color: '#FFB82D' }}>
-                .
-              </span>
-            </h2>
+{/* Line 2: Boost Your Brand (single line) */}
+<h2 className="whitespace-nowrap text-[28px] leading-[36px] sm:text-[36px] sm:leading-[45px] md:text-[48px] md:leading-[60px] xl:text-[60px] xl:leading-[75px] font-bold mt-0">
+  <span style={{ color: '#545454' }}>Boost</span>{'\u00A0'}
+  <span style={{ color: '#00AAFE' }}>Your Brand</span>
+  <span style={{ color: '#FFB82D' }}>.</span>
+</h2>
           </div>
 
           {/* Paragraph - responsive typography */}

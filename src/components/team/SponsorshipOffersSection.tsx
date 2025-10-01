@@ -5,16 +5,24 @@ import { SponsorshipCard } from "./SponsorshipCard";
 import { useSponsorshipOffers } from "@/hooks/useSponsorshipOffers";
 import { SponsorshipPackage } from "@/types/dashboard";
 import { toast } from "sonner";
+import { useState } from "react";
+import CreateOfferModal from "./CreateOfferModal";
 
 export const SponsorshipOffersSection = () => {
-  const { data: packages, isLoading, error } = useSponsorshipOffers();
+  const { data: packages, isLoading, error, refetch } = useSponsorshipOffers();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleAddPackage = () => {
-    toast.info("Add package dialog coming soon");
+    setIsModalOpen(true);
   };
 
   const handleEditPackage = (pkg: SponsorshipPackage) => {
     toast.info(`Edit package: ${pkg.name}`);
+  };
+
+  const handleModalComplete = () => {
+    toast.success("Sponsorship offer created successfully!");
+    refetch();
   };
 
   if (isLoading) {
@@ -93,6 +101,12 @@ export const SponsorshipOffersSection = () => {
           </Button>
         </div>
       )}
+      
+      <CreateOfferModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        onComplete={handleModalComplete}
+      />
     </CollapsibleSection>
   );
 };

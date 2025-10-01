@@ -10,7 +10,7 @@ const Footer = () => {
           <div className="lg:col-span-4 space-y-6">
             <Link to="/" className="inline-block">
               <img 
-                src="/logos/sponsa-logo.png" 
+                src="/logos/sponsa-logo-footer.png" 
                 alt="Sponsa" 
                 className="brightness-0 invert"
                 style={{ width: '247px', height: '70px' }}

@@ -4,7 +4,6 @@ export type FlowStep =
   | "create-profile"
   | "profile-review"
   | "create-offer"
-  | "form"
   | "fundraising-goal"
   | "impact-selection"
   | "supported-players"

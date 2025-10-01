@@ -6,12 +6,11 @@ import CreateTeamProfile from "@/components/CreateTeamProfile";
 import ProfileReview from "@/components/ProfileReview";
 import CreateSponsorshipOffer from "@/components/CreateSponsorshipOffer";
 import QuestionnaireFlow from "@/components/questionnaire/QuestionnaireFlow";
-import SponsorshipForm from "@/components/SponsorshipForm";
 import SponsorshipReview from "@/components/SponsorshipReview";
 import WebsiteAnalysisInput from "@/components/WebsiteAnalysisInput";
 import PDFUploadInput from "@/components/PDFUploadInput";
 import PDFAnalysisProgress from "@/components/PDFAnalysisProgress";
-import type { TeamProfile, SponsorshipData, SponsorshipPackage } from "@/types/flow";
+import type { TeamProfile, SponsorshipData, SponsorshipPackage, MultiStepOfferData } from "@/types/flow";
 
 type OnboardingStep =
   | 'create-profile'
@@ -19,7 +18,6 @@ type OnboardingStep =
   | 'select-method'
   | 'website-analysis'
   | 'pdf-upload'
-  | 'fill-form'
   | 'questionnaire'
   | 'review';
 
@@ -189,13 +187,75 @@ const TeamOnboarding = () => {
     });
   };
 
-  const handleFormComplete = (data: SponsorshipData) => {
-    setSponsorshipData(data);
-    setCurrentStep('questionnaire');
-  };
 
-  const handleQuestionnaireComplete = async () => {
-    setCurrentStep('review');
+  const handleQuestionnaireComplete = async (data: MultiStepOfferData) => {
+    // Load the most recent published offer from questionnaire source for review
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Find the most recent published questionnaire offer
+      const { data: offer, error } = await supabase
+        .from('sponsorship_offers')
+        .select(`
+          *,
+          sponsorship_packages (
+            id,
+            name,
+            price,
+            benefits,
+            description,
+            package_placements (
+              placement_option_id,
+              placement_options (
+                id,
+                name,
+                category,
+                description
+              )
+            )
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('source', 'questionnaire')
+        .eq('status', 'published')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) throw error;
+
+      if (offer) {
+        setCurrentOfferId(offer.id);
+        
+        const formattedData: SponsorshipData = {
+          fundraisingGoal: offer.fundraising_goal?.toString() || '0',
+          duration: offer.duration || 'TBD',
+          description: offer.description || '',
+          packages: offer.sponsorship_packages?.map((pkg: any) => ({
+            id: pkg.id,
+            name: pkg.name,
+            price: pkg.price,
+            benefits: pkg.benefits || [],
+            placements: pkg.package_placements?.map((pp: any) => 
+              pp.placement_options?.name || ''
+            ).filter(Boolean) || []
+          })) || [],
+          source: 'form'
+        };
+
+        setSponsorshipData(formattedData);
+        setCurrentStep('review');
+      }
+    } catch (error) {
+      console.error('Error loading offer data:', error);
+      toast({
+        title: "Success!",
+        description: "Your sponsorship offer has been created.",
+      });
+      // If we can't load for review, just go to dashboard
+      navigate('/team/dashboard');
+    }
   };
 
   const handleReviewApprove = async () => {
@@ -226,10 +286,28 @@ const TeamOnboarding = () => {
   };
 
   const handleBack = () => {
-    const stepOrder: OnboardingStep[] = ['create-profile', 'profile-review', 'select-method', 'questionnaire', 'review'];
-    const currentIndex = stepOrder.indexOf(currentStep);
-    if (currentIndex > 0) {
-      setCurrentStep(stepOrder[currentIndex - 1]);
+    switch (currentStep) {
+      case 'profile-review':
+        setCurrentStep('create-profile');
+        break;
+      case 'select-method':
+        setCurrentStep('profile-review');
+        break;
+      case 'website-analysis':
+      case 'pdf-upload':
+      case 'questionnaire':
+        setCurrentStep('select-method');
+        break;
+      case 'review':
+        // Go back to the method that was used to create the offer
+        if (analysisFileName) {
+          setCurrentStep('pdf-upload');
+        } else {
+          setCurrentStep('questionnaire');
+        }
+        break;
+      default:
+        break;
     }
   };
 
@@ -330,14 +408,6 @@ const TeamOnboarding = () => {
               }
             }}
             onBack={handleCancelAnalysis}
-          />
-        );
-
-      case 'fill-form':
-        return (
-          <SponsorshipForm
-            onComplete={handleFormComplete}
-            onBack={() => setCurrentStep('select-method')}
           />
         );
 

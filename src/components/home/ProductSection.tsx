@@ -15,7 +15,7 @@ const ProductSection = () => {
     {
       title: "Get Reporting & Insights",
       description: "Get a complete overview of and breakdown into your sponsorships, manage relationships and renewals - all from your portal.",
-      image: "/images/product-placeholder.png",
+      image: "/images/dashboard-analytics-product.png",
       reverse: false
     }
   ];

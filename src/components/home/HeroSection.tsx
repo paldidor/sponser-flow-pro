@@ -24,81 +24,82 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative w-full overflow-hidden" style={{ fontFamily: 'Poppins, sans-serif', height: '760px' }}>
-      {/* Background gradient - Full Width */}
-      <div 
-        className="absolute inset-0 w-full" 
-        style={{ 
-          background: 'linear-gradient(180deg, #B8E6FE 0%, #DFF2FE 50%, #EFF6FF 100%)' 
-        }}
-      />
-
-      {/* Animated clouds - Full Width */}
-      <div className="absolute inset-0 w-full pointer-events-none overflow-hidden">
-        <img 
-          src="/images/cloud-animation.png" 
-          alt="" 
-          className="absolute animate-[drift-very-slow_60s_linear_infinite]"
+    <section className="relative w-full overflow-hidden flex justify-center" style={{ fontFamily: 'Poppins, sans-serif' }}>
+      {/* Fixed width container matching Figma design */}
+      <div className="relative" style={{ width: '1359px', height: '760px' }}>
+        {/* Background gradient */}
+        <div 
+          className="absolute inset-0" 
           style={{ 
-            width: '70px', 
-            height: '70px', 
-            right: '2%', 
-            top: '14px', 
-            opacity: 0.60 
+            background: 'linear-gradient(180deg, #B8E6FE 0%, #DFF2FE 50%, #EFF6FF 100%)' 
           }}
         />
-        <img 
-          src="/images/cloud-animation.png" 
-          alt="" 
-          className="absolute animate-[drift-slow_45s_linear_infinite]"
-          style={{ 
-            width: '98px', 
-            height: '98px', 
-            left: '35%', 
-            top: '28px', 
-            opacity: 0.80 
-          }}
-        />
-        <img 
-          src="/images/cloud-animation.png" 
-          alt="" 
-          className="absolute animate-[drift-moderate_30s_linear_infinite]"
-          style={{ 
-            width: '126px', 
-            height: '126px', 
-            left: '8%', 
-            top: '112px', 
-            opacity: 0.90 
-          }}
-        />
-      </div>
 
-      {/* Grass footer - Full Width */}
-      <div 
-        className="absolute left-0 w-full overflow-hidden" 
-        style={{ 
-          height: '84px', 
-          bottom: '0px' 
-        }}
-      >
-        <img 
-          src="/images/grass-background.png" 
-          alt="" 
-          className="w-full h-full object-cover"
-        />
-      </div>
+        {/* Animated clouds */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <img 
+            src="/images/cloud-animation.png" 
+            alt="" 
+            className="absolute animate-[drift-very-slow_60s_linear_infinite]"
+            style={{ 
+              width: '70px', 
+              height: '70px', 
+              left: '1332.72px', 
+              top: '14px', 
+              opacity: 0.60 
+            }}
+          />
+          <img 
+            src="/images/cloud-animation.png" 
+            alt="" 
+            className="absolute animate-[drift-slow_45s_linear_infinite]"
+            style={{ 
+              width: '98px', 
+              height: '98px', 
+              left: '478.70px', 
+              top: '28px', 
+              opacity: 0.80 
+            }}
+          />
+          <img 
+            src="/images/cloud-animation.png" 
+            alt="" 
+            className="absolute animate-[drift-moderate_30s_linear_infinite]"
+            style={{ 
+              width: '126px', 
+              height: '126px', 
+              left: '118.84px', 
+              top: '112px', 
+              opacity: 0.90 
+            }}
+          />
+        </div>
 
-      {/* Centered Content Container */}
-      <div className="container mx-auto px-4 lg:px-8 relative h-full max-w-7xl">
+        {/* Grass footer */}
+        <div 
+          className="absolute left-0 overflow-hidden" 
+          style={{ 
+            width: '1359px', 
+            height: '84px', 
+            top: '676px' 
+          }}
+        >
+          <img 
+            src="/images/grass-background.png" 
+            alt="" 
+            className="w-full h-full object-cover"
+          />
+        </div>
+
         {/* Hero image - coach and players */}
         <img 
           src="/images/hero-coach-players-banner.png" 
           alt="Coach and youth players with sponsorship banner" 
-          className="absolute hidden lg:block"
+          className="absolute"
           style={{ 
             width: '504px', 
             height: '336px', 
-            right: '0px', 
+            left: '791.50px', 
             top: '392px',
             boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.15)'
           }}
@@ -108,9 +109,8 @@ const HeroSection = () => {
         <div 
           className="absolute" 
           style={{ 
-            width: '539px',
-            maxWidth: 'calc(100% - 32px)',
-            left: '0px', 
+            width: '539px', 
+            left: '119.50px', 
             top: '140px' 
           }}
         >
@@ -270,7 +270,7 @@ const HeroSection = () => {
             transform: translateX(0) translateY(0);
           }
           100% {
-            transform: translateX(calc(100vw - 70px)) translateY(-10px);
+            transform: translateX(calc(-1332.72px + 100vw + 70px)) translateY(-10px);
           }
         }
         
@@ -279,7 +279,7 @@ const HeroSection = () => {
             transform: translateX(0) translateY(0);
           }
           100% {
-            transform: translateX(calc(65vw - 98px)) translateY(-15px);
+            transform: translateX(calc(-478.70px + 100vw + 98px)) translateY(-15px);
           }
         }
         
@@ -288,20 +288,40 @@ const HeroSection = () => {
             transform: translateX(0) translateY(0);
           }
           100% {
-            transform: translateX(calc(92vw - 126px)) translateY(-5px);
+            transform: translateX(calc(-118.84px + 100vw + 126px)) translateY(-5px);
           }
         }
 
         /* Responsive adjustments */
-        @media (max-width: 1024px) {
-          section {
-            height: 600px !important;
+        @media (max-width: 1400px) {
+          section > div {
+            transform: scale(0.85);
+            transform-origin: top center;
+            height: 646px !important;
+          }
+        }
+
+        @media (max-width: 1200px) {
+          section > div {
+            transform: scale(0.70);
+            transform-origin: top center;
+            height: 532px !important;
+          }
+        }
+
+        @media (max-width: 1000px) {
+          section > div {
+            transform: scale(0.55);
+            transform-origin: top center;
+            height: 418px !important;
           }
         }
 
         @media (max-width: 768px) {
-          section {
-            height: 500px !important;
+          section > div {
+            transform: scale(0.45);
+            transform-origin: top center;
+            height: 342px !important;
           }
         }
       `}</style>

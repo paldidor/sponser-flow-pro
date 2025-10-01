@@ -21,41 +21,71 @@ const ProductSection = () => {
   ];
 
   return (
-    <section id="product" className="py-16 lg:py-24 bg-background">
-      <div className="container mx-auto px-4 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-12 lg:mb-20">
-          <h2 className="text-4xl lg:text-5xl font-bold mb-4">
-            <span className="text-foreground">Sponsa Makes It </span>
-            <span className="text-primary">Easy</span>
-            <span className="text-accent">.</span>
+    <section id="product" className="py-16 lg:py-24 bg-white">
+      <div className="container mx-auto px-4 lg:px-8 max-w-[1120px]">
+        {/* Header */}
+        <div className="text-center mb-14">
+          <h2 className="mb-4">
+            <span style={{ color: '#545454', fontSize: '42px', fontWeight: 800, lineHeight: '42px' }}>
+              Sponsa Makes It{' '}
+            </span>
+            <span style={{ color: '#00AAFE', fontSize: '42px', fontWeight: 800, lineHeight: '42px' }}>
+              Easy
+            </span>
+            <span style={{ color: '#FFB82D', fontSize: '42px', fontWeight: 800, lineHeight: '42px' }}>
+              .
+            </span>
           </h2>
-          <p className="text-lg text-muted-foreground">
+          <p 
+            className="max-w-[672px] mx-auto opacity-80" 
+            style={{ color: '#545454', fontSize: '17.50px', fontWeight: 400, lineHeight: '24.50px' }}
+          >
             Get started free and have everything you need to find, manage and scale your youth sports sponsorships.
           </p>
         </div>
 
-        <div className="space-y-16 lg:space-y-24">
+        {/* Features */}
+        <div className="flex flex-col gap-24 lg:gap-[98px]">
           {features.map((feature, index) => (
             <div 
               key={index}
-              className={`grid lg:grid-cols-2 gap-8 lg:gap-16 items-center ${
+              className={`flex flex-col lg:flex-row gap-8 lg:gap-10 items-center ${
                 feature.reverse ? 'lg:flex-row-reverse' : ''
               }`}
             >
-              <div className={`${feature.reverse ? 'lg:order-2' : 'lg:order-1'} space-y-4`}>
-                <h3 className="text-3xl lg:text-4xl font-bold text-foreground">
+              {/* Text Content */}
+              <div className="w-full lg:w-[441px] flex flex-col gap-3.5">
+                <h3 style={{ color: '#545454', fontSize: '26.25px', fontWeight: 700, lineHeight: '31.50px' }}>
                   {feature.title}
                 </h3>
-                <p className="text-lg text-muted-foreground">
+                <p 
+                  className="opacity-80" 
+                  style={{ color: '#545454', fontSize: '15.75px', fontWeight: 400, lineHeight: '25.59px' }}
+                >
                   {feature.description}
                 </p>
               </div>
-              <div className={`${feature.reverse ? 'lg:order-1' : 'lg:order-2'}`}>
-                <div className="relative rounded-xl overflow-hidden shadow-2xl">
+
+              {/* Image Card */}
+              <div className="w-full lg:w-[539px] relative">
+                <div 
+                  className="relative overflow-hidden rounded-[14px]"
+                  style={{
+                    boxShadow: '0px 4px 6px -4px rgba(0, 0, 0, 0.10)',
+                    outline: '1px solid #E5E7EB',
+                    outlineOffset: '-1px'
+                  }}
+                >
                   <img 
                     src={feature.image} 
                     alt={feature.title} 
                     className="w-full h-auto"
+                  />
+                  <div 
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: 'linear-gradient(0deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0) 100%)'
+                    }}
                   />
                 </div>
               </div>

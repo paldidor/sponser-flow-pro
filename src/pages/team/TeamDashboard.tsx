@@ -1,4 +1,5 @@
 import { DashboardHeader } from "@/components/team/DashboardHeader";
+import { OverviewSection } from "@/components/team/OverviewSection";
 
 const TeamDashboard = () => {
   return (
@@ -6,15 +7,19 @@ const TeamDashboard = () => {
       <DashboardHeader teamName="Thunder Youth Soccer" notificationCount={3} />
       
       <main className="container mx-auto px-4 py-8 max-w-7xl">
-        {/* Overview Section - Coming in Phase 2 */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-6">Overview</h2>
-          <div className="bg-muted/30 rounded-lg p-12 text-center">
-            <p className="text-muted-foreground">
-              Dashboard metrics and sections coming soon...
-            </p>
-          </div>
-        </section>
+        <OverviewSection 
+          totalRevenue={9000}
+          potentialRevenue={19500}
+          activeSponsors={3}
+          openTasks={3}
+        />
+        
+        {/* Sponsorship Offers Section - Coming in Phase 3 */}
+        <div className="bg-muted/30 rounded-lg p-12 text-center mb-8">
+          <p className="text-muted-foreground">
+            Sponsorship offers section coming next...
+          </p>
+        </div>
       </main>
     </div>
   );

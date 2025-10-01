@@ -19,6 +19,7 @@ const HowItWorksSection = () => {
 
   return (
     <section 
+      id="how-it-works"
       className="w-full py-16 lg:py-24 px-4 sm:px-8"
       style={{ background: 'rgba(255, 184, 45, 0.10)' }}
     >

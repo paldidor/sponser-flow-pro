@@ -26,7 +26,7 @@ const BlogSection = () => {
   ];
 
   return (
-    <section className="py-16 lg:py-24" style={{ background: 'rgba(255, 184, 45, 0.10)' }}>
+    <section id="blog" className="py-16 lg:py-24" style={{ background: 'rgba(255, 184, 45, 0.10)' }}>
       <div className="container mx-auto px-4 lg:px-8 max-w-[1120px]">
         {/* Header */}
         <div className="text-center mb-10 lg:mb-16">

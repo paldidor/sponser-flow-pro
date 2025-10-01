@@ -26,6 +26,7 @@ const CommunitySection = () => {
 
   return (
     <section 
+      id="community"
       className="relative py-16 lg:py-24 overflow-hidden"
       style={{ background: "#CAE5F4" }}
     >

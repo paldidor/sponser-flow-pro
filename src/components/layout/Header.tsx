@@ -36,6 +36,21 @@ const Header = () => {
     navigate('/');
   };
 
+  const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, sectionId: string) => {
+    e.preventDefault();
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const headerOffset = 56; // Height of fixed header
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   return (
     <header className={`sticky top-0 z-50 w-full transition-all duration-200 ${
       scrolled ? 'bg-primary shadow-md' : 'bg-primary'
@@ -55,15 +70,27 @@ const Header = () => {
           <a href="#teams" className="text-sm font-medium text-white transition-colors hover:text-accent">
             Teams
           </a>
-          <a href="#sponsors" className="text-sm font-medium text-white transition-colors hover:text-accent">
+          <a 
+            href="#how-it-works" 
+            onClick={(e) => scrollToSection(e, 'how-it-works')}
+            className="text-sm font-medium text-white transition-colors hover:text-accent"
+          >
             Sponsors
           </a>
-          <a href="#local-champs" className="text-sm font-medium text-white transition-colors hover:text-accent">
+          <a 
+            href="#community" 
+            onClick={(e) => scrollToSection(e, 'community')}
+            className="text-sm font-medium text-white transition-colors hover:text-accent"
+          >
             Local Champs
           </a>
-          <Link to="/marketplace" className="text-sm font-medium text-white transition-colors hover:text-accent">
+          <a 
+            href="#blog" 
+            onClick={(e) => scrollToSection(e, 'blog')}
+            className="text-sm font-medium text-white transition-colors hover:text-accent"
+          >
             Blog
-          </Link>
+          </a>
         </div>
 
         {/* Desktop Actions */}
@@ -125,26 +152,35 @@ const Header = () => {
               Teams
             </a>
             <a 
-              href="#sponsors" 
+              href="#how-it-works" 
               className="text-sm font-medium text-white transition-colors hover:text-accent py-2"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={(e) => {
+                scrollToSection(e, 'how-it-works');
+                setMobileMenuOpen(false);
+              }}
             >
               Sponsors
             </a>
             <a 
-              href="#local-champs" 
+              href="#community" 
               className="text-sm font-medium text-white transition-colors hover:text-accent py-2"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={(e) => {
+                scrollToSection(e, 'community');
+                setMobileMenuOpen(false);
+              }}
             >
               Local Champs
             </a>
-            <Link 
-              to="/marketplace" 
+            <a 
+              href="#blog" 
               className="text-sm font-medium text-white transition-colors hover:text-accent py-2"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={(e) => {
+                scrollToSection(e, 'blog');
+                setMobileMenuOpen(false);
+              }}
             >
               Blog
-            </Link>
+            </a>
             {user ? (
               <>
                 <Link to="/team/dashboard" onClick={() => setMobileMenuOpen(false)}>

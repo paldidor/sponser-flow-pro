@@ -103,11 +103,7 @@ const CommunitySection = () => {
                 >
                   <img 
                     src="/icons/community-users.svg" 
-                    alt=""
-                    style={{
-                  width: "392px",
-                  height: "392px",
-                  objectFit: "contain"
+                    alt="" 
                     className="h-6 w-6"
                   />
                 </div>
@@ -221,7 +217,12 @@ const CommunitySection = () => {
           <div className="relative flex justify-center lg:justify-end">
             <img 
               src="/images/community-player-celebrating.png" 
-              alt="Community member celebrating" 
+              alt="Community member celebrating"
+              style={{
+                  width: "392px",
+                  height: "392px",
+                  objectFit: "contain"
+                }}
               className="w-full max-w-md h-auto"
             />
           </div>

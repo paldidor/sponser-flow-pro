@@ -157,12 +157,14 @@ const TeamOnboarding = () => {
 
       if (data.analysis_status === 'completed') {
         return true;
-      } else if (data.analysis_status === 'failed') {
+      } else if (data.analysis_status === 'failed' || data.analysis_status === 'error') {
         toast({
           title: "Analysis Failed",
           description: "Please try again or choose a different method.",
           variant: "destructive",
         });
+        setCurrentStep('pdf-upload');
+        setAnalysisFileName(null);
         return false;
       }
 
@@ -289,10 +291,18 @@ const TeamOnboarding = () => {
               const { data: { user } } = await supabase.auth.getUser();
               if (!user) return;
 
+              // Fetch team_profile_id
+              const { data: teamProfile } = await supabase
+                .from('team_profiles')
+                .select('id')
+                .eq('user_id', user.id)
+                .maybeSingle();
+
               const { data: offerData } = await supabase
                 .from('sponsorship_offers')
                 .insert({
                   user_id: user.id,
+                  team_profile_id: teamProfile?.id || null,
                   title: `Sponsorship from ${fileName}`,
                   fundraising_goal: 0,
                   duration: 'TBD',
@@ -309,7 +319,12 @@ const TeamOnboarding = () => {
               if (offerData) {
                 setCurrentOfferId(offerData.id);
                 await supabase.functions.invoke('analyze-pdf-sponsorship', {
-                  body: { pdfUrl: fileUrl, offerId: offerData.id, userId: user.id }
+                  body: { 
+                    pdfUrl: fileUrl, 
+                    offerId: offerData.id, 
+                    userId: user.id,
+                    teamProfileId: teamProfile?.id || null
+                  }
                 });
                 pollAnalysisStatus(offerData.id);
               }

@@ -10,8 +10,9 @@ const PDFUploadInput = lazy(() => import("@/components/PDFUploadInput"));
 const PDFAnalysisProgress = lazy(() => import("@/components/PDFAnalysisProgress"));
 const WebsiteAnalysisInput = lazy(() => import("@/components/WebsiteAnalysisInput"));
 const AnalysisSpinner = lazy(() => import("@/components/AnalysisSpinner"));
+const SponsorshipReview = lazy(() => import("@/components/SponsorshipReview"));
 
-type FlowStep = 'select-method' | 'questionnaire' | 'pdf-upload' | 'pdf-analysis' | 'website-input' | 'website-analysis';
+type FlowStep = 'select-method' | 'questionnaire' | 'pdf-upload' | 'pdf-analysis' | 'pdf-review' | 'website-input' | 'website-analysis';
 
 interface CreateOfferFlowProps {
   onComplete: () => void;
@@ -22,6 +23,7 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
   const [currentStep, setCurrentStep] = useState<FlowStep>('select-method');
   const [analysisFileName, setAnalysisFileName] = useState<string | null>(null);
   const [currentOfferId, setCurrentOfferId] = useState<string | null>(null);
+  const [analyzedOfferData, setAnalyzedOfferData] = useState<any>(null);
   const { toast } = useToast();
 
   const handleSelectMethod = (method: "form" | "website" | "pdf", url?: string) => {
@@ -113,6 +115,63 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
     pollAnalysisStatus(offerData.id);
   };
 
+  const loadPDFOfferData = async (offerId: string) => {
+    try {
+      const { data: offer, error: offerError } = await supabase
+        .from('sponsorship_offers')
+        .select(`
+          *,
+          sponsorship_packages (
+            id,
+            name,
+            price,
+            benefits,
+            description,
+            package_placements (
+              placement_option_id,
+              placement_options (
+                id,
+                name,
+                category,
+                description
+              )
+            )
+          )
+        `)
+        .eq('id', offerId)
+        .single();
+
+      if (offerError) throw offerError;
+
+      const formattedData = {
+        fundraisingGoal: offer.fundraising_goal?.toString() || '0',
+        duration: offer.duration || 'TBD',
+        description: offer.description || offer.impact || '',
+        packages: offer.sponsorship_packages?.map((pkg: any) => ({
+          id: pkg.id,
+          name: pkg.name,
+          price: pkg.price,
+          benefits: pkg.benefits || [],
+          placements: pkg.package_placements?.map((pp: any) => 
+            pp.placement_options?.name || ''
+          ).filter(Boolean) || []
+        })) || [],
+        source: 'pdf',
+        fileName: offer.source_file_name || undefined
+      };
+
+      setAnalyzedOfferData(formattedData);
+      setCurrentStep('pdf-review');
+    } catch (error) {
+      console.error('Error loading PDF offer data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load analyzed data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const pollAnalysisStatus = async (offerId: string) => {
     const maxAttempts = 30;
     let attempts = 0;
@@ -147,11 +206,7 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
       const status = await checkStatus();
       
       if (status === 'completed') {
-        toast({
-          title: "Analysis Complete",
-          description: "Your sponsorship packages have been created!",
-        });
-        onComplete();
+        await loadPDFOfferData(offerId);
         return;
       } else if (status === 'failed') {
         toast({
@@ -196,12 +251,41 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
     onComplete();
   };
 
+  const handlePDFReviewApprove = async () => {
+    if (!currentOfferId) return;
+    
+    try {
+      const { error } = await supabase
+        .from('sponsorship_offers')
+        .update({ status: 'published' })
+        .eq('id', currentOfferId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success!",
+        description: "Your sponsorship offer has been published.",
+      });
+      onComplete();
+    } catch (error) {
+      console.error('Error publishing offer:', error);
+      toast({
+        title: "Error",
+        description: "Failed to publish offer. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleBack = () => {
     if (currentStep === 'questionnaire' || currentStep === 'pdf-upload' || currentStep === 'website-input') {
       setCurrentStep('select-method');
     } else if (currentStep === 'pdf-analysis') {
       setCurrentStep('pdf-upload');
       setAnalysisFileName(null);
+    } else if (currentStep === 'pdf-review') {
+      setCurrentStep('select-method');
+      setAnalyzedOfferData(null);
     } else if (currentStep === 'website-analysis') {
       setCurrentStep('website-input');
     }
@@ -259,6 +343,21 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
           <Suspense fallback={<LoadingFallback />}>
             <WebsiteAnalysisInput
               onAnalyze={handleWebsiteAnalyze}
+              onBack={handleBack}
+            />
+          </Suspense>
+        );
+
+      case 'pdf-review':
+        if (!analyzedOfferData) {
+          return <LoadingFallback />;
+        }
+        return (
+          <Suspense fallback={<LoadingFallback />}>
+            <SponsorshipReview
+              sponsorshipData={analyzedOfferData}
+              teamData={null}
+              onApprove={handlePDFReviewApprove}
               onBack={handleBack}
             />
           </Suspense>

@@ -103,7 +103,11 @@ const CommunitySection = () => {
                 >
                   <img 
                     src="/icons/community-users.svg" 
-                    alt="" 
+                    alt=""
+                    style={{
+                  width: "392px",
+                  height: "392px",
+                  objectFit: "contain"
                     className="h-6 w-6"
                   />
                 </div>
@@ -218,7 +222,7 @@ const CommunitySection = () => {
             <img 
               src="/images/community-player-celebrating.png" 
               alt="Community member celebrating" 
-              className="w-full max-w-[392px] h-auto"
+              className="w-full max-w-md h-auto"
             />
           </div>
         </div>

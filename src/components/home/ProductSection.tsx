@@ -298,7 +298,7 @@ const ProductSection = () => {
                 <img 
                   src={feature.image} 
                   alt={feature.title} 
-                  className="max-w-[240px] h-auto"
+                  className="w-full max-w-sm md:max-w-md h-auto"
                 />
               </div>
             </div>

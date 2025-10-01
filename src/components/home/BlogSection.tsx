@@ -1,106 +1,157 @@
-import { Button } from "@/components/ui/button";
-import { Calendar, Clock, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const BlogSection = () => {
   const articles = [
     {
       image: "/images/product-marketplace.png",
-      date: "Sep 18, 2025",
+      date: "Sep 17, 2025",
       readTime: "9 min read",
       title: "How Youth Sports Sponsorships Deliver Measurable Marketing Impact",
-      excerpt: "Discover how youth sports sponsorships deliver measurable marketing impact at scale.",
-      tag: "Sponsa"
+      excerpt: "Discover how youth sports sponsorships deliver measurable marketing impact at scale."
     },
     {
       image: "/images/product-tasks.png",
       date: "Sep 5, 2025",
       readTime: "7 min read",
       title: "Unlocking the Power of Youth Sports Sponsorship Marketing",
-      excerpt: "Discover how youth sports sponsorships give businesses authentic, cost-effective marketing. Sponsa makes them easier to find, manage, and...",
-      tag: "Sponsa"
+      excerpt: "Discover how youth sports sponsorships give businesses authentic, cost-effective marketing. Sponsa makes them easier to find, manage, and measure."
     },
     {
       image: "/images/product-placeholder.png",
       date: "Aug 29, 2025",
       readTime: "8 min read",
       title: "Why Youth Sports Sponsorships Matters Now More Than Ever",
-      excerpt: "Rising youth sports costs sideline kids. Sponsorships bring them back into the game — and strengthen communities.",
-      tag: "Sponsa"
+      excerpt: "Rising youth sports costs sideline kids. Sponsorships bring them back into the game — and strengthen communities."
     }
   ];
 
   return (
-    <section className="py-16 lg:py-24 bg-muted/30">
-      <div className="container mx-auto px-4 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-12 lg:mb-16">
-          <h2 className="text-4xl lg:text-5xl font-bold mb-4">
-            <span className="text-foreground">Read On. </span>
-            <span className="text-primary">Game On</span>
-            <span className="text-accent">.</span>
+    <section className="py-16 lg:py-24" style={{ background: 'rgba(255, 184, 45, 0.10)' }}>
+      <div className="container mx-auto px-4 lg:px-8 max-w-[1120px]">
+        {/* Header */}
+        <div className="text-center mb-10 lg:mb-16">
+          <h2 className="mb-4">
+            <span style={{ color: '#545454', fontSize: '42px', fontWeight: 800, lineHeight: '42px' }}>
+              Read On
+            </span>
+            <span style={{ color: '#FFB82D', fontSize: '42px', fontWeight: 800, lineHeight: '42px' }}>
+              .
+            </span>
+            <span style={{ color: '#00AAFE', fontSize: '42px', fontWeight: 800, lineHeight: '42px' }}>
+              {' '}Game On
+            </span>
+            <span style={{ color: '#FFB82D', fontSize: '42px', fontWeight: 800, lineHeight: '42px' }}>
+              .
+            </span>
           </h2>
-          <p className="text-lg text-muted-foreground">
+          <p 
+            className="max-w-[672px] mx-auto opacity-80" 
+            style={{ color: '#545454', fontSize: '17.50px', fontWeight: 400, lineHeight: '24.50px' }}
+          >
             Check out our latest articles.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 lg:gap-8 mb-8">
+        {/* Articles Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-12">
           {articles.map((article, index) => (
             <div 
               key={index}
-              className="bg-card rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all group"
+              className="bg-white overflow-hidden flex flex-col"
+              style={{
+                borderRadius: '12.75px',
+                boxShadow: '0px 1px 2px -1px rgba(0, 0, 0, 0.10)'
+              }}
             >
-              <div className="relative overflow-hidden">
+              {/* Image */}
+              <div className="overflow-hidden" style={{ borderTopLeftRadius: '8.75px', borderTopRightRadius: '8.75px' }}>
                 <img 
                   src={article.image} 
                   alt={article.title}
-                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-[196px] object-cover"
                 />
-                <div className="absolute top-4 left-4">
-                  <span className="bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
-                    {article.tag}
-                  </span>
-                </div>
               </div>
-              <div className="p-6">
-                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    <span>{article.date}</span>
+
+              {/* Content */}
+              <div className="p-[21px] flex flex-col gap-[10.50px] flex-1">
+                {/* Meta */}
+                <div className="flex items-center gap-3.5 opacity-70">
+                  <div className="flex items-center gap-[3.50px]">
+                    <img src="/icons/calendar.svg" alt="" className="w-[10.50px] h-[10.50px]" />
+                    <span style={{ color: '#545454', fontSize: '10.50px', fontWeight: 400, lineHeight: '14px' }}>
+                      {article.date}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    <span>{article.readTime}</span>
+                  <div className="flex items-center gap-[3.50px]">
+                    <img src="/icons/clock-small.svg" alt="" className="w-[10.50px] h-[10.50px]" />
+                    <span style={{ color: '#545454', fontSize: '10.50px', fontWeight: 400, lineHeight: '14px' }}>
+                      {article.readTime}
+                    </span>
                   </div>
                 </div>
-                <h3 className="text-xl font-bold mb-2 text-foreground group-hover:text-primary transition-colors">
+
+                {/* Title */}
+                <h3 
+                  className="overflow-hidden"
+                  style={{ 
+                    color: '#545454', 
+                    fontSize: '15.75px', 
+                    fontWeight: 700, 
+                    lineHeight: '24.50px',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical'
+                  }}
+                >
                   {article.title}
                 </h3>
-                <p className="text-muted-foreground mb-4">
+
+                {/* Excerpt */}
+                <p 
+                  className="opacity-80 overflow-hidden flex-1"
+                  style={{ 
+                    color: '#545454', 
+                    fontSize: '12.25px', 
+                    fontWeight: 400, 
+                    lineHeight: '19.91px',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: 'vertical'
+                  }}
+                >
                   {article.excerpt}
                 </p>
-                <Button 
-                  variant="link" 
-                  className="p-0 h-auto text-primary font-semibold group/btn"
-                >
-                  Read More
-                  <ArrowRight className="ml-1 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
-                </Button>
+
+                {/* Read More */}
+                <div className="pt-[15px] border-t border-[#F3F4F6]">
+                  <div className="flex items-center justify-between">
+                    <span style={{ color: '#00AAFE', fontSize: '12.25px', fontWeight: 400, lineHeight: '17.50px' }}>
+                      Read More
+                    </span>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M5.25 3.5L8.75 7L5.25 10.5" stroke="#00AAFE" strokeWidth="1.17" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
               </div>
             </div>
           ))}
         </div>
 
+        {/* View All Button */}
         <div className="flex justify-center">
           <Link to="/marketplace">
-            <Button 
-              variant="outline"
-              size="lg"
-              className="group"
+            <button 
+              className="flex items-center gap-2 px-4 py-2 rounded-[6.75px] hover:bg-white/50 transition-colors"
+              style={{ color: '#00AAFE', fontSize: '12.25px', fontWeight: 500, lineHeight: '17.50px' }}
             >
               View All Articles
-              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-            </Button>
+              <div className="w-9 h-8 rounded-full border border-[#00AAFE] bg-white flex items-center justify-center">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5.25 3.5L8.75 7L5.25 10.5" stroke="#00AAFE" strokeWidth="1.17" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </button>
           </Link>
         </div>
       </div>

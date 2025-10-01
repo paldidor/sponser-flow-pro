@@ -81,6 +81,64 @@ const TeamOnboarding = () => {
     setAnalysisFileName(null);
   };
 
+  const loadPDFOfferData = async (offerId: string) => {
+    try {
+      // Load offer with packages and placements
+      const { data: offer, error: offerError } = await supabase
+        .from('sponsorship_offers')
+        .select(`
+          *,
+          sponsorship_packages (
+            id,
+            name,
+            price,
+            benefits,
+            description,
+            package_placements (
+              placement_option_id,
+              placement_options (
+                id,
+                name,
+                category,
+                description
+              )
+            )
+          )
+        `)
+        .eq('id', offerId)
+        .single();
+
+      if (offerError) throw offerError;
+
+      // Format the data for SponsorshipReview
+      const formattedData: SponsorshipData = {
+        fundraisingGoal: offer.fundraising_goal?.toString() || '0',
+        duration: offer.duration || 'TBD',
+        description: offer.description || '',
+        packages: offer.sponsorship_packages?.map((pkg: any) => ({
+          id: pkg.id,
+          name: pkg.name,
+          price: pkg.price,
+          benefits: pkg.benefits || [],
+          placements: pkg.package_placements?.map((pp: any) => 
+            pp.placement_options?.name || ''
+          ).filter(Boolean) || []
+        })) || [],
+        source: 'pdf',
+        fileName: offer.source_file_name || undefined
+      };
+
+      setSponsorshipData(formattedData);
+    } catch (error) {
+      console.error('Error loading PDF offer data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load analyzed data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const pollAnalysisStatus = async (offerId: string) => {
     const maxAttempts = 30;
     let attempts = 0;
@@ -114,7 +172,8 @@ const TeamOnboarding = () => {
     while (attempts < maxAttempts) {
       const isComplete = await checkStatus();
       if (isComplete) {
-        setCurrentStep('questionnaire');
+        await loadPDFOfferData(offerId);
+        setCurrentStep('review');
         return;
       }
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -276,9 +335,12 @@ const TeamOnboarding = () => {
         );
 
       case 'review':
+        if (!sponsorshipData) {
+          return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+        }
         return (
           <SponsorshipReview
-            sponsorshipData={sponsorshipData!}
+            sponsorshipData={sponsorshipData}
             teamData={teamData}
             onApprove={handleReviewApprove}
             onBack={handleBack}

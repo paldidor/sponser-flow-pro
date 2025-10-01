@@ -51,6 +51,7 @@ export const useActivationTasks = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activation-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["team-dashboard-metrics"] });
       toast.success("Task status updated");
     },
     onError: (error) => {

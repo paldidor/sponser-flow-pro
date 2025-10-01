@@ -12,7 +12,6 @@ const Footer = () => {
               <img 
                 src="/logos/sponsa-logo-footer.png" 
                 alt="Sponsa" 
-                className="brightness-0 invert"
                 style={{ width: '247px', height: '70px' }}
               />
             </Link>

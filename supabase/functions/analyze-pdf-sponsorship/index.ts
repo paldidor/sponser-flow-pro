@@ -21,7 +21,7 @@ serve(async (req) => {
     console.log('Starting PDF analysis request');
 
     // Get request data
-    const { pdfUrl, offerId, userId } = await req.json();
+    const { pdfUrl, offerId, userId, teamProfileId } = await req.json();
 
     if (!pdfUrl || !offerId || !userId) {
       throw new Error('Missing required parameters: pdfUrl, offerId, or userId');
@@ -32,6 +32,20 @@ serve(async (req) => {
     // Initialize Supabase client
     const supabase = createClient(supabaseUrl!, supabaseServiceRoleKey!);
 
+    // Fetch team profile if not provided
+    let finalTeamProfileId = teamProfileId;
+    if (!finalTeamProfileId) {
+      console.log('Fetching team profile for user:', userId);
+      const { data: teamProfile } = await supabase
+        .from('team_profiles')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      finalTeamProfileId = teamProfile?.id || null;
+      console.log('Team profile ID:', finalTeamProfileId);
+    }
+
     // Update status to analyzing immediately
     await supabase
       .from('sponsorship_offers')
@@ -40,7 +54,7 @@ serve(async (req) => {
       .eq('user_id', userId);
 
     // Start background task for heavy processing
-    const analysisPromise = performAnalysis(pdfUrl, offerId, userId, supabase);
+    const analysisPromise = performAnalysis(pdfUrl, offerId, userId, finalTeamProfileId, supabase);
     
     // Start analysis asynchronously (fire and forget)
     analysisPromise.catch((err) => {
@@ -81,6 +95,7 @@ async function performAnalysis(
   pdfUrl: string,
   offerId: string,
   userId: string,
+  teamProfileId: string | null,
   supabase: any
 ) {
 
@@ -328,6 +343,8 @@ ${extractedText}`;
         supported_players: parsedData.total_players_supported || null,
         analysis_status: 'completed',
         title: `Sponsorship Offer - ${parsedData.funding_goal} Goal`,
+        team_profile_id: teamProfileId,
+        status: 'published',
       })
       .eq('id', offerId)
       .eq('user_id', userId);

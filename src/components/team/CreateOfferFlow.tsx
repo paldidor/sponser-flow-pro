@@ -37,12 +37,39 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
   const handlePDFUpload = async (fileUrl: string, fileName: string) => {
     setAnalysisFileName(fileName);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to create an offer.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    const { data: offerData } = await supabase
+    // Fetch user's team profile
+    const { data: teamProfile, error: profileError } = await supabase
+      .from('team_profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('Error fetching team profile:', profileError);
+      toast({
+        title: "Error",
+        description: "Failed to load team profile. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const teamProfileId = teamProfile?.id || null;
+
+    const { data: offerData, error: createError } = await supabase
       .from('sponsorship_offers')
       .insert({
         user_id: user.id,
+        team_profile_id: teamProfileId,
         title: `Sponsorship from ${fileName}`,
         fundraising_goal: 0,
         duration: 'TBD',
@@ -56,67 +83,96 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
       .select()
       .single();
 
-    if (offerData) {
-      setCurrentOfferId(offerData.id);
-      setCurrentStep('pdf-analysis');
-      
-      await supabase.functions.invoke('analyze-pdf-sponsorship', {
-        body: { pdfUrl: fileUrl, offerId: offerData.id, userId: user.id }
+    if (createError || !offerData) {
+      console.error('Error creating offer:', createError);
+      toast({
+        title: "Error",
+        description: "Failed to create sponsorship offer. Please try again.",
+        variant: "destructive",
       });
-      
-      pollAnalysisStatus(offerData.id);
+      return;
     }
+
+    setCurrentOfferId(offerData.id);
+    setCurrentStep('pdf-analysis');
+    
+    const { error: invokeError } = await supabase.functions.invoke('analyze-pdf-sponsorship', {
+      body: { pdfUrl: fileUrl, offerId: offerData.id, userId: user.id, teamProfileId }
+    });
+
+    if (invokeError) {
+      console.error('Error invoking analysis function:', invokeError);
+      toast({
+        title: "Analysis Error",
+        description: "Failed to start PDF analysis. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    pollAnalysisStatus(offerData.id);
   };
 
   const pollAnalysisStatus = async (offerId: string) => {
     const maxAttempts = 30;
     let attempts = 0;
 
-    const checkStatus = async (): Promise<boolean> => {
+    const checkStatus = async (): Promise<'completed' | 'failed' | 'pending'> => {
       const { data, error } = await supabase
         .from('sponsorship_offers')
         .select('analysis_status')
         .eq('id', offerId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error checking analysis status:', error);
-        return false;
+        return 'pending';
+      }
+
+      if (!data) {
+        console.error('Offer not found');
+        return 'failed';
       }
 
       if (data.analysis_status === 'completed') {
-        return true;
-      } else if (data.analysis_status === 'failed') {
-        toast({
-          title: "Analysis Failed",
-          description: "Please try again or choose a different method.",
-          variant: "destructive",
-        });
-        return false;
+        return 'completed';
+      } else if (data.analysis_status === 'failed' || data.analysis_status === 'error') {
+        return 'failed';
       }
 
-      return false;
+      return 'pending';
     };
 
     while (attempts < maxAttempts) {
-      const isComplete = await checkStatus();
-      if (isComplete) {
+      const status = await checkStatus();
+      
+      if (status === 'completed') {
         toast({
           title: "Analysis Complete",
           description: "Your sponsorship packages have been created!",
         });
         onComplete();
         return;
+      } else if (status === 'failed') {
+        toast({
+          title: "Analysis Failed",
+          description: "Please try again or choose a different method.",
+          variant: "destructive",
+        });
+        setCurrentStep('pdf-upload');
+        return;
       }
+      
       await new Promise(resolve => setTimeout(resolve, 2000));
       attempts++;
     }
 
     toast({
       title: "Analysis Timeout",
-      description: "The analysis is taking longer than expected. Please try again.",
+      description: "The analysis is taking longer than expected. Please check your dashboard or try again.",
       variant: "destructive",
     });
+    onComplete(); // Still navigate to dashboard even on timeout
   };
 
   const handleWebsiteAnalyze = async (url: string) => {

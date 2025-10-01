@@ -106,6 +106,38 @@ export type Database = {
         }
         Relationships: []
       }
+      creative_assets: {
+        Row: {
+          asset_name: string
+          asset_url: string
+          created_at: string
+          id: string
+          sponsor_id: string
+        }
+        Insert: {
+          asset_name: string
+          asset_url: string
+          created_at?: string
+          id?: string
+          sponsor_id: string
+        }
+        Update: {
+          asset_name?: string
+          asset_url?: string
+          created_at?: string
+          id?: string
+          sponsor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creative_assets_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       package_placements: {
         Row: {
           created_at: string
@@ -198,6 +230,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      sponsors: {
+        Row: {
+          bio: string | null
+          created_at: string
+          id: string
+          logo_url: string | null
+          name: string
+          package_id: string | null
+          social_links: Json | null
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name: string
+          package_id?: string | null
+          social_links?: Json | null
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          package_id?: string | null
+          social_links?: Json | null
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsors_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "sponsorship_packages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sponsorship_offers: {
         Row: {

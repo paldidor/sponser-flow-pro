@@ -2,6 +2,7 @@ import { DashboardHeader } from "@/components/team/DashboardHeader";
 import { OverviewSection } from "@/components/team/OverviewSection";
 import { SponsorshipOffersSection } from "@/components/team/SponsorshipOffersSection";
 import { ActivationTasksSection } from "@/components/team/ActivationTasksSection";
+import { ActiveSponsorsSection } from "@/components/team/ActiveSponsorsSection";
 
 const TeamDashboard = () => {
   return (
@@ -20,12 +21,7 @@ const TeamDashboard = () => {
         
         <ActivationTasksSection />
         
-        {/* Active Sponsors Section - Coming in Phase 5 */}
-        <div className="bg-muted/30 rounded-lg p-12 text-center mb-8">
-          <p className="text-muted-foreground">
-            Active sponsors section coming next...
-          </p>
-        </div>
+        <ActiveSponsorsSection />
       </main>
     </div>
   );

@@ -53,7 +53,7 @@ export const ActiveSponsorsSection = () => {
           ))}
         </div>
       ) : (
-        <div className="text-center py-12">
+        <div className="text-center py-12 px-4">
           <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-muted-foreground mb-2">No active sponsors yet</p>
           <p className="text-sm text-muted-foreground">

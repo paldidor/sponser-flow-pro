@@ -59,17 +59,18 @@ export const SponsorshipOffersSection = () => {
       actionButton={
         <Button 
           onClick={handleAddPackage}
-          className="bg-primary hover:bg-primary/90 text-white"
+          className="bg-primary hover:bg-primary/90 text-white h-10 sm:h-9 touch-manipulation"
           size="sm"
         >
-          <Plus className="h-4 w-4 mr-2" />
-          Add new Package
+          <Plus className="h-4 w-4 mr-1 sm:mr-2" />
+          <span className="hidden xs:inline">Add new Package</span>
+          <span className="xs:hidden">Add</span>
         </Button>
       }
     >
       {packages && packages.length > 0 ? (
-        <div className="overflow-x-auto -mx-6 px-6 pb-2">
-          <div className="flex gap-4 min-w-min">
+        <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6 pb-2">
+          <div className="flex gap-3 sm:gap-4 min-w-min">
             {packages.map((pkg) => (
               <SponsorshipCard
                 key={pkg.id}
@@ -82,8 +83,11 @@ export const SponsorshipOffersSection = () => {
       ) : (
         <div className="text-center py-12">
           <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-muted-foreground mb-4">No sponsorship packages yet</p>
-          <Button onClick={handleAddPackage} className="bg-primary hover:bg-primary/90 text-white">
+          <p className="text-muted-foreground mb-4 px-4">No sponsorship packages yet</p>
+          <Button 
+            onClick={handleAddPackage} 
+            className="bg-primary hover:bg-primary/90 text-white h-11 touch-manipulation"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Create your first package
           </Button>

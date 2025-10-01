@@ -15,19 +15,19 @@ export const SponsorCard = ({ sponsor }: SponsorCardProps) => {
   };
 
   return (
-    <Card className="p-6 hover:shadow-lg transition-all">
+    <Card className="p-4 sm:p-6 hover:shadow-lg transition-all">
       {/* Logo and Name */}
-      <div className="flex items-start gap-4 mb-4">
-        <Avatar className="h-16 w-16 border-2 border-muted">
+      <div className="flex items-start gap-3 sm:gap-4 mb-4">
+        <Avatar className="h-14 w-14 sm:h-16 sm:w-16 border-2 border-muted flex-shrink-0">
           <AvatarImage src={sponsor.logo_url} alt={sponsor.name} />
-          <AvatarFallback className="bg-primary/10 text-primary">
+          <AvatarFallback className="bg-primary/10 text-primary text-base sm:text-lg">
             {sponsor.name.charAt(0).toUpperCase()}
           </AvatarFallback>
         </Avatar>
         
-        <div className="flex-1">
-          <h4 className="font-semibold text-lg text-foreground mb-1">{sponsor.name}</h4>
-          <Badge variant="secondary" className="bg-dashboard-green/10 text-dashboard-green">
+        <div className="flex-1 min-w-0">
+          <h4 className="font-semibold text-base sm:text-lg text-foreground mb-1 truncate">{sponsor.name}</h4>
+          <Badge variant="secondary" className="bg-dashboard-green/10 text-dashboard-green text-xs">
             {sponsor.package_type}
           </Badge>
         </div>
@@ -46,20 +46,20 @@ export const SponsorCard = ({ sponsor }: SponsorCardProps) => {
           href={sponsor.website}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 text-sm text-primary hover:underline mb-4"
+          className="flex items-center gap-2 text-sm text-primary hover:underline mb-4 touch-manipulation"
         >
-          <ExternalLink className="h-4 w-4" />
-          <span>Visit Website</span>
+          <ExternalLink className="h-4 w-4 flex-shrink-0" />
+          <span className="truncate">Visit Website</span>
         </a>
       )}
 
       {/* Social Links */}
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-1.5 sm:gap-2 mb-4">
         {sponsor.social_links.facebook && (
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0"
+            className="h-9 w-9 p-0 touch-manipulation"
             onClick={() => window.open(sponsor.social_links.facebook, "_blank")}
           >
             <Facebook className="h-4 w-4" />
@@ -70,7 +70,7 @@ export const SponsorCard = ({ sponsor }: SponsorCardProps) => {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0"
+            className="h-9 w-9 p-0 touch-manipulation"
             onClick={() => window.open(sponsor.social_links.twitter, "_blank")}
           >
             <Twitter className="h-4 w-4" />
@@ -81,7 +81,7 @@ export const SponsorCard = ({ sponsor }: SponsorCardProps) => {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0"
+            className="h-9 w-9 p-0 touch-manipulation"
             onClick={() => window.open(sponsor.social_links.instagram, "_blank")}
           >
             <Instagram className="h-4 w-4" />
@@ -92,7 +92,7 @@ export const SponsorCard = ({ sponsor }: SponsorCardProps) => {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0"
+            className="h-9 w-9 p-0 touch-manipulation"
             onClick={() => window.open(sponsor.social_links.linkedin, "_blank")}
           >
             <Linkedin className="h-4 w-4" />
@@ -105,13 +105,13 @@ export const SponsorCard = ({ sponsor }: SponsorCardProps) => {
       {sponsor.creative_assets.length > 0 && (
         <div className="pt-4 border-t">
           <p className="text-xs font-medium text-muted-foreground mb-2">Creative Assets</p>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {sponsor.creative_assets.slice(0, 3).map((asset, index) => (
               <Button
                 key={index}
                 variant="outline"
                 size="sm"
-                className="text-xs"
+                className="text-xs h-9 touch-manipulation"
                 onClick={() => handleAssetClick(asset)}
               >
                 Asset {index + 1}

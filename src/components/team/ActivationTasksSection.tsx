@@ -58,11 +58,12 @@ export const ActivationTasksSection = () => {
       actionButton={
         <Button 
           onClick={handleAddTask}
-          className="bg-dashboard-orange hover:bg-dashboard-orange/90 text-white"
+          className="bg-dashboard-orange hover:bg-dashboard-orange/90 text-white h-10 sm:h-9 touch-manipulation"
           size="sm"
         >
-          <Plus className="h-4 w-4 mr-2" />
-          Add New Task
+          <Plus className="h-4 w-4 mr-1 sm:mr-2" />
+          <span className="hidden xs:inline">Add New Task</span>
+          <span className="xs:hidden">Add</span>
         </Button>
       }
     >
@@ -90,12 +91,12 @@ export const ActivationTasksSection = () => {
           </div>
         </div>
       ) : (
-        <div className="text-center py-12">
+        <div className="text-center py-12 px-4">
           <ClipboardList className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-muted-foreground mb-4">No activation tasks yet</p>
           <Button 
             onClick={handleAddTask}
-            className="bg-dashboard-orange hover:bg-dashboard-orange/90 text-white"
+            className="bg-dashboard-orange hover:bg-dashboard-orange/90 text-white h-11 touch-manipulation"
           >
             <Plus className="h-4 w-4 mr-2" />
             Create your first task

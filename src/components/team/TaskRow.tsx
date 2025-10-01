@@ -19,11 +19,11 @@ export const TaskRow = ({ task, onStatusChange }: TaskRowProps) => {
   const status = statusConfig[task.status];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-6 gap-4 p-4 border-b last:border-b-0 hover:bg-muted/50 transition-colors">
+    <div className="grid grid-cols-1 md:grid-cols-6 gap-3 sm:gap-4 p-3 sm:p-4 border-b last:border-b-0 hover:bg-muted/50 transition-colors">
       {/* Task Name */}
       <div className="md:col-span-1">
         <div className="text-xs text-muted-foreground md:hidden mb-1">Task Name</div>
-        <div className="font-medium text-foreground">{task.task_name}</div>
+        <div className="font-medium text-sm sm:text-base text-foreground">{task.task_name}</div>
       </div>
 
       {/* Due Date */}
@@ -56,21 +56,21 @@ export const TaskRow = ({ task, onStatusChange }: TaskRowProps) => {
       <div className="md:col-span-1">
         <div className="text-xs text-muted-foreground md:hidden mb-1">Status</div>
         <Select value={task.status} onValueChange={(value) => onStatusChange(task.id, value)}>
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full h-10 touch-manipulation">
             <SelectValue>
               <Badge className={cn("font-medium", status.color)}>
                 {status.label}
               </Badge>
             </SelectValue>
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="in-progress">
+          <SelectContent className="z-50">
+            <SelectItem value="in-progress" className="h-10 touch-manipulation">
               <Badge className="bg-dashboard-orange text-white font-medium">In Progress</Badge>
             </SelectItem>
-            <SelectItem value="stuck">
+            <SelectItem value="stuck" className="h-10 touch-manipulation">
               <Badge className="bg-destructive text-white font-medium">Stuck</Badge>
             </SelectItem>
-            <SelectItem value="complete">
+            <SelectItem value="complete" className="h-10 touch-manipulation">
               <Badge className="bg-dashboard-green text-white font-medium">Complete</Badge>
             </SelectItem>
           </SelectContent>

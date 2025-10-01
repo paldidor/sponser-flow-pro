@@ -191,10 +191,8 @@ const HeroSection = () => {
               {/* Button */}
               <button
                 type="submit"
-                className="h-[42px] sm:absolute sm:left-[327.38px] sm:top-0 transition-opacity"
+                className="h-[42px] w-auto sm:absolute sm:left-[327.38px] sm:top-0 transition-opacity"
                 style={{ 
-                  width: '100%',
-                  maxWidth: '100%',
                   background: '#00AAFE',
                   opacity: 0.50,
                   borderRadius: '12.75px',

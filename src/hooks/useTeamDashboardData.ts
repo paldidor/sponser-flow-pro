@@ -12,6 +12,10 @@ export interface DashboardMetrics {
 export const useTeamDashboardData = () => {
   return useQuery({
     queryKey: ["team-dashboard-metrics"],
+    staleTime: 30000, // 30 seconds - data is considered fresh
+    gcTime: 300000, // 5 minutes - cache garbage collection time
+    refetchOnWindowFocus: true,
+    retry: 2,
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       

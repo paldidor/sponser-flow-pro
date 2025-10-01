@@ -5,6 +5,10 @@ import { SponsorshipPackage } from "@/types/dashboard";
 export const useSponsorshipOffers = () => {
   return useQuery({
     queryKey: ["sponsorship-offers"],
+    staleTime: 60000, // 1 minute
+    gcTime: 300000, // 5 minutes
+    refetchOnWindowFocus: true,
+    retry: 2,
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       

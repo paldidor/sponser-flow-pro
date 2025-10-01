@@ -8,6 +8,10 @@ export const useActivationTasks = () => {
 
   const query = useQuery({
     queryKey: ["activation-tasks"],
+    staleTime: 60000, // 1 minute - tasks don't change frequently
+    gcTime: 300000, // 5 minutes
+    refetchOnWindowFocus: true,
+    retry: 2,
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       

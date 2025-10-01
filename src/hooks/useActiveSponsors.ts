@@ -5,6 +5,10 @@ import { ActiveSponsor } from "@/types/dashboard";
 export const useActiveSponsors = () => {
   return useQuery({
     queryKey: ["active-sponsors"],
+    staleTime: 60000, // 1 minute - sponsor data doesn't change frequently
+    gcTime: 300000, // 5 minutes
+    refetchOnWindowFocus: false, // No need to refetch on focus for sponsor data
+    retry: 2,
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       

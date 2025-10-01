@@ -1,9 +1,3 @@
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { useState } from "react";
 
 const FAQSection = () => {
@@ -12,118 +6,198 @@ const FAQSection = () => {
   const brandsFAQs = [
     {
       question: "Can I sponsor multiple teams at once?",
-      answer: "Yes! Sponsa makes it easy to manage multiple team sponsorships from a single dashboard. You can select and manage placements across different teams all in one place."
+      height: "65px"
     },
     {
       question: "What kind of visibility and engagement will my brand get?",
-      answer: "Your brand will be visible on team jerseys, banners, social media, and at games. You'll get detailed analytics on impressions, engagement rates, and community reach through your Sponsa dashboard."
+      height: "65px"
     },
     {
       question: "What kind of reporting will I receive?",
-      answer: "You'll receive comprehensive reports including sponsorship analytics, community impact metrics, engagement data, and ROI tracking. All reports are accessible in real-time through your portal."
+      height: "65px"
     },
     {
       question: "Once I select a sponsorship, how are activations managed?",
-      answer: "Activations are managed through your Sponsa portal. You'll upload logos and brand assets, the team will review and approve them, and you'll track the activation process with automated tasks and reminders."
+      height: "86px"
     },
     {
       question: "How much does it cost to sponsor through Sponsa?",
-      answer: "Sponsorship costs vary by team, placement type, and duration. Sponsa is free to use - you only pay for the sponsorships you select. Pricing is transparent and shown upfront before you commit."
+      height: "64px"
     }
   ];
 
   const teamsFAQs = [
     {
       question: "How do I create a sponsorship listing?",
-      answer: "Simply sign up, complete your team profile, and use our guided flow to create sponsorship packages. You'll define placements, set pricing, and publish your listing to the marketplace."
+      height: "65px"
     },
     {
       question: "How quickly can I start receiving sponsorships?",
-      answer: "Once your profile and packages are approved (usually within 24-48 hours), your listing goes live immediately. Teams typically start receiving inquiries within the first week."
+      height: "65px"
     },
     {
       question: "What support does Sponsa provide?",
-      answer: "We provide onboarding support, marketing materials, activation guides, and ongoing customer support. Plus, you'll have access to our knowledge base and community resources."
+      height: "65px"
     },
     {
       question: "Is there a fee to use Sponsa?",
-      answer: "Sponsa is free for teams to list and manage sponsorships. We only charge a small service fee when a sponsorship is successfully activated."
+      height: "65px"
     },
     {
       question: "How do I manage sponsor relationships?",
-      answer: "Everything happens in your Sponsa dashboard - communication, asset approvals, activation tracking, reporting, and renewals. It's designed to save you hours of admin work."
+      height: "65px"
     }
   ];
 
   const faqs = activeTab === "brands" ? brandsFAQs : teamsFAQs;
 
   return (
-    <section id="faq" className="py-16 lg:py-24 bg-background">
+    <section id="faq" style={{ background: "#F9FAFB" }} className="py-16 lg:py-24">
       <div className="container mx-auto px-4 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <h2 className="text-4xl lg:text-5xl font-bold mb-4">
-            <span className="text-foreground">Questions? We've Got </span>
-            <span className="text-primary">Answers</span>
-            <span className="text-accent">.</span>
+        {/* Header */}
+        <div className="text-center max-w-[1064px] mx-auto mb-8">
+          <h2 className="mb-4">
+            <span style={{ color: "#0A0A0A", fontSize: "42px", fontWeight: 700, lineHeight: "42px" }}>
+              Questions? We've Got{" "}
+            </span>
+            <span style={{ color: "#00AAFE", fontSize: "42px", fontWeight: 700, lineHeight: "42px" }}>
+              Answers
+            </span>
+            <span style={{ color: "#FFB82D", fontSize: "42px", fontWeight: 700, lineHeight: "42px" }}>
+              .
+            </span>
           </h2>
-          <p className="text-lg text-muted-foreground">
+          <p style={{ color: "#545454", fontSize: "15.75px", fontWeight: 400, lineHeight: "24.5px" }}>
             Everything you need to know about how Sponsa works.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-[1fr_auto] gap-8 lg:gap-16 items-start max-w-6xl mx-auto">
-          {/* Left: FAQs */}
-          <div className="space-y-6">
-            {/* Tabs */}
-            <div className="flex gap-3 justify-center lg:justify-start">
-              <button
-                onClick={() => setActiveTab("brands")}
-                className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-                  activeTab === "brands"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                }`}
-              >
-                Brands
-              </button>
-              <button
-                onClick={() => setActiveTab("teams")}
-                className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-                  activeTab === "teams"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                }`}
-              >
-                Teams
-              </button>
+        {/* Tabs */}
+        <div className="flex justify-center mb-12">
+          <div 
+            style={{ 
+              width: "189.45px", 
+              height: "51px",
+              background: "white",
+              boxShadow: "0px 1px 2px -1px rgba(0, 0, 0, 0.10)",
+              borderRadius: "8.75px",
+              border: "1px solid #E5E7EB",
+              padding: "4.5px",
+              display: "flex",
+              gap: "0"
+            }}
+          >
+            <button
+              onClick={() => setActiveTab("brands")}
+              style={{
+                width: "91px",
+                height: "42px",
+                background: activeTab === "brands" ? "#00AAFE" : "transparent",
+                boxShadow: activeTab === "brands" ? "0px 1px 2px -1px rgba(0, 0, 0, 0.10)" : "none",
+                borderRadius: "6.75px",
+                color: activeTab === "brands" ? "white" : "#4A5565",
+                fontSize: "14px",
+                fontWeight: 400,
+                lineHeight: "21px",
+                border: "none",
+                cursor: "pointer",
+                transition: "all 0.2s"
+              }}
+            >
+              Brands
+            </button>
+            <button
+              onClick={() => setActiveTab("teams")}
+              style={{
+                width: "89.45px",
+                height: "42px",
+                background: activeTab === "teams" ? "#00AAFE" : "transparent",
+                boxShadow: activeTab === "teams" ? "0px 1px 2px -1px rgba(0, 0, 0, 0.10)" : "none",
+                borderRadius: "6.75px",
+                color: activeTab === "teams" ? "white" : "#4A5565",
+                fontSize: "14px",
+                fontWeight: 400,
+                lineHeight: "21px",
+                border: "none",
+                cursor: "pointer",
+                transition: "all 0.2s"
+              }}
+            >
+              Teams
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="max-w-[1008px] mx-auto">
+          <div className="grid lg:grid-cols-[483px_1fr] gap-8 lg:gap-[125px] items-start">
+            {/* FAQ Items */}
+            <div className="flex flex-col gap-[10.5px]">
+              {faqs.map((faq, index) => (
+                <div
+                  key={index}
+                  style={{
+                    height: faq.height,
+                    paddingTop: "8px",
+                    paddingBottom: index === faqs.length - 1 ? "8px" : "1px",
+                    paddingLeft: "15px",
+                    paddingRight: "15px",
+                    background: "white",
+                    boxShadow: "0px 1px 2px -1px rgba(0, 0, 0, 0.10)",
+                    borderRadius: "8.75px",
+                    border: "1px solid #E5E7EB",
+                    display: "flex",
+                    flexDirection: "column"
+                  }}
+                >
+                  <div style={{ position: "relative", flex: 1 }}>
+                    <div 
+                      style={{
+                        position: "absolute",
+                        left: "7px",
+                        top: "14.5px",
+                        color: "#0A0A0A",
+                        fontSize: "14px",
+                        fontWeight: 500,
+                        lineHeight: "21px",
+                        maxWidth: "340px"
+                      }}
+                    >
+                      {faq.question}
+                    </div>
+                    <div 
+                      style={{
+                        position: "absolute",
+                        right: "15px",
+                        top: "15.75px",
+                        width: "14px",
+                        height: "14px"
+                      }}
+                    >
+                      <img 
+                        src="/icons/chevron-faq.svg" 
+                        alt="" 
+                        style={{ width: "100%", height: "100%" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
 
-            {/* Accordion */}
-            <Accordion type="single" collapsible className="space-y-3">
-              {faqs.map((faq, index) => (
-                <AccordionItem 
-                  key={index} 
-                  value={`item-${index}`}
-                  className="bg-card border rounded-lg px-6"
-                >
-                  <AccordionTrigger className="text-left font-semibold hover:text-primary hover:no-underline">
-                    {faq.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground">
-                    {faq.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </div>
-
-          {/* Right: Mascot */}
-          <div className="hidden lg:block">
-            <img 
-              src="/images/sponsa-mascot-faq.png" 
-              alt="Sponsa mascot" 
-              className="w-80 h-auto sticky top-24"
-            />
+            {/* Mascot Image */}
+            <div className="hidden lg:block">
+              <img 
+                src="/images/sponsa-mascot-faq.png" 
+                alt="Sponsa mascot" 
+                style={{
+                  width: "392px",
+                  height: "392px",
+                  objectFit: "contain"
+                }}
+                className="mx-auto"
+              />
+            </div>
           </div>
         </div>
       </div>

@@ -3,7 +3,7 @@ const ProductSection = () => {
     {
       title: "Get Matched or Explore",
       description: "Get matched with or explore youth sports team communities that fit your goals then select the available placements you want your business logo and messaging to go.",
-      image: "/images/product-marketplace.png",
+      image: "/images/marketplace-cards.png",
       reverse: false
     },
     {

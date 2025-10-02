@@ -166,7 +166,7 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
                 </p>
 
                 {/* Stats Grid - 8 Tiles */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 mt-6">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 mt-6">
                   <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
                     <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
                       {sponsorshipData.duration.includes("yr") || sponsorshipData.duration.toLowerCase().includes("annual") ? "1 yr" : sponsorshipData.duration}

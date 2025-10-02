@@ -37,11 +37,17 @@ const TeamOnboarding = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('team_profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Error checking team profile:', profileError);
+        // Stay on 'create-profile' step on error
+        return;
+      }
 
       if (profile) {
         setCurrentStep('select-method');

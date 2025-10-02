@@ -75,9 +75,11 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
         console.error('Error fetching team profile:', error);
         toast({
           title: "Error loading profile",
-          description: error.message,
+          description: "Failed to load your team profile. Please try again.",
           variant: "destructive",
         });
+        // Continue with default/empty team if profile doesn't exist yet
+        setTeam(defaultTeam);
       } else if (data) {
         console.log('Fetched team profile (raw):', data);
         console.log('main_values type:', typeof data.main_values, 'value:', data.main_values);

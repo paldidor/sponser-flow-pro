@@ -31,11 +31,15 @@ export const useSmartAuth = () => {
       }
 
       // Check if user has a team profile
-      const { data: teamProfile } = await supabase
+      const { data: teamProfile, error: profileError } = await supabase
         .from('team_profiles')
         .select('id')
         .eq('user_id', session.user.id)
-        .single();
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Error checking team profile:', profileError);
+      }
 
       const hasProfile = !!teamProfile;
 

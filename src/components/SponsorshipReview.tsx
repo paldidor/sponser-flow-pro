@@ -1,14 +1,25 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, MapPin, Users, DollarSign, Calendar, Target } from "lucide-react";
+import { Pencil, MapPin, Users, DollarSign, Calendar, Target, Plus, Trash2 } from "lucide-react";
 import ProgressIndicator from "./ProgressIndicator";
 import LoadingState from "./LoadingState";
-import { SponsorshipData, TeamProfile } from "@/types/flow";
+import { SponsorshipData, TeamProfile, SponsorshipPackage } from "@/types/flow";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { validateSponsorshipData } from "@/lib/validationUtils";
 import { useToast } from "@/hooks/use-toast";
+import { PackageEditor } from "./sponsorship/PackageEditor";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface SponsorshipReviewProps {
   sponsorshipData: SponsorshipData;
@@ -20,6 +31,12 @@ interface SponsorshipReviewProps {
 const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: SponsorshipReviewProps) => {
   const [team, setTeam] = useState<TeamProfile | null>(teamData);
   const [isLoading, setIsLoading] = useState(!teamData);
+  const [packages, setPackages] = useState<SponsorshipPackage[]>(sponsorshipData.packages);
+  const [isEditingPackage, setIsEditingPackage] = useState(false);
+  const [editingPackageData, setEditingPackageData] = useState<any>(null);
+  const [editorMode, setEditorMode] = useState<"create" | "edit">("create");
+  const [deletePackageId, setDeletePackageId] = useState<string | null>(null);
+  const [offerId, setOfferId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleApprove = () => {
@@ -38,11 +55,9 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
   };
 
   useEffect(() => {
-    const fetchTeamProfile = async () => {
+    const fetchData = async () => {
       if (teamData) {
         setTeam(teamData);
-        setIsLoading(false);
-        return;
       }
 
       try {
@@ -52,26 +67,160 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
           return;
         }
 
-        const { data, error } = await supabase
-          .from('team_profiles')
-          .select('*')
+        // Fetch team profile if not provided
+        if (!teamData) {
+          const { data, error } = await supabase
+            .from('team_profiles')
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          if (error) {
+            console.error('Error fetching team profile:', error);
+          } else if (data) {
+            setTeam(data as TeamProfile);
+          }
+        }
+
+        // Fetch the offer ID to use for package operations
+        const { data: offerData } = await supabase
+          .from('sponsorship_offers')
+          .select('id')
           .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
           .maybeSingle();
 
-        if (error) {
-          console.error('Error fetching team profile:', error);
-        } else if (data) {
-          setTeam(data as TeamProfile);
+        if (offerData) {
+          setOfferId(offerData.id);
         }
       } catch (error) {
-        console.error('Error fetching team profile:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchTeamProfile();
+    fetchData();
   }, [teamData]);
+
+  const refreshPackages = async () => {
+    if (!offerId) return;
+
+    try {
+      const { data: packagesData, error } = await supabase
+        .from('sponsorship_packages')
+        .select(`
+          *,
+          package_placements (
+            placement_option:placement_options (*)
+          )
+        `)
+        .eq('sponsorship_offer_id', offerId)
+        .order('package_order');
+
+      if (error) throw error;
+
+      const formattedPackages: SponsorshipPackage[] = (packagesData || []).map((pkg: any) => ({
+        id: pkg.id,
+        name: pkg.name,
+        price: pkg.price,
+        benefits: pkg.benefits || [],
+        placements: (pkg.package_placements || []).map((pp: any) => pp.placement_option?.name).filter(Boolean),
+      }));
+
+      setPackages(formattedPackages);
+    } catch (error) {
+      console.error('Error refreshing packages:', error);
+      toast({
+        title: "Error",
+        description: "Failed to refresh packages",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditPackage = async (packageId: string) => {
+    try {
+      const { data: pkgData, error } = await supabase
+        .from('sponsorship_packages')
+        .select(`
+          *,
+          package_placements (
+            placement_option_id
+          )
+        `)
+        .eq('id', packageId)
+        .single();
+
+      if (error) throw error;
+
+      setEditingPackageData({
+        id: pkgData.id,
+        name: pkgData.name,
+        price: pkgData.price,
+        placementIds: (pkgData.package_placements || []).map((pp: any) => pp.placement_option_id),
+        sponsorship_offer_id: pkgData.sponsorship_offer_id,
+      });
+      setEditorMode("edit");
+      setIsEditingPackage(true);
+    } catch (error) {
+      console.error('Error loading package:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load package for editing",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddPackage = () => {
+    setEditingPackageData(null);
+    setEditorMode("create");
+    setIsEditingPackage(true);
+  };
+
+  const handleDeletePackage = async () => {
+    if (!deletePackageId) return;
+
+    try {
+      // Delete package placements first
+      const { error: placementsError } = await supabase
+        .from('package_placements')
+        .delete()
+        .eq('package_id', deletePackageId);
+
+      if (placementsError) throw placementsError;
+
+      // Delete the package
+      const { error: packageError } = await supabase
+        .from('sponsorship_packages')
+        .delete()
+        .eq('id', deletePackageId);
+
+      if (packageError) throw packageError;
+
+      toast({
+        title: "Success",
+        description: "Package deleted successfully",
+      });
+
+      await refreshPackages();
+    } catch (error) {
+      console.error('Error deleting package:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete package",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletePackageId(null);
+    }
+  };
+
+  const handlePackageSaved = async () => {
+    await refreshPackages();
+  };
   const totalReach = team ? (
     (team.instagram_followers || 0) + 
     (team.facebook_followers || 0) + 
@@ -80,7 +229,7 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
     (team.youtube_followers || 0) + 
     (team.email_list_size || 0)
   ) : 0;
-  const totalPotential = sponsorshipData.packages.reduce((sum, pkg) => sum + pkg.price, 0);
+  const totalPotential = packages.reduce((sum, pkg) => sum + pkg.price, 0);
 
   if (isLoading) {
     return (
@@ -212,16 +361,22 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
         <Card className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold">Sponsorship Packages</h2>
-            <div className="text-right">
-              <p className="text-sm text-muted-foreground">Total Potential</p>
-              <p className="text-2xl font-bold text-green-600">
-                ${totalPotential.toLocaleString()}
-              </p>
+            <div className="flex items-center gap-4">
+              <Button onClick={handleAddPackage} variant="outline" size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Package
+              </Button>
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Total Potential</p>
+                <p className="text-2xl font-bold text-green-600">
+                  ${totalPotential.toLocaleString()}
+                </p>
+              </div>
             </div>
           </div>
 
           <div className="space-y-4">
-            {sponsorshipData.packages.map((pkg) => (
+            {packages.map((pkg) => (
               <Card key={pkg.id} className="p-6 bg-secondary/30">
                 <div className="flex items-start justify-between mb-4">
                   <div>
@@ -230,9 +385,23 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
                       ${pkg.price.toLocaleString()}
                     </p>
                   </div>
-                  <Button variant="ghost" size="sm">
-                    <Pencil className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditPackage(pkg.id)}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDeletePackageId(pkg.id)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
 
                 {pkg.benefits.length > 0 && (
@@ -268,6 +437,34 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
             ))}
           </div>
         </Card>
+
+        {offerId && (
+          <PackageEditor
+            open={isEditingPackage}
+            onOpenChange={setIsEditingPackage}
+            packageData={editingPackageData}
+            sponsorshipOfferId={offerId}
+            onSave={handlePackageSaved}
+            mode={editorMode}
+          />
+        )}
+
+        <AlertDialog open={!!deletePackageId} onOpenChange={(open) => !open && setDeletePackageId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Package</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this package? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeletePackage} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <div className="flex justify-center gap-4">
           <Button variant="outline" size="lg" onClick={onBack}>

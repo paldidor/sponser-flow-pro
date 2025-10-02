@@ -32,8 +32,14 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
     } else if (method === "website") {
       setCurrentStep('website-input');
     } else {
+      // PDF method is now handled directly in CreateSponsorshipOffer
+      // This shouldn't be called anymore, but keep for backwards compatibility
       setCurrentStep('pdf-upload');
     }
+  };
+
+  const handleDirectPDFUpload = async (fileUrl: string, fileName: string, file: File) => {
+    await handlePDFUpload(fileUrl, fileName, file);
   };
 
   const handlePDFUpload = async (fileUrl: string, fileName: string, file?: File) => {
@@ -172,11 +178,13 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
         return;
       } else if (status === 'failed') {
         toast({
-          title: "Analysis Failed",
-          description: "Please try again or choose a different method.",
+          title: "PDF Analysis Failed",
+          description: "We couldn't process your PDF. Let's try the questionnaire instead - it only takes 2-3 minutes!",
           variant: "destructive",
         });
-        setCurrentStep('pdf-upload');
+        setCurrentStep('questionnaire');
+        setAnalysisFileName(null);
+        resetOffer();
         return;
       }
       
@@ -257,7 +265,10 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
       case 'select-method':
         return (
           <Suspense fallback={<LoadingFallback />}>
-            <CreateSponsorshipOffer onSelectMethod={handleSelectMethod} />
+            <CreateSponsorshipOffer 
+              onSelectMethod={handleSelectMethod}
+              onPDFUpload={handleDirectPDFUpload}
+            />
           </Suspense>
         );
 

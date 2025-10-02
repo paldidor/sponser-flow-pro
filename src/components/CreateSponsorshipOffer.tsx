@@ -4,14 +4,82 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Upload, Globe, FileText, Clock, ArrowRight } from "lucide-react";
 import ProgressIndicator from "./ProgressIndicator";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { validatePDFFile } from "@/lib/validationUtils";
 
 interface CreateSponsorshipOfferProps {
   onSelectMethod: (method: "form" | "website" | "pdf", url?: string) => void;
+  onPDFUpload?: (fileUrl: string, fileName: string, file: File) => void;
 }
 
-const CreateSponsorshipOffer = ({ onSelectMethod }: CreateSponsorshipOfferProps) => {
+const CreateSponsorshipOffer = ({ onSelectMethod, onPDFUpload }: CreateSponsorshipOfferProps) => {
   const [websiteUrl, setWebsiteUrl] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  const handlePDFClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file
+    const validation = validatePDFFile(file);
+    if (!validation.isValid) {
+      toast({
+        title: "Invalid File",
+        description: validation.error,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const timestamp = Date.now();
+      const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const filePath = `${timestamp}_${sanitizedFileName}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('sponsorship-pdfs')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('sponsorship-pdfs')
+        .getPublicUrl(filePath);
+
+      if (onPDFUpload) {
+        onPDFUpload(publicUrl, file.name, file);
+      } else {
+        onSelectMethod("pdf");
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload Failed",
+        description: error instanceof Error ? error.message : "Failed to upload PDF. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen py-12 px-4">
@@ -44,11 +112,19 @@ const CreateSponsorshipOffer = ({ onSelectMethod }: CreateSponsorshipOfferProps)
                   Best Method
                 </div>
               </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf"
+                onChange={handleFileChange}
+                className="hidden"
+              />
               <Button
                 className="w-full"
-                onClick={() => onSelectMethod("pdf")}
+                onClick={handlePDFClick}
+                disabled={isUploading}
               >
-                Upload PDF
+                {isUploading ? "Uploading..." : "Upload PDF"}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>

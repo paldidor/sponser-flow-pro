@@ -78,11 +78,9 @@ const TeamOnboarding = () => {
         }
 
         if (profile) {
-          toast({
-            title: "Welcome Back!",
-            description: "Your team profile is ready. Let's create your sponsorship offer.",
-          });
-          setCurrentStep('select-method');
+          setTeamData(profile as TeamProfile);
+          navigate('/team/dashboard', { replace: true });
+          return;
         }
       } catch (error) {
         console.error('Unexpected error during initialization:', error);

@@ -135,7 +135,16 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
           if (error) {
             console.error('Error fetching team profile:', error);
           } else if (data) {
-            setTeam(data as TeamProfile);
+            // Ensure main_values is properly parsed as an array
+            const teamProfile: TeamProfile = {
+              ...data,
+              main_values: Array.isArray(data.main_values) 
+                ? data.main_values 
+                : typeof data.main_values === 'string'
+                  ? JSON.parse(data.main_values)
+                  : []
+            };
+            setTeam(teamProfile);
           }
         }
 

@@ -89,9 +89,24 @@ export const TeamProfileEditor = ({
 
   useEffect(() => {
     if (open && profileData) {
+      // Helper function to ensure main_values is always an array
+      const parseMainValues = (values: any): string[] => {
+        if (!values) return [];
+        if (Array.isArray(values)) return values;
+        if (typeof values === 'string') {
+          try {
+            const parsed = JSON.parse(values);
+            return Array.isArray(parsed) ? parsed : [];
+          } catch {
+            return [];
+          }
+        }
+        return [];
+      };
+
       setFormData({
         team_name: profileData.team_name || "",
-        main_values: profileData.main_values || [],
+        main_values: parseMainValues(profileData.main_values),
         location: profileData.location || "",
         team_bio: profileData.team_bio || "",
         sport: profileData.sport || "",

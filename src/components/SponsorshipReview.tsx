@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Pencil, MapPin, Users, DollarSign, Calendar, Target, Plus, Trash2 } from "lucide-react";
 import ProgressIndicator from "./ProgressIndicator";
 import LoadingState from "./LoadingState";
@@ -39,6 +41,14 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
   const [deletePackageId, setDeletePackageId] = useState<string | null>(null);
   const [offerId, setOfferId] = useState<string | null>(null);
   const [isEditingTeam, setIsEditingTeam] = useState(false);
+  
+  // Campaign details editing state
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [fundraisingGoal, setFundraisingGoal] = useState(sponsorshipData.fundraisingGoal);
+  const [duration, setDuration] = useState(sponsorshipData.duration);
+  const [description, setDescription] = useState(sponsorshipData.description || "");
+  const [savingField, setSavingField] = useState(false);
+  
   const { toast } = useToast();
 
   const handleApprove = () => {
@@ -231,6 +241,88 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
       description: "Team profile updated successfully",
     });
   };
+
+  const handleEditField = (field: string) => {
+    setEditingField(field);
+  };
+
+  const handleCancelEdit = () => {
+    // Reset to original values
+    setFundraisingGoal(sponsorshipData.fundraisingGoal);
+    setDuration(sponsorshipData.duration);
+    setDescription(sponsorshipData.description || "");
+    setEditingField(null);
+  };
+
+  const handleSaveCampaignField = async (field: string) => {
+    if (!offerId) {
+      toast({
+        title: "Error",
+        description: "Offer ID not found. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate
+    if (field === "fundraisingGoal") {
+      const goalValue = Number(fundraisingGoal);
+      if (isNaN(goalValue) || goalValue <= 0) {
+        toast({
+          title: "Validation Error",
+          description: "Fundraising goal must be a positive number",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    if (field === "duration" && !duration.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Duration is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSavingField(true);
+
+    try {
+      const updateData: any = {};
+      
+      if (field === "fundraisingGoal") {
+        updateData.fundraising_goal = Number(fundraisingGoal);
+      } else if (field === "duration") {
+        updateData.duration = duration;
+      } else if (field === "description") {
+        updateData.description = description;
+      }
+
+      const { error } = await supabase
+        .from("sponsorship_offers")
+        .update(updateData)
+        .eq("id", offerId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Campaign details updated successfully",
+      });
+
+      setEditingField(null);
+    } catch (error) {
+      console.error("Error updating campaign details:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update campaign details",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingField(false);
+    }
+  };
   const totalReach = team ? (
     (team.instagram_followers || 0) + 
     (team.facebook_followers || 0) + 
@@ -240,6 +332,7 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
     (team.email_list_size || 0)
   ) : 0;
   const totalPotential = packages.reduce((sum, pkg) => sum + pkg.price, 0);
+  const totalReachValue = totalReach.toLocaleString();
 
   if (isLoading) {
     return (
@@ -289,45 +382,162 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
             </div>
 
             <div className="space-y-6">
+              {/* Fundraising Goal */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-medium text-muted-foreground">Fundraising Goal</h3>
-                  <Button variant="ghost" size="sm">
-                    <Pencil className="w-3 h-3" />
-                  </Button>
+                  {editingField !== "fundraisingGoal" && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditField("fundraisingGoal")}
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                  )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <DollarSign className="w-5 h-5 text-green-600" />
-                  <span className="text-2xl font-bold text-green-600">
-                    ${Number(sponsorshipData.fundraisingGoal).toLocaleString()}
-                  </span>
-                </div>
+                {editingField === "fundraisingGoal" ? (
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        type="number"
+                        value={fundraisingGoal}
+                        onChange={(e) => setFundraisingGoal(e.target.value)}
+                        className="pl-9 text-lg"
+                        placeholder="Enter amount"
+                        autoFocus
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleSaveCampaignField("fundraisingGoal")}
+                        disabled={savingField}
+                      >
+                        {savingField ? "Saving..." : "Save"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleCancelEdit}
+                        disabled={savingField}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="w-5 h-5 text-green-600" />
+                    <span className="text-2xl font-bold text-green-600">
+                      ${Number(fundraisingGoal).toLocaleString()}
+                    </span>
+                  </div>
+                )}
               </div>
 
+              {/* Duration */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-medium text-muted-foreground">Campaign Duration</h3>
-                  <Button variant="ghost" size="sm">
-                    <Pencil className="w-3 h-3" />
-                  </Button>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-primary" />
-                  <span className="text-lg font-semibold">{sponsorshipData.duration}</span>
-                </div>
-              </div>
-
-              {sponsorshipData.description && (
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-medium text-muted-foreground">Description</h3>
-                    <Button variant="ghost" size="sm">
+                  {editingField !== "duration" && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditField("duration")}
+                    >
                       <Pencil className="w-3 h-3" />
                     </Button>
-                  </div>
-                  <p className="text-sm">{sponsorshipData.description}</p>
+                  )}
                 </div>
-              )}
+                {editingField === "duration" ? (
+                  <div className="space-y-2">
+                    <Input
+                      value={duration}
+                      onChange={(e) => setDuration(e.target.value)}
+                      className="text-lg"
+                      placeholder="e.g., 1 Season, 6 Months"
+                      autoFocus
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleSaveCampaignField("duration")}
+                        disabled={savingField}
+                      >
+                        {savingField ? "Saving..." : "Save"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleCancelEdit}
+                        disabled={savingField}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-primary" />
+                    <span className="text-lg font-semibold">{duration}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Description */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">Description</h3>
+                  {editingField !== "description" && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditField("description")}
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                  )}
+                </div>
+                {editingField === "description" ? (
+                  <div className="space-y-2">
+                    <Textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="text-sm"
+                      placeholder="Enter campaign description..."
+                      rows={4}
+                      autoFocus
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleSaveCampaignField("description")}
+                        disabled={savingField}
+                      >
+                        {savingField ? "Saving..." : "Save"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleCancelEdit}
+                        disabled={savingField}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm">
+                    {description || (
+                      <span className="text-muted-foreground italic">
+                        No description provided. Click to add one.
+                      </span>
+                    )}
+                  </p>
+                )}
+              </div>
             </div>
           </Card>
 

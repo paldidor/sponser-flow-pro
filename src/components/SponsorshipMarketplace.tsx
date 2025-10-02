@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, MapPin, Users, Calendar, TrendingUp, Mail, Globe, Heart, Share2, Instagram, Twitter } from "lucide-react";
+import { Check, MapPin, Mail, Globe, Heart, Share2, Instagram, Twitter, Facebook, Linkedin, Youtube, TrendingUp } from "lucide-react";
 import { SponsorshipData, TeamProfile } from "@/types/flow";
+import { useToast } from "@/hooks/use-toast";
 
 interface SponsorshipMarketplaceProps {
   sponsorshipData: SponsorshipData;
@@ -12,6 +14,7 @@ interface SponsorshipMarketplaceProps {
 
 const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarketplaceProps) => {
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const defaultTeam: TeamProfile = {
     team_name: "Community Youth Team",
@@ -37,9 +40,72 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
   const totalReach = (team.instagram_followers || 0) + (team.facebook_followers || 0) + (team.twitter_followers || 0) + (team.email_list_size || 0);
   const selectedPkg = sponsorshipData.packages.find(pkg => pkg.id === selectedPackage);
 
+  const contactEmail = sponsorshipData.contact?.email;
+  const websiteUrl = sponsorshipData.contact?.website;
+
+  const handleContactTeam = () => {
+    if (contactEmail) {
+      window.location.href = `mailto:${contactEmail}?subject=Sponsorship Inquiry for ${team.team_name}`;
+    } else {
+      toast({
+        title: "Contact information unavailable",
+        description: "Please try again later or use the social media links.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: `Support ${team.team_name}`,
+      text: `Check out this sponsorship opportunity for ${team.team_name}!`,
+      url: window.location.href,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        // User cancelled or error occurred
+      }
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(window.location.href);
+      toast({
+        title: "Link copied!",
+        description: "Share link has been copied to clipboard.",
+      });
+    }
+  };
+
+  const socialLinks = [
+    { icon: Instagram, url: team.instagram_link, label: "Instagram" },
+    { icon: Twitter, url: team.twitter_link, label: "Twitter" },
+    { icon: Facebook, url: team.facebook_link, label: "Facebook" },
+    { icon: Linkedin, url: team.linkedin_link, label: "LinkedIn" },
+    { icon: Youtube, url: team.youtube_link, label: "YouTube" },
+  ].filter(link => link.url);
+
   return (
-    <div className="min-h-screen py-12 px-4 bg-background">
-      <div className="max-w-7xl mx-auto">
+    <>
+      <Helmet>
+        <title>{`Sponsor ${team.team_name} - Youth Sports Sponsorship`}</title>
+        <meta 
+          name="description" 
+          content={`Support ${team.team_name} through sponsorship. ${team.team_bio?.substring(0, 150)}...`} 
+        />
+        <meta property="og:title" content={`Sponsor ${team.team_name}`} />
+        <meta property="og:description" content={team.team_bio} />
+        <meta property="og:type" content="website" />
+        {team.images?.[0] && <meta property="og:image" content={team.images[0]} />}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`Sponsor ${team.team_name}`} />
+        <meta name="twitter:description" content={team.team_bio} />
+        {team.images?.[0] && <meta name="twitter:image" content={team.images[0]} />}
+      </Helmet>
+      
+      <div className="min-h-screen py-12 px-4 bg-background">
+        <div className="max-w-7xl mx-auto">
         {/* Hero Section */}
         <div className="bg-card rounded-2xl shadow-sm overflow-hidden mb-8">
           <div className="p-8">
@@ -53,21 +119,24 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
                     <h1 className="text-3xl font-bold mb-2">{team.team_name}</h1>
                     <div className="flex items-center gap-4 text-muted-foreground">
                       <div className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
+                      <MapPin className="w-4 h-4" />
                         <span>{team.location}</span>
                       </div>
-                      <a href="#" className="flex items-center gap-1 text-primary hover:underline">
-                        <Globe className="w-4 h-4" />
-                        Visit Team Website
-                      </a>
+                      {websiteUrl && (
+                        <a 
+                          href={websiteUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="flex items-center gap-1 text-primary hover:underline"
+                        >
+                          <Globe className="w-4 h-4" />
+                          Visit Team Website
+                        </a>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      <Heart className="w-4 h-4 mr-2" />
-                      Save Team
-                    </Button>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={handleShare}>
                       <Share2 className="w-4 h-4 mr-2" />
                       Share
                     </Button>
@@ -80,7 +149,11 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
                   <div className="grid grid-cols-2 gap-4">
                     {team.images.slice(0, 2).map((img, idx) => (
                       <div key={idx} className="aspect-video rounded-lg overflow-hidden bg-muted">
-                        <img src={img} alt={`Team ${idx + 1}`} className="w-full h-full object-cover" />
+                        <img 
+                          src={img} 
+                          alt={`${team.team_name} - Team photo ${idx + 1}`} 
+                          className="w-full h-full object-cover" 
+                        />
                       </div>
                     ))}
                   </div>
@@ -246,24 +319,38 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
 
               <Card className="p-6 mt-6">
                 <h3 className="font-semibold mb-4">Questions?</h3>
-                <Button variant="outline" className="w-full mb-3">
+                <Button 
+                  variant="outline" 
+                  className="w-full mb-3" 
+                  onClick={handleContactTeam}
+                  disabled={!contactEmail}
+                >
                   <Mail className="w-4 h-4 mr-2" />
                   Contact Team
                 </Button>
-                <div className="flex justify-center gap-4 mt-4">
-                  <a href="#" className="text-muted-foreground hover:text-primary">
-                    <Instagram className="w-5 h-5" />
-                  </a>
-                  <a href="#" className="text-muted-foreground hover:text-primary">
-                    <Twitter className="w-5 h-5" />
-                  </a>
-                </div>
+                {socialLinks.length > 0 && (
+                  <div className="flex justify-center gap-4 mt-4">
+                    {socialLinks.map(({ icon: Icon, url, label }) => (
+                      <a 
+                        key={label}
+                        href={url} 
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted-foreground hover:text-primary transition-colors"
+                        aria-label={`Visit ${team.team_name} on ${label}`}
+                      >
+                        <Icon className="w-5 h-5" />
+                      </a>
+                    ))}
+                  </div>
+                )}
               </Card>
             </div>
           </div>
         </div>
       </div>
     </div>
+    </>
   );
 };
 

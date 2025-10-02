@@ -64,9 +64,16 @@ export const useSmartAuth = () => {
         hasProfile = !!teamProfile;
       }
 
+      // Check if onboarding is in progress - if so, don't redirect
+      const isOnboarding = sessionStorage.getItem('onboarding_in_progress') === 'true';
+      
       // Determine redirect path based on role and profile status
       let redirectPath = '/auth';
-      if (userRole === 'team') {
+      
+      if (isOnboarding) {
+        // Stay on current page during onboarding
+        redirectPath = window.location.pathname;
+      } else if (userRole === 'team') {
         redirectPath = hasProfile ? '/team/dashboard' : '/team/onboarding';
       } else if (userRole === 'business') {
         redirectPath = '/marketplace'; // Future: /business/dashboard

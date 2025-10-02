@@ -35,6 +35,15 @@ const TeamOnboarding = () => {
   const { toast } = useToast();
   const { currentOfferId, offerData, isLoading, loadingMessage, loadOfferData, loadLatestQuestionnaireOffer, publishOffer, resetOffer } = useOfferCreation();
 
+  // Set onboarding flag to prevent auto-redirects during onboarding
+  useEffect(() => {
+    sessionStorage.setItem('onboarding_in_progress', 'true');
+    
+    return () => {
+      sessionStorage.removeItem('onboarding_in_progress');
+    };
+  }, []);
+
   // Check if user already has a profile
   useEffect(() => {
     const checkExistingProfile = async () => {
@@ -81,6 +90,7 @@ const TeamOnboarding = () => {
 
         if (profile) {
           setTeamData(profile as TeamProfile);
+          sessionStorage.removeItem('onboarding_in_progress');
           navigate('/team/dashboard', { replace: true });
           return;
         }
@@ -316,6 +326,7 @@ const TeamOnboarding = () => {
           title: "Offer Created Successfully",
           description: "Your sponsorship offer has been created! Redirecting to dashboard...",
         });
+        sessionStorage.removeItem('onboarding_in_progress');
         setTimeout(() => navigate('/team/dashboard'), 1500);
       }
     } catch (error) {
@@ -324,6 +335,7 @@ const TeamOnboarding = () => {
         title: "Something Went Wrong",
         description: "Your offer was created, but we couldn't load it for review. Check your dashboard!",
       });
+      sessionStorage.removeItem('onboarding_in_progress');
       setTimeout(() => navigate('/team/dashboard'), 2000);
     }
   };
@@ -331,6 +343,7 @@ const TeamOnboarding = () => {
   const handleReviewApprove = async () => {
     const success = await publishOffer();
     if (success) {
+      sessionStorage.removeItem('onboarding_in_progress');
       navigate('/team/dashboard');
     }
   };

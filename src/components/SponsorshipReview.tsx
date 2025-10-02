@@ -207,6 +207,15 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
   };
 
   const handleEditPackage = async (packageId: string) => {
+    if (!offerId) {
+      toast({
+        title: "Unable to Edit Package",
+        description: "Please wait for the offer to be loaded, or refresh the page.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       const { data: pkgData, error } = await supabase
         .from('sponsorship_packages')
@@ -241,6 +250,14 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
   };
 
   const handleAddPackage = () => {
+    if (!offerId) {
+      toast({
+        title: "Unable to Add Package",
+        description: "Please wait for the offer to be created first, or refresh the page.",
+        variant: "destructive",
+      });
+      return;
+    }
     setEditingPackageData(null);
     setEditorMode("create");
     setIsEditingPackage(true);
@@ -680,7 +697,12 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold">Sponsorship Packages</h2>
             <div className="flex items-center gap-4">
-              <Button onClick={handleAddPackage} variant="outline" size="sm">
+              <Button 
+                onClick={handleAddPackage} 
+                variant="outline" 
+                size="sm"
+                disabled={!offerId || savingField}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Package
               </Button>
@@ -718,7 +740,8 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEditPackage(pkg.id)}
-                        disabled={savingField}
+                        disabled={!offerId || savingField}
+                        title="Edit package"
                       >
                         <Pencil className="w-4 h-4" />
                       </Button>
@@ -728,6 +751,7 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
                         onClick={() => setDeletePackageId(pkg.id)}
                         className="text-destructive hover:text-destructive"
                         disabled={savingField}
+                        title="Delete package"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -769,16 +793,14 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
           </div>
         </Card>
 
-        {offerId && (
-          <PackageEditor
-            open={isEditingPackage}
-            onOpenChange={setIsEditingPackage}
-            packageData={editingPackageData}
-            sponsorshipOfferId={offerId}
-            onSave={handlePackageSaved}
-            mode={editorMode}
-          />
-        )}
+        <PackageEditor
+          open={isEditingPackage && !!offerId}
+          onOpenChange={setIsEditingPackage}
+          packageData={editingPackageData}
+          sponsorshipOfferId={offerId || ""}
+          onSave={handlePackageSaved}
+          mode={editorMode}
+        />
 
         <TeamProfileEditor
           open={isEditingTeam}

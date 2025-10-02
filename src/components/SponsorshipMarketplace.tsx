@@ -128,20 +128,20 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         
         {/* Hero / Team Header */}
-        <div className="bg-white border-b border-gray-200 rounded-xl mb-6 overflow-hidden">
+        <div className="bg-white border-b border-gray-200 mb-6">
           <div className="p-6 sm:p-8">
             <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
               {/* Left: Team Info */}
               <div className="flex flex-col">
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 lg:w-16 lg:h-16 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                     <Trophy className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h1 className="text-2xl sm:text-3xl lg:text-[32px] font-bold leading-tight mb-2" style={{ color: '#545454' }}>
                       {team.team_name}
                     </h1>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-sm">
                       <div className="flex items-center gap-1 text-gray-600">
                         <MapPin className="w-4 h-4 flex-shrink-0" />
                         <span className="truncate">{team.location}</span>
@@ -161,16 +161,16 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
                   </div>
                 </div>
                 
-                <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-6" style={{ maxWidth: '65ch' }}>
+                <p className="text-sm sm:text-base text-gray-700 mb-6" style={{ maxWidth: '65ch', lineHeight: '1.55' }}>
                   {team.team_bio}
                 </p>
               </div>
 
               {/* Right: Images */}
               {team.images && team.images.length > 0 && (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   {team.images.slice(0, 2).map((img, idx) => (
-                    <div key={idx} className="h-24 sm:h-32 lg:h-40 rounded-lg overflow-hidden bg-gray-100">
+                    <div key={idx} className="h-28 sm:h-32 lg:h-36 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
                       <img 
                         src={img} 
                         alt={`${team.team_name} - Team photo ${idx + 1}`} 
@@ -186,57 +186,57 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
 
         {/* Stats Grid - 8 Tiles */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-[#00aafe] text-center">
-            <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
+          <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
+            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
               {sponsorshipData.duration.includes("yr") || sponsorshipData.duration.toLowerCase().includes("annual") ? "1 yr" : sponsorshipData.duration}
             </div>
             <div className="text-xs text-gray-600 leading-tight">Duration</div>
           </div>
 
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-[#00aafe] text-center">
-            <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
+          <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
+            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
               ${Number(sponsorshipData.fundraisingGoal).toLocaleString()}
             </div>
             <div className="text-xs text-gray-600 leading-tight">Fundraising Goal</div>
           </div>
 
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-[#00aafe] text-center">
-            <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
+          <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
+            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
               {team.number_of_players}
             </div>
             <div className="text-xs text-gray-600 leading-tight">Players Supported</div>
           </div>
 
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-[#00aafe] text-center">
-            <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
+          <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
+            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
               {team.competition_scope.charAt(0).toUpperCase() + team.competition_scope.slice(1)}
             </div>
             <div className="text-xs text-gray-600 leading-tight">Competition Level</div>
           </div>
 
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-[#00aafe] text-center">
-            <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
+          <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
+            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
               {(team.instagram_followers || 0).toLocaleString()}
             </div>
             <div className="text-xs text-gray-600 leading-tight">Families Reached</div>
           </div>
 
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-[#00aafe] text-center">
-            <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
+          <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
+            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
               24
             </div>
             <div className="text-xs text-gray-600 leading-tight">Games Per Season</div>
           </div>
 
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-[#00aafe] text-center">
-            <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
+          <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
+            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
               {totalReach.toLocaleString()}
             </div>
             <div className="text-xs text-gray-600 leading-tight">Total Social Reach</div>
           </div>
 
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-[#00aafe] text-center">
-            <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
+          <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
+            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
               340
             </div>
             <div className="text-xs text-gray-600 leading-tight">Weekly Attendance</div>
@@ -248,7 +248,7 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
           <CollapsibleTrigger asChild>
             <Button 
               variant="outline" 
-              className="w-full justify-between h-auto py-3 px-4 hover:bg-gray-50"
+              className="w-full flex justify-between items-center h-auto py-3 px-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <div className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" />

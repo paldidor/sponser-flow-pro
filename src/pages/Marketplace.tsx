@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMarketplaceData } from "@/hooks/useMarketplaceData";
 import { FilterState } from "@/types/marketplace";
@@ -16,6 +16,7 @@ const Marketplace = () => {
   const { data: opportunities, isLoading, error, refetch } = useMarketplaceData();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [savedOpportunities, setSavedOpportunities] = useState<Set<string>>(new Set());
   const [filters, setFilters] = useState<FilterState>({
@@ -26,15 +27,24 @@ const Marketplace = () => {
     priceRange: [0, 5000],
   });
 
-  // Filter opportunities based on search and filters
+  // Debounce search query for better mobile performance
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Filter opportunities based on search and filters (memoized for performance)
   const filteredOpportunities = useMemo(() => {
     if (!opportunities) return [];
 
     return opportunities.filter((opp) => {
-      // Search filter
-      const searchLower = searchQuery.toLowerCase();
+      // Search filter (using debounced query)
+      const searchLower = debouncedSearchQuery.toLowerCase();
       const matchesSearch =
-        !searchQuery ||
+        !debouncedSearchQuery ||
         opp.title.toLowerCase().includes(searchLower) ||
         opp.organization.toLowerCase().includes(searchLower) ||
         opp.team.toLowerCase().includes(searchLower) ||
@@ -75,9 +85,9 @@ const Marketplace = () => {
         matchesPrice
       );
     });
-  }, [opportunities, searchQuery, filters]);
+  }, [opportunities, debouncedSearchQuery, filters]);
 
-  const handleSaveOpportunity = (id: string) => {
+  const handleSaveOpportunity = useCallback((id: string) => {
     setSavedOpportunities((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(id)) {
@@ -87,11 +97,11 @@ const Marketplace = () => {
       }
       return newSet;
     });
-  };
+  }, []);
 
-  const handleOpportunityClick = (id: string) => {
+  const handleOpportunityClick = useCallback((id: string) => {
     navigate(`/marketplace/${id}`);
-  };
+  }, [navigate]);
 
   if (error) {
     return <QueryErrorBoundary error={error} resetErrorBoundary={() => refetch()} />;
@@ -105,7 +115,7 @@ const Marketplace = () => {
     (filters.priceRange[0] > 0 || filters.priceRange[1] < 5000 ? 1 : 0);
 
   const hasActiveFilters =
-    searchQuery !== "" ||
+    debouncedSearchQuery !== "" ||
     filters.sports.length > 0 ||
     filters.location !== "" ||
     filters.tiers.length > 0 ||
@@ -119,7 +129,7 @@ const Marketplace = () => {
       <HeaderBand count={filteredOpportunities?.length || 0} />
 
       <div className="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
-        {/* Search & Filters Bar */}
+        {/* Search & Filters Bar - Optimized for mobile touch */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex-1">
             <SearchBar value={searchQuery} onChange={setSearchQuery} />
@@ -151,9 +161,9 @@ const Marketplace = () => {
           />
         )}
 
-        {/* Opportunities Grid */}
+        {/* Opportunities Grid - Touch-optimized spacing */}
         {!isLoading && filteredOpportunities.length > 0 && (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 xs:gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             {filteredOpportunities.map((opportunity) => (
               <OpportunityCard
                 key={opportunity.id}

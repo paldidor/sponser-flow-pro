@@ -51,18 +51,18 @@ export const OpportunityCard = ({
           {opportunity.sport}
         </span>
 
-        {/* Bookmark Button */}
+        {/* Bookmark Button - Enhanced for mobile touch */}
         <button
           onClick={handleBookmark}
           className={cn(
-            "absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full bg-black/20 transition-colors hover:bg-black/40",
+            "absolute right-3 top-3 grid min-h-[44px] min-w-[44px] place-items-center rounded-full bg-black/20 p-2 transition-colors hover:bg-black/40 active:scale-95",
             opportunity.saved && "bg-[#00AAFE] hover:bg-[#00AAFE]/90"
           )}
           aria-label={opportunity.saved ? "Remove bookmark" : "Save opportunity"}
         >
           <Bookmark
             className={cn(
-              "h-4 w-4 stroke-white",
+              "h-5 w-5 stroke-white",
               opportunity.saved && "fill-white"
             )}
           />
@@ -130,7 +130,7 @@ export const OpportunityCard = ({
           <Button
             data-card-cta
             onClick={handleClick}
-            className="h-9 rounded-[10px] bg-[#00AAFE] px-4 text-[14px] font-medium text-white hover:bg-[#00AAFE]/90"
+            className="h-11 min-h-[44px] rounded-[10px] bg-[#00AAFE] px-4 text-[14px] font-medium text-white hover:bg-[#00AAFE]/90 active:scale-95"
           >
             View Details
           </Button>

@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { FilterState, SportType, TierType } from "@/types/marketplace";
 import { formatCurrency } from "@/lib/marketplaceUtils";
+import { useSwipe } from "@/hooks/use-swipe";
 
 interface FiltersDrawerProps {
   open: boolean;
@@ -30,6 +31,12 @@ export const FiltersDrawer = ({
   filters,
   onFiltersChange,
 }: FiltersDrawerProps) => {
+  // Swipe to close functionality for mobile
+  const swipeHandlers = useSwipe({
+    onSwipeRight: () => onOpenChange(false),
+    threshold: 50,
+  });
+
   const handleSportToggle = (sport: SportType) => {
     const newSports = filters.sports.includes(sport)
       ? filters.sports.filter((s) => s !== sport)
@@ -66,6 +73,7 @@ export const FiltersDrawer = ({
       <SheetContent
         side="right"
         className="w-full overflow-y-auto sm:max-w-md"
+        {...swipeHandlers}
       >
         <SheetHeader>
           <SheetTitle>Filters</SheetTitle>
@@ -196,14 +204,14 @@ export const FiltersDrawer = ({
           <Button
             variant="outline"
             onClick={handleClearAll}
-            className="flex-1"
+            className="flex-1 min-h-[44px] active:scale-95"
             disabled={activeFiltersCount === 0}
           >
             Clear All
           </Button>
           <Button
             onClick={() => onOpenChange(false)}
-            className="flex-1 bg-[#00AAFE] hover:bg-[#00AAFE]/90"
+            className="flex-1 min-h-[44px] bg-[#00AAFE] hover:bg-[#00AAFE]/90 active:scale-95"
           >
             Apply Filters
           </Button>

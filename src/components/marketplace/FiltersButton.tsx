@@ -12,7 +12,7 @@ export const FiltersButton = ({ onClick, activeFiltersCount = 0 }: FiltersButton
     <Button
       variant="outline"
       onClick={onClick}
-      className="relative h-9 min-w-[98px] gap-2 rounded-lg border-black/10 bg-white text-[14px] font-medium text-[#0A0A0A] hover:bg-gray-50"
+      className="relative h-11 min-h-[44px] min-w-[98px] gap-2 rounded-lg border-black/10 bg-white text-[14px] font-medium text-[#0A0A0A] hover:bg-gray-50 active:scale-95"
     >
       <SlidersHorizontal className="h-4 w-4" />
       <span>Filters</span>

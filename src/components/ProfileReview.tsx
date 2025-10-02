@@ -190,10 +190,28 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
         return;
       }
 
-      const { error } = await supabase
+      // Ensure a profile row exists; insert if missing, otherwise update
+      let error: any = null;
+      const { data: existingProfile, error: existingErr } = await supabase
         .from('team_profiles')
-        .update({ main_values: updatedValues })
-        .eq('user_id', user.id);
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingErr) {
+        error = existingErr as any;
+      } else if (!existingProfile) {
+        const { error: insertError } = await supabase
+          .from('team_profiles')
+          .insert({ user_id: user.id, main_values: updatedValues });
+        error = insertError as any;
+      } else {
+        const { error: updateError } = await supabase
+          .from('team_profiles')
+          .update({ main_values: updatedValues })
+          .eq('user_id', user.id);
+        error = updateError as any;
+      }
 
       if (error) {
         // Revert optimistic update
@@ -270,10 +288,28 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
         return;
       }
 
-      const { error } = await supabase
+      // Ensure a profile row exists; insert if missing, otherwise update
+      let error: any = null;
+      const { data: existingProfile, error: existingErr } = await supabase
         .from('team_profiles')
-        .update({ main_values: updatedValues })
-        .eq('user_id', user.id);
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingErr) {
+        error = existingErr as any;
+      } else if (!existingProfile) {
+        const { error: insertError } = await supabase
+          .from('team_profiles')
+          .insert({ user_id: user.id, main_values: updatedValues });
+        error = insertError as any;
+      } else {
+        const { error: updateError } = await supabase
+          .from('team_profiles')
+          .update({ main_values: updatedValues })
+          .eq('user_id', user.id);
+        error = updateError as any;
+      }
 
       if (error) {
         // Revert optimistic update
@@ -370,13 +406,32 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
         return;
       }
 
-      // Prepare the update object
-      const updateData: any = { [field]: editValue };
+      // Prepare the update object with proper types
+      const value = numericFields.includes(field) ? Number(editValue) : editValue;
+      const updateData: any = { [field]: value };
 
-      const { error } = await supabase
+      // Ensure a profile row exists; insert if missing, otherwise update
+      let error: any = null;
+      const { data: existingProfile, error: existingErr } = await supabase
         .from('team_profiles')
-        .update(updateData)
-        .eq('user_id', user.id);
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingErr) {
+        error = existingErr as any;
+      } else if (!existingProfile) {
+        const { error: insertError } = await supabase
+          .from('team_profiles')
+          .insert({ user_id: user.id, ...updateData });
+        error = insertError as any;
+      } else {
+        const { error: updateError } = await supabase
+          .from('team_profiles')
+          .update(updateData)
+          .eq('user_id', user.id);
+        error = updateError as any;
+      }
 
       if (error) {
         // Revert optimistic update on error

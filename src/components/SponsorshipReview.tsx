@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Pencil, MapPin, Users, DollarSign, Calendar, Target } from "lucide-react";
 import ProgressIndicator from "./ProgressIndicator";
+import LoadingState from "./LoadingState";
 import { SponsorshipData, TeamProfile } from "@/types/flow";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,12 +84,12 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
 
   if (isLoading) {
     return (
-      <div className="min-h-screen py-12 px-4 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading team profile...</p>
-        </div>
-      </div>
+      <LoadingState 
+        variant="page"
+        size="lg"
+        message="Loading Team Profile"
+        submessage="Gathering all the information for your sponsorship offer..."
+      />
     );
   }
 

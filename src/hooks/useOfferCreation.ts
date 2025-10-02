@@ -7,11 +7,14 @@ export const useOfferCreation = () => {
   const [currentOfferId, setCurrentOfferId] = useState<string | null>(null);
   const [offerData, setOfferData] = useState<SponsorshipData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState<string>("");
   const { toast } = useToast();
 
   const loadOfferData = async (offerId: string, source: 'pdf' | 'questionnaire' = 'questionnaire') => {
     try {
       setIsLoading(true);
+      setLoadingMessage("Fetching offer details from database...");
+      
       const { data: offer, error: offerError } = await supabase
         .from('sponsorship_offers')
         .select(`
@@ -37,6 +40,8 @@ export const useOfferCreation = () => {
         .single();
 
       if (offerError) throw offerError;
+
+      setLoadingMessage("Processing offer data...");
 
       const formattedData: SponsorshipData = {
         fundraisingGoal: offer.fundraising_goal?.toString() || '0',
@@ -68,12 +73,15 @@ export const useOfferCreation = () => {
       return null;
     } finally {
       setIsLoading(false);
+      setLoadingMessage("");
     }
   };
 
   const loadLatestQuestionnaireOffer = async () => {
     try {
       setIsLoading(true);
+      setLoadingMessage("Authenticating...");
+      
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       
       if (authError || !user) {
@@ -84,6 +92,8 @@ export const useOfferCreation = () => {
         });
         return null;
       }
+
+      setLoadingMessage("Finding your latest offer...");
 
       const { data: offer, error } = await supabase
         .from('sponsorship_offers')
@@ -128,6 +138,7 @@ export const useOfferCreation = () => {
       return null;
     } finally {
       setIsLoading(false);
+      setLoadingMessage("");
     }
   };
 
@@ -143,6 +154,9 @@ export const useOfferCreation = () => {
     }
 
     try {
+      setIsLoading(true);
+      setLoadingMessage("Publishing your offer...");
+      
       const { error } = await supabase
         .from('sponsorship_offers')
         .update({ status: 'published' })
@@ -163,6 +177,9 @@ export const useOfferCreation = () => {
         variant: "destructive",
       });
       return false;
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage("");
     }
   };
 
@@ -170,12 +187,14 @@ export const useOfferCreation = () => {
     setCurrentOfferId(null);
     setOfferData(null);
     setIsLoading(false);
+    setLoadingMessage("");
   };
 
   return {
     currentOfferId,
     offerData,
     isLoading,
+    loadingMessage,
     loadOfferData,
     loadLatestQuestionnaireOffer,
     publishOffer,

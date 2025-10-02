@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useOfferCreation } from "@/hooks/useOfferCreation";
 import { validatePDFFile } from "@/lib/validationUtils";
-import { Loader2 } from "lucide-react";
+import LoadingState from "@/components/LoadingState";
 
 const CreateSponsorshipOffer = lazy(() => import("@/components/CreateSponsorshipOffer"));
 const QuestionnaireFlow = lazy(() => import("@/components/questionnaire/QuestionnaireFlow"));
@@ -24,7 +24,7 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
   const [currentStep, setCurrentStep] = useState<FlowStep>('select-method');
   const [analysisFileName, setAnalysisFileName] = useState<string | null>(null);
   const { toast } = useToast();
-  const { currentOfferId, offerData, loadOfferData, loadLatestQuestionnaireOffer, publishOffer, resetOffer } = useOfferCreation();
+  const { currentOfferId, offerData, isLoading: isLoadingOffer, loadingMessage, loadOfferData, loadLatestQuestionnaireOffer, publishOffer, resetOffer } = useOfferCreation();
 
   const handleSelectMethod = (method: "form" | "website" | "pdf", url?: string) => {
     if (method === "form") {
@@ -249,9 +249,7 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
   };
 
   const LoadingFallback = () => (
-    <div className="flex items-center justify-center min-h-[400px]">
-      <Loader2 className="w-8 h-8 animate-spin text-primary" />
-    </div>
+    <LoadingState size="md" message="Loading component..." />
   );
 
   const renderStep = () => {
@@ -306,8 +304,15 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
         );
 
       case 'review':
-        if (!offerData) {
-          return <LoadingFallback />;
+        if (!offerData || isLoadingOffer) {
+          return (
+            <LoadingState 
+              variant="page"
+              size="lg"
+              message={loadingMessage || "Loading Offer Details"}
+              submessage="Preparing your sponsorship offer for review..."
+            />
+          );
         }
         return (
           <Suspense fallback={<LoadingFallback />}>

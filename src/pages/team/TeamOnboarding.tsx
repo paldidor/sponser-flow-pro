@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useOfferCreation } from "@/hooks/useOfferCreation";
 import { validateTeamProfile, validatePDFFile } from "@/lib/validationUtils";
+import LoadingState from "@/components/LoadingState";
 import CreateTeamProfile from "@/components/CreateTeamProfile";
 import ProfileReview from "@/components/ProfileReview";
 import CreateSponsorshipOffer from "@/components/CreateSponsorshipOffer";
@@ -32,7 +33,7 @@ const TeamOnboarding = () => {
   const [isCheckingProfile, setIsCheckingProfile] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { currentOfferId, offerData, loadOfferData, loadLatestQuestionnaireOffer, publishOffer, resetOffer } = useOfferCreation();
+  const { currentOfferId, offerData, isLoading, loadingMessage, loadOfferData, loadLatestQuestionnaireOffer, publishOffer, resetOffer } = useOfferCreation();
 
   // Check if user already has a profile
   useEffect(() => {
@@ -363,24 +364,24 @@ const TeamOnboarding = () => {
   // Show loading state during initialization
   if (isInitializing) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Loading your profile...</p>
-        </div>
-      </div>
+      <LoadingState 
+        variant="page"
+        size="lg"
+        message="Loading Your Profile"
+        submessage="Just a moment while we check your account status..."
+      />
     );
   }
 
   // Show loading state during profile checks
   if (isCheckingProfile) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Verifying your profile...</p>
-        </div>
-      </div>
+      <LoadingState 
+        variant="page"
+        size="lg"
+        message="Verifying Profile"
+        submessage="Making sure everything is set up correctly..."
+      />
     );
   }
 
@@ -577,14 +578,14 @@ const TeamOnboarding = () => {
         );
 
       case 'review':
-        if (!offerData) {
+        if (!offerData || isLoading) {
           return (
-            <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
-              <div className="text-center space-y-4">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-                <p className="text-muted-foreground">Loading your offer details...</p>
-              </div>
-            </div>
+            <LoadingState 
+              variant="page"
+              size="lg"
+              message={loadingMessage || "Loading Offer Details"}
+              submessage="Preparing your sponsorship offer for review..."
+            />
           );
         }
         return (

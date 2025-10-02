@@ -10,6 +10,7 @@ import { OpportunityCard } from "@/components/marketplace/OpportunityCard";
 import { EmptyState } from "@/components/marketplace/EmptyState";
 import { QueryErrorBoundary } from "@/components/QueryErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
+import Footer from "@/components/layout/Footer";
 
 const Marketplace = () => {
   const navigate = useNavigate();
@@ -125,10 +126,10 @@ const Marketplace = () => {
     filters.priceRange[1] < 5000;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="flex min-h-screen flex-col bg-white">
       <HeaderBand count={filteredOpportunities?.length || 0} />
 
-      <div className="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
+      <div className="container mx-auto flex-1 px-4 py-6 sm:px-6 lg:px-8">
         {/* Search & Filters Bar - Optimized for mobile touch */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex-1">
@@ -178,6 +179,9 @@ const Marketplace = () => {
           </div>
         )}
       </div>
+
+      {/* Footer */}
+      <Footer />
 
       {/* Filters Drawer */}
       <FiltersDrawer

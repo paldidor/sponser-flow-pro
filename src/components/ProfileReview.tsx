@@ -15,9 +15,10 @@ interface ProfileReviewProps {
   teamData: TeamProfile | null;
   onApprove: () => void;
   isManualEntry?: boolean;
+  onProfileUpdate?: (updatedProfile: TeamProfile) => void;
 }
 
-const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileReviewProps) => {
+const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUpdate }: ProfileReviewProps) => {
   const [team, setTeam] = useState<TeamProfile | null>(teamData);
   const [isLoading, setIsLoading] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -166,10 +167,20 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
   const handleRemoveTag = async (tagToRemove: string) => {
     const updatedValues = currentTeam.main_values.filter(v => v !== tagToRemove);
     setIsSaving(true);
+    
+    // Store old team for rollback
+    const oldTeam = team;
+    
     try {
+      // Optimistically update UI
+      const updatedTeam = team ? { ...team, main_values: updatedValues } : null;
+      setTeam(updatedTeam);
+      
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
+        // Revert optimistic update
+        setTeam(oldTeam);
         toast({
           title: "Error",
           description: "You must be logged in to save changes",
@@ -184,6 +195,8 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
         .eq('user_id', user.id);
 
       if (error) {
+        // Revert optimistic update
+        setTeam(oldTeam);
         console.error('Error updating profile:', error);
         toast({
           title: "Error saving changes",
@@ -191,13 +204,19 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
           variant: "destructive",
         });
       } else {
-        setTeam(prev => prev ? { ...prev, main_values: updatedValues } : null);
         toast({
-          title: "Tag removed",
+          title: "Tag removed ✓",
           description: "Your profile has been updated",
         });
+        
+        // Notify parent component
+        if (onProfileUpdate && updatedTeam) {
+          onProfileUpdate(updatedTeam);
+        }
       }
     } catch (err) {
+      // Revert optimistic update
+      setTeam(oldTeam);
       console.error('Unexpected error:', err);
     } finally {
       setIsSaving(false);
@@ -209,10 +228,22 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
     
     const updatedValues = [...currentTeam.main_values, newTagValue.trim()];
     setIsSaving(true);
+    
+    // Store old team for rollback
+    const oldTeam = team;
+    
     try {
+      // Optimistically update UI
+      const updatedTeam = team ? { ...team, main_values: updatedValues } : null;
+      setTeam(updatedTeam);
+      setNewTagValue("");
+      
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
+        // Revert optimistic update
+        setTeam(oldTeam);
+        setNewTagValue(newTagValue);
         toast({
           title: "Error",
           description: "You must be logged in to save changes",
@@ -227,6 +258,9 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
         .eq('user_id', user.id);
 
       if (error) {
+        // Revert optimistic update
+        setTeam(oldTeam);
+        setNewTagValue(newTagValue);
         console.error('Error updating profile:', error);
         toast({
           title: "Error saving changes",
@@ -234,14 +268,20 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
           variant: "destructive",
         });
       } else {
-        setTeam(prev => prev ? { ...prev, main_values: updatedValues } : null);
-        setNewTagValue("");
         toast({
-          title: "Tag added",
+          title: "Tag added ✓",
           description: "Your profile has been updated",
         });
+        
+        // Notify parent component
+        if (onProfileUpdate && updatedTeam) {
+          onProfileUpdate(updatedTeam);
+        }
       }
     } catch (err) {
+      // Revert optimistic update
+      setTeam(oldTeam);
+      setNewTagValue(newTagValue);
       console.error('Unexpected error:', err);
     } finally {
       setIsSaving(false);
@@ -250,10 +290,20 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
 
   const handleSave = async (field: string) => {
     setIsSaving(true);
+    
+    // Store old value for potential rollback
+    const oldValue = team ? team[field as keyof TeamProfile] : null;
+    
     try {
+      // Optimistically update UI first
+      const updatedTeam = team ? { ...team, [field]: editValue } : null;
+      setTeam(updatedTeam);
+      
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
+        // Revert optimistic update
+        setTeam(team);
         toast({
           title: "Error",
           description: "You must be logged in to save changes",
@@ -271,6 +321,8 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
         .eq('user_id', user.id);
 
       if (error) {
+        // Revert optimistic update on error
+        setTeam(team);
         console.error('Error updating profile:', error);
         toast({
           title: "Error saving changes",
@@ -278,15 +330,25 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false }: ProfileRe
           variant: "destructive",
         });
       } else {
-        // Update local state
-        setTeam(prev => prev ? { ...prev, [field]: editValue } : null);
-        setEditingField(null);
+        // Show success indicator
         toast({
-          title: "Changes saved",
-          description: "Your profile has been updated successfully",
+          title: "Saved ✓",
+          description: "Your changes have been saved",
         });
+        
+        // Notify parent component of update
+        if (onProfileUpdate && updatedTeam) {
+          onProfileUpdate(updatedTeam);
+        }
+        
+        // Close edit mode after a brief delay
+        setTimeout(() => {
+          setEditingField(null);
+        }, 500);
       }
     } catch (err) {
+      // Revert optimistic update on error
+      setTeam(team);
       console.error('Unexpected error:', err);
       toast({
         title: "Error",

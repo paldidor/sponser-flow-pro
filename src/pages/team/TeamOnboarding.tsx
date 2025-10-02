@@ -97,7 +97,10 @@ const TeamOnboarding = () => {
     checkExistingProfile();
   }, [navigate, toast]);
 
-  // ... keep existing code (handler functions)
+  const handleProfileUpdate = (updatedProfile: TeamProfile) => {
+    setTeamData(updatedProfile);
+  };
+
   const handleProfileApprove = () => {
     setCurrentStep('select-method');
   };
@@ -503,6 +506,7 @@ const TeamOnboarding = () => {
             teamData={teamData}
             onApprove={handleProfileApprove}
             isManualEntry={isManualEntry}
+            onProfileUpdate={handleProfileUpdate}
           />
         );
 

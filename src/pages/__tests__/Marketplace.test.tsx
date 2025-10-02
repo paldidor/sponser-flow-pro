@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
@@ -100,6 +100,25 @@ const createWrapper = () => {
   );
 };
 
+// Helper to wait for async updates
+const waitFor = (callback: () => void, timeout = 1000) => {
+  return new Promise<void>((resolve, reject) => {
+    const startTime = Date.now();
+    const interval = setInterval(() => {
+      try {
+        callback();
+        clearInterval(interval);
+        resolve();
+      } catch (error) {
+        if (Date.now() - startTime > timeout) {
+          clearInterval(interval);
+          reject(error);
+        }
+      }
+    }, 50);
+  });
+};
+
 describe('Marketplace', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -112,10 +131,13 @@ describe('Marketplace', () => {
       error: null,
     } as any);
 
-    render(<Marketplace />, { wrapper: createWrapper() });
+    const { container } = render(<Marketplace />, { wrapper: createWrapper() });
     
-    expect(screen.getByTestId('header-band')).toBeInTheDocument();
-    expect(screen.getByTestId('search-bar')).toBeInTheDocument();
+    const headerBand = container.querySelector('[data-testid="header-band"]');
+    const searchBar = container.querySelector('[data-testid="search-bar"]');
+    
+    expect(headerBand).toBeInTheDocument();
+    expect(searchBar).toBeInTheDocument();
   });
 
   it('should render opportunities when data is loaded', async () => {
@@ -125,15 +147,17 @@ describe('Marketplace', () => {
       error: null,
     } as any);
 
-    render(<Marketplace />, { wrapper: createWrapper() });
+    const { container } = render(<Marketplace />, { wrapper: createWrapper() });
 
     await waitFor(() => {
-      expect(screen.getByTestId('opportunity-1')).toBeInTheDocument();
-      expect(screen.getByTestId('opportunity-2')).toBeInTheDocument();
+      const opp1 = container.querySelector('[data-testid="opportunity-1"]');
+      const opp2 = container.querySelector('[data-testid="opportunity-2"]');
+      expect(opp1).toBeInTheDocument();
+      expect(opp2).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Soccer Team Sponsorship')).toBeInTheDocument();
-    expect(screen.getByText('Basketball Team Sponsorship')).toBeInTheDocument();
+    expect(container.textContent).toContain('Soccer Team Sponsorship');
+    expect(container.textContent).toContain('Basketball Team Sponsorship');
   });
 
   it('should filter opportunities by search query', async () => {
@@ -144,14 +168,16 @@ describe('Marketplace', () => {
     } as any);
 
     const user = userEvent.setup();
-    render(<Marketplace />, { wrapper: createWrapper() });
+    const { container } = render(<Marketplace />, { wrapper: createWrapper() });
 
-    const searchInput = screen.getByTestId('search-bar');
+    const searchInput = container.querySelector('[data-testid="search-bar"]') as HTMLInputElement;
     await user.type(searchInput, 'soccer');
 
     await waitFor(() => {
-      expect(screen.getByTestId('opportunity-1')).toBeInTheDocument();
-      expect(screen.queryByTestId('opportunity-2')).not.toBeInTheDocument();
+      const opp1 = container.querySelector('[data-testid="opportunity-1"]');
+      const opp2 = container.querySelector('[data-testid="opportunity-2"]');
+      expect(opp1).toBeInTheDocument();
+      expect(opp2).not.toBeInTheDocument();
     });
   });
 
@@ -163,14 +189,16 @@ describe('Marketplace', () => {
     } as any);
 
     const user = userEvent.setup();
-    render(<Marketplace />, { wrapper: createWrapper() });
+    const { container } = render(<Marketplace />, { wrapper: createWrapper() });
 
-    const searchInput = screen.getByTestId('search-bar');
+    const searchInput = container.querySelector('[data-testid="search-bar"]') as HTMLInputElement;
     await user.type(searchInput, 'New York');
 
     await waitFor(() => {
-      expect(screen.getByTestId('opportunity-2')).toBeInTheDocument();
-      expect(screen.queryByTestId('opportunity-1')).not.toBeInTheDocument();
+      const opp1 = container.querySelector('[data-testid="opportunity-1"]');
+      const opp2 = container.querySelector('[data-testid="opportunity-2"]');
+      expect(opp2).toBeInTheDocument();
+      expect(opp1).not.toBeInTheDocument();
     });
   });
 
@@ -182,14 +210,16 @@ describe('Marketplace', () => {
     } as any);
 
     const user = userEvent.setup();
-    render(<Marketplace />, { wrapper: createWrapper() });
+    const { container } = render(<Marketplace />, { wrapper: createWrapper() });
 
-    const searchInput = screen.getByTestId('search-bar');
+    const searchInput = container.querySelector('[data-testid="search-bar"]') as HTMLInputElement;
     await user.type(searchInput, 'nonexistent');
 
     await waitFor(() => {
-      expect(screen.queryByTestId('opportunity-1')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('opportunity-2')).not.toBeInTheDocument();
+      const opp1 = container.querySelector('[data-testid="opportunity-1"]');
+      const opp2 = container.querySelector('[data-testid="opportunity-2"]');
+      expect(opp1).not.toBeInTheDocument();
+      expect(opp2).not.toBeInTheDocument();
     });
   });
 
@@ -200,10 +230,10 @@ describe('Marketplace', () => {
       error: null,
     } as any);
 
-    render(<Marketplace />, { wrapper: createWrapper() });
+    const { container } = render(<Marketplace />, { wrapper: createWrapper() });
 
     await waitFor(() => {
-      expect(screen.getByText('Count: 2')).toBeInTheDocument();
+      expect(container.textContent).toContain('Count: 2');
     });
   });
 
@@ -214,9 +244,10 @@ describe('Marketplace', () => {
       error: null,
     } as any);
 
-    render(<Marketplace />, { wrapper: createWrapper() });
+    const { container } = render(<Marketplace />, { wrapper: createWrapper() });
 
-    expect(screen.getByTestId('footer')).toBeInTheDocument();
+    const footer = container.querySelector('[data-testid="footer"]');
+    expect(footer).toBeInTheDocument();
   });
 
   it('should debounce search input', async () => {
@@ -227,21 +258,25 @@ describe('Marketplace', () => {
     } as any);
 
     const user = userEvent.setup();
-    render(<Marketplace />, { wrapper: createWrapper() });
+    const { container } = render(<Marketplace />, { wrapper: createWrapper() });
 
-    const searchInput = screen.getByTestId('search-bar');
+    const searchInput = container.querySelector('[data-testid="search-bar"]') as HTMLInputElement;
     
     // Type quickly
     await user.type(searchInput, 'soc');
 
     // Results should still show all initially
-    expect(screen.getByTestId('opportunity-1')).toBeInTheDocument();
-    expect(screen.getByTestId('opportunity-2')).toBeInTheDocument();
+    const opp1 = container.querySelector('[data-testid="opportunity-1"]');
+    const opp2 = container.querySelector('[data-testid="opportunity-2"]');
+    expect(opp1).toBeInTheDocument();
+    expect(opp2).toBeInTheDocument();
 
     // After debounce delay, filter should apply
+    await new Promise(resolve => setTimeout(resolve, 500));
     await waitFor(() => {
-      expect(screen.getByTestId('opportunity-1')).toBeInTheDocument();
-    }, { timeout: 500 });
+      const opp1After = container.querySelector('[data-testid="opportunity-1"]');
+      expect(opp1After).toBeInTheDocument();
+    });
   });
 
   it('should handle opportunity click navigation', async () => {
@@ -252,10 +287,11 @@ describe('Marketplace', () => {
     } as any);
 
     const user = userEvent.setup();
-    render(<Marketplace />, { wrapper: createWrapper() });
+    const { container } = render(<Marketplace />, { wrapper: createWrapper() });
 
     await waitFor(async () => {
-      const opportunity = screen.getByTestId('opportunity-1');
+      const opportunity = container.querySelector('[data-testid="opportunity-1"]') as HTMLElement;
+      expect(opportunity).toBeInTheDocument();
       await user.click(opportunity);
     });
 

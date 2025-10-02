@@ -104,19 +104,21 @@ export const formatCurrency = (amount: number): string => {
   }).format(amount);
 };
 
-// Get sport-specific placeholder image with appropriate color
+// Get sport-specific placeholder image
 export const getSportPlaceholder = (sport: SportType): string => {
-  const colorMap: Record<SportType, string> = {
-    Soccer: "22c55e/ffffff",
-    Basketball: "f97316/ffffff",
-    Baseball: "3b82f6/ffffff",
-    Volleyball: "a855f7/ffffff",
-    Football: "ef4444/ffffff",
-    Hockey: "06b6d4/ffffff",
-    Other: "6b7280/ffffff",
+  // Use picsum.photos for realistic placeholder images
+  // Different seed per sport for variety
+  const seedMap: Record<SportType, number> = {
+    Soccer: 100,
+    Basketball: 200,
+    Baseball: 300,
+    Volleyball: 400,
+    Football: 500,
+    Hockey: 600,
+    Other: 700,
   };
   
-  return `https://placehold.co/640x256/${colorMap[sport]}?text=${encodeURIComponent(sport)}`;
+  return `https://picsum.photos/seed/${seedMap[sport]}/640/256`;
 };
 
 // Transform Supabase data to Opportunity type

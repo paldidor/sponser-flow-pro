@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { validateSponsorshipData } from "@/lib/validationUtils";
 import { useToast } from "@/hooks/use-toast";
 import { PackageEditor } from "./sponsorship/PackageEditor";
+import { TeamProfileEditor } from "./team/TeamProfileEditor";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +38,7 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
   const [editorMode, setEditorMode] = useState<"create" | "edit">("create");
   const [deletePackageId, setDeletePackageId] = useState<string | null>(null);
   const [offerId, setOfferId] = useState<string | null>(null);
+  const [isEditingTeam, setIsEditingTeam] = useState(false);
   const { toast } = useToast();
 
   const handleApprove = () => {
@@ -221,6 +223,14 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
   const handlePackageSaved = async () => {
     await refreshPackages();
   };
+
+  const handleTeamSaved = (updatedTeam: TeamProfile) => {
+    setTeam(updatedTeam);
+    toast({
+      title: "Success",
+      description: "Team profile updated successfully",
+    });
+  };
   const totalReach = team ? (
     (team.instagram_followers || 0) + 
     (team.facebook_followers || 0) + 
@@ -322,7 +332,16 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
           </Card>
 
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-6">Team Overview</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold">Team Overview</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditingTeam(true)}
+              >
+                <Pencil className="w-4 h-4" />
+              </Button>
+            </div>
             
             {team ? (
               <div className="space-y-4">
@@ -448,6 +467,13 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
             mode={editorMode}
           />
         )}
+
+        <TeamProfileEditor
+          open={isEditingTeam}
+          onOpenChange={setIsEditingTeam}
+          profileData={team}
+          onSave={handleTeamSaved}
+        />
 
         <AlertDialog open={!!deletePackageId} onOpenChange={(open) => !open && setDeletePackageId(null)}>
           <AlertDialogContent>

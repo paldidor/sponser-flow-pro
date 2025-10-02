@@ -166,58 +166,58 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
                 </p>
 
                 {/* Stats Grid - 8 Tiles */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-5 mb-5">
-                  <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
-                    <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mt-5 mb-5">
+                  <div className="bg-white rounded-lg p-2.5 shadow-sm border-2 border-[#00aafe] text-center">
+                    <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
                       {sponsorshipData.duration.includes("yr") || sponsorshipData.duration.toLowerCase().includes("annual") ? "1 yr" : sponsorshipData.duration}
                     </div>
                     <div className="text-xs text-gray-600 leading-tight">Duration</div>
                   </div>
 
-                  <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
-                    <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
+                  <div className="bg-white rounded-lg p-2.5 shadow-sm border-2 border-[#00aafe] text-center">
+                    <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
                       ${Number(sponsorshipData.fundraisingGoal).toLocaleString()}
                     </div>
                     <div className="text-xs text-gray-600 leading-tight">Fundraising Goal</div>
                   </div>
 
-                  <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
-                    <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
+                  <div className="bg-white rounded-lg p-2.5 shadow-sm border-2 border-[#00aafe] text-center">
+                    <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
                       {team.number_of_players}
                     </div>
                     <div className="text-xs text-gray-600 leading-tight">Players Supported</div>
                   </div>
 
-                  <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
-                    <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
+                  <div className="bg-white rounded-lg p-2.5 shadow-sm border-2 border-[#00aafe] text-center">
+                    <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
                       {team.competition_scope.charAt(0).toUpperCase() + team.competition_scope.slice(1)}
                     </div>
                     <div className="text-xs text-gray-600 leading-tight">Competition Level</div>
                   </div>
 
-                  <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
-                    <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
+                  <div className="bg-white rounded-lg p-2.5 shadow-sm border-2 border-[#00aafe] text-center">
+                    <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
                       {(team.instagram_followers || 0).toLocaleString()}
                     </div>
                     <div className="text-xs text-gray-600 leading-tight">Families Reached</div>
                   </div>
 
-                  <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
-                    <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
+                  <div className="bg-white rounded-lg p-2.5 shadow-sm border-2 border-[#00aafe] text-center">
+                    <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
                       24
                     </div>
                     <div className="text-xs text-gray-600 leading-tight">Games Per Season</div>
                   </div>
 
-                  <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
-                    <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
+                  <div className="bg-white rounded-lg p-2.5 shadow-sm border-2 border-[#00aafe] text-center">
+                    <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
                       {totalReach.toLocaleString()}
                     </div>
                     <div className="text-xs text-gray-600 leading-tight">Total Social Reach</div>
                   </div>
 
-                  <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
-                    <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
+                  <div className="bg-white rounded-lg p-2.5 shadow-sm border-2 border-[#00aafe] text-center">
+                    <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
                       340
                     </div>
                     <div className="text-xs text-gray-600 leading-tight">Weekly Attendance</div>
@@ -269,10 +269,10 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
                 </Collapsible>
 
                 {/* Save Team & Share Actions */}
-                <div className="flex gap-3">
+                <div className="flex gap-3 max-w-sm">
                   <Button 
                     variant="outline" 
-                    className="flex-1 border-gray-300 hover:border-gray-400"
+                    className="px-8 w-auto border-gray-300 hover:border-gray-400"
                     onClick={handleSaveTeam}
                   >
                     <Heart className={`w-4 h-4 mr-2 ${isSaved ? 'fill-current text-red-500' : ''}`} />
@@ -280,7 +280,7 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
                   </Button>
                   <Button 
                     variant="outline" 
-                    className="flex-1 border-gray-300 hover:border-gray-400"
+                    className="px-8 w-auto border-gray-300 hover:border-gray-400"
                     onClick={handleShare}
                   >
                     <Share2 className="w-4 h-4 mr-2" />

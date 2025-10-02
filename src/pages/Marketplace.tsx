@@ -1,16 +1,18 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, lazy, Suspense, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMarketplaceData } from "@/hooks/useMarketplaceData";
 import { FilterState } from "@/types/marketplace";
 import { HeaderBand } from "@/components/marketplace/HeaderBand";
 import { SearchBar } from "@/components/marketplace/SearchBar";
 import { FiltersButton } from "@/components/marketplace/FiltersButton";
-import { FiltersDrawer } from "@/components/marketplace/FiltersDrawer";
-import { OpportunityCard } from "@/components/marketplace/OpportunityCard";
+import { OptimizedOpportunityList } from "@/components/marketplace/OptimizedOpportunityList";
 import { EmptyState } from "@/components/marketplace/EmptyState";
 import { QueryErrorBoundary } from "@/components/QueryErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
-import Footer from "@/components/layout/Footer";
+
+// Lazy load heavy components for better initial load performance
+const FiltersDrawer = lazy(() => import("@/components/marketplace/FiltersDrawer").then(m => ({ default: m.FiltersDrawer })));
+const Footer = lazy(() => import("@/components/layout/Footer"));
 
 const Marketplace = () => {
   const navigate = useNavigate();
@@ -38,53 +40,65 @@ const Marketplace = () => {
   }, [searchQuery]);
 
   // Filter opportunities based on search and filters (memoized for performance)
+  // Split filtering logic for better readability and potential optimization
   const filteredOpportunities = useMemo(() => {
     if (!opportunities) return [];
 
+    const searchLower = debouncedSearchQuery.toLowerCase();
+    
     return opportunities.filter((opp) => {
-      // Search filter (using debounced query)
-      const searchLower = debouncedSearchQuery.toLowerCase();
-      const matchesSearch =
-        !debouncedSearchQuery ||
-        opp.title.toLowerCase().includes(searchLower) ||
-        opp.organization.toLowerCase().includes(searchLower) ||
-        opp.team.toLowerCase().includes(searchLower) ||
-        opp.city.toLowerCase().includes(searchLower) ||
-        opp.state.toLowerCase().includes(searchLower) ||
-        opp.sport.toLowerCase().includes(searchLower);
+      // Early return optimizations - check cheapest operations first
+      
+      // Sports filter (array lookup is fast)
+      if (filters.sports.length > 0 && !filters.sports.includes(opp.sport)) {
+        return false;
+      }
 
-      // Sports filter
-      const matchesSport =
-        filters.sports.length === 0 || filters.sports.includes(opp.sport);
+      // Tier filter (array lookup)
+      if (filters.tiers.length > 0 && !filters.tiers.includes(opp.tier)) {
+        return false;
+      }
 
-      // Location filter
-      const matchesLocation =
-        !filters.location ||
-        opp.city.toLowerCase().includes(filters.location.toLowerCase()) ||
-        opp.state.toLowerCase().includes(filters.location.toLowerCase());
+      // Duration filter (numeric comparison is fast)
+      if (
+        opp.durationMonths < filters.durationRange[0] ||
+        opp.durationMonths > filters.durationRange[1]
+      ) {
+        return false;
+      }
 
-      // Tier filter
-      const matchesTier =
-        filters.tiers.length === 0 || filters.tiers.includes(opp.tier);
+      // Price filter (numeric comparison)
+      if (
+        opp.startingAt < filters.priceRange[0] ||
+        opp.startingAt > filters.priceRange[1]
+      ) {
+        return false;
+      }
 
-      // Duration filter
-      const matchesDuration =
-        opp.durationMonths >= filters.durationRange[0] &&
-        opp.durationMonths <= filters.durationRange[1];
+      // Location filter (string operation - slower)
+      if (filters.location) {
+        const locationLower = filters.location.toLowerCase();
+        if (
+          !opp.city.toLowerCase().includes(locationLower) &&
+          !opp.state.toLowerCase().includes(locationLower)
+        ) {
+          return false;
+        }
+      }
 
-      // Price filter
-      const matchesPrice =
-        opp.startingAt >= filters.priceRange[0] &&
-        opp.startingAt <= filters.priceRange[1];
+      // Search filter (most expensive - do last)
+      if (debouncedSearchQuery) {
+        return (
+          opp.title.toLowerCase().includes(searchLower) ||
+          opp.organization.toLowerCase().includes(searchLower) ||
+          opp.team.toLowerCase().includes(searchLower) ||
+          opp.city.toLowerCase().includes(searchLower) ||
+          opp.state.toLowerCase().includes(searchLower) ||
+          opp.sport.toLowerCase().includes(searchLower)
+        );
+      }
 
-      return (
-        matchesSearch &&
-        matchesSport &&
-        matchesLocation &&
-        matchesTier &&
-        matchesDuration &&
-        matchesPrice
-      );
+      return true;
     });
   }, [opportunities, debouncedSearchQuery, filters]);
 
@@ -162,34 +176,33 @@ const Marketplace = () => {
           />
         )}
 
-        {/* Opportunities Grid - Touch-optimized spacing */}
+        {/* Opportunities Grid - Optimized rendering */}
         {!isLoading && filteredOpportunities.length > 0 && (
-          <div className="grid gap-4 xs:gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
-            {filteredOpportunities.map((opportunity) => (
-              <OpportunityCard
-                key={opportunity.id}
-                opportunity={{
-                  ...opportunity,
-                  saved: savedOpportunities.has(opportunity.id),
-                }}
-                onSave={handleSaveOpportunity}
-                onClick={handleOpportunityClick}
-              />
-            ))}
-          </div>
+          <OptimizedOpportunityList
+            opportunities={filteredOpportunities.map((opp) => ({
+              ...opp,
+              saved: savedOpportunities.has(opp.id),
+            }))}
+            onSave={handleSaveOpportunity}
+            onClick={handleOpportunityClick}
+          />
         )}
       </div>
 
-      {/* Footer */}
-      <Footer />
+      {/* Footer - Lazy loaded */}
+      <Suspense fallback={<div className="h-32" />}>
+        <Footer />
+      </Suspense>
 
-      {/* Filters Drawer */}
-      <FiltersDrawer
-        open={filtersOpen}
-        onOpenChange={setFiltersOpen}
-        filters={filters}
-        onFiltersChange={setFilters}
-      />
+      {/* Filters Drawer - Lazy loaded */}
+      <Suspense fallback={null}>
+        <FiltersDrawer
+          open={filtersOpen}
+          onOpenChange={setFiltersOpen}
+          filters={filters}
+          onFiltersChange={setFilters}
+        />
+      </Suspense>
     </div>
   );
 };

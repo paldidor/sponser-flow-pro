@@ -1,3 +1,4 @@
+import { memo, useRef, useEffect, useState } from "react";
 import { MapPin, Users, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OpportunityCardProps } from "@/types/marketplace";
@@ -10,11 +11,39 @@ import usersIcon from "@/assets/icons/users-stat.svg";
 import targetIcon from "@/assets/icons/target-stat.svg";
 import { cn } from "@/lib/utils";
 
-export const OpportunityCard = ({
+export const OpportunityCard = memo(({
   opportunity,
   onSave,
   onClick,
 }: OpportunityCardProps) => {
+  const imgRef = useRef<HTMLImageElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Intersection Observer for lazy loading optimization
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        rootMargin: "50px", // Start loading 50px before visible
+      }
+    );
+
+    observer.observe(img);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
   const handleClick = (e: React.MouseEvent) => {
     // Prevent navigation when clicking bookmark or CTA
     if (
@@ -33,16 +62,20 @@ export const OpportunityCard = ({
 
   return (
     <article
-      className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-[14px] border border-[#E5E7EB] bg-white transition-shadow hover:shadow-lg"
+      className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-[14px] border border-[#E5E7EB] bg-white transition-shadow hover:shadow-lg animate-fade-in"
       onClick={handleClick}
+      style={{ willChange: 'transform, opacity' }}
     >
       {/* Hero Section */}
-      <div className="relative h-[128px] w-full">
+      <div className="relative h-[128px] w-full bg-gray-100">
         <img
-          src={opportunity.imageUrl}
+          ref={imgRef}
+          src={isVisible ? opportunity.imageUrl : undefined}
           alt={opportunity.title}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover transition-opacity duration-300"
           loading="lazy"
+          decoding="async"
+          style={{ opacity: isVisible ? 1 : 0 }}
         />
         <div className="absolute inset-0 bg-black/40" />
 
@@ -138,4 +171,12 @@ export const OpportunityCard = ({
       </div>
     </article>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison for memo optimization
+  return (
+    prevProps.opportunity.id === nextProps.opportunity.id &&
+    prevProps.opportunity.saved === nextProps.opportunity.saved
+  );
+});
+
+OpportunityCard.displayName = 'OpportunityCard';

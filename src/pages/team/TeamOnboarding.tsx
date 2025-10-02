@@ -28,34 +28,76 @@ const TeamOnboarding = () => {
   const [analysisFileName, setAnalysisFileName] = useState<string | null>(null);
   const [isManualEntry, setIsManualEntry] = useState(false);
   const [currentOfferId, setCurrentOfferId] = useState<string | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [isCheckingProfile, setIsCheckingProfile] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   // Check if user already has a profile
   useEffect(() => {
     const checkExistingProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      try {
+        setIsInitializing(true);
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError) {
+          console.error('Auth error:', authError);
+          toast({
+            title: "Authentication Error",
+            description: "Please log in to continue.",
+            variant: "destructive",
+          });
+          navigate('/auth');
+          return;
+        }
 
-      const { data: profile, error: profileError } = await supabase
-        .from('team_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
+        if (!user) {
+          toast({
+            title: "Authentication Required",
+            description: "Please log in to access the onboarding flow.",
+            variant: "destructive",
+          });
+          navigate('/auth');
+          return;
+        }
 
-      if (profileError) {
-        console.error('Error checking team profile:', profileError);
-        // Stay on 'create-profile' step on error
-        return;
-      }
+        const { data: profile, error: profileError } = await supabase
+          .from('team_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-      if (profile) {
-        setCurrentStep('select-method');
+        if (profileError) {
+          console.error('Error checking team profile:', profileError);
+          toast({
+            title: "Error Loading Profile",
+            description: "We couldn't check your profile status. Starting fresh.",
+          });
+          // Stay on 'create-profile' step on error
+          return;
+        }
+
+        if (profile) {
+          toast({
+            title: "Welcome Back!",
+            description: "Your team profile is ready. Let's create your sponsorship offer.",
+          });
+          setCurrentStep('select-method');
+        }
+      } catch (error) {
+        console.error('Unexpected error during initialization:', error);
+        toast({
+          title: "Something Went Wrong",
+          description: "Please refresh the page and try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsInitializing(false);
       }
     };
 
     checkExistingProfile();
-  }, []);
+  }, [navigate, toast]);
 
   // ... keep existing code (handler functions)
   const handleProfileApprove = () => {
@@ -64,49 +106,63 @@ const TeamOnboarding = () => {
 
   const handleSelectMethod = async (method: "form" | "website" | "pdf", url?: string) => {
     // Validate that team profile exists before allowing offer creation
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    try {
+      setIsCheckingProfile(true);
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        toast({
+          title: "Authentication Required",
+          description: "Your session has expired. Please log in again.",
+          variant: "destructive",
+        });
+        navigate('/auth');
+        return;
+      }
+
+      const { data: teamProfile, error } = await supabase
+        .from('team_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error checking team profile:', error);
+        toast({
+          title: "Verification Failed",
+          description: "We couldn't verify your team profile. Please try again or contact support if the issue persists.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!teamProfile) {
+        toast({
+          title: "Profile Required",
+          description: "You need to complete your team profile first. Let's go back and create it!",
+          variant: "destructive",
+        });
+        setCurrentStep('create-profile');
+        return;
+      }
+
+      // Profile exists, proceed with selected method
+      if (method === "form") {
+        setCurrentStep('questionnaire');
+      } else if (method === "website") {
+        setCurrentStep('website-analysis');
+      } else {
+        setCurrentStep('pdf-upload');
+      }
+    } catch (error) {
+      console.error('Unexpected error during method selection:', error);
       toast({
-        title: "Authentication required",
-        description: "Please log in to continue.",
+        title: "Unexpected Error",
+        description: "Something went wrong. Please try again.",
         variant: "destructive",
       });
-      return;
-    }
-
-    const { data: teamProfile, error } = await supabase
-      .from('team_profiles')
-      .select('id')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error checking team profile:', error);
-      toast({
-        title: "Error",
-        description: "Failed to verify team profile. Please try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!teamProfile) {
-      toast({
-        title: "Team profile required",
-        description: "Please complete your team profile before creating a sponsorship offer.",
-        variant: "destructive",
-      });
-      setCurrentStep('create-profile');
-      return;
-    }
-
-    // Profile exists, proceed with selected method
-    if (method === "form") {
-      setCurrentStep('questionnaire');
-    } else if (method === "website") {
-      setCurrentStep('website-analysis');
-    } else {
-      setCurrentStep('pdf-upload');
+    } finally {
+      setIsCheckingProfile(false);
     }
   };
 
@@ -235,13 +291,15 @@ const TeamOnboarding = () => {
   const handleQuestionnaireComplete = async (data: MultiStepOfferData) => {
     // Validate team profile exists before loading offer
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
         toast({
-          title: "Authentication required",
-          description: "Please log in to continue.",
+          title: "Authentication Required",
+          description: "Your session has expired. Please log in again.",
           variant: "destructive",
         });
+        navigate('/auth');
         return;
       }
 
@@ -255,8 +313,8 @@ const TeamOnboarding = () => {
       if (profileError) {
         console.error('Error checking team profile:', profileError);
         toast({
-          title: "Error",
-          description: "Failed to verify team profile. Please try again.",
+          title: "Profile Verification Failed",
+          description: "We couldn't verify your team profile. Please try again.",
           variant: "destructive",
         });
         return;
@@ -264,13 +322,18 @@ const TeamOnboarding = () => {
 
       if (!teamProfile) {
         toast({
-          title: "Team profile required",
-          description: "Please complete your team profile before creating a sponsorship offer.",
+          title: "Profile Required First",
+          description: "Please complete your team profile before creating sponsorship offers.",
           variant: "destructive",
         });
         setCurrentStep('create-profile');
         return;
       }
+
+      toast({
+        title: "Loading Your Offer",
+        description: "Preparing your sponsorship offer for review...",
+      });
 
       // Find the most recent published questionnaire offer
       const { data: offer, error } = await supabase
@@ -301,7 +364,16 @@ const TeamOnboarding = () => {
         .limit(1)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading offer data:', error);
+        toast({
+          title: "Offer Created Successfully",
+          description: "Your sponsorship offer has been created! Redirecting to dashboard...",
+        });
+        // If we can't load for review, just go to dashboard
+        setTimeout(() => navigate('/team/dashboard'), 1500);
+        return;
+      }
 
       if (offer) {
         setCurrentOfferId(offer.id);
@@ -326,13 +398,12 @@ const TeamOnboarding = () => {
         setCurrentStep('review');
       }
     } catch (error) {
-      console.error('Error loading offer data:', error);
+      console.error('Unexpected error during questionnaire completion:', error);
       toast({
-        title: "Success!",
-        description: "Your sponsorship offer has been created.",
+        title: "Something Went Wrong",
+        description: "Your offer was created, but we couldn't load it for review. Check your dashboard!",
       });
-      // If we can't load for review, just go to dashboard
-      navigate('/team/dashboard');
+      setTimeout(() => navigate('/team/dashboard'), 2000);
     }
   };
 
@@ -389,6 +460,30 @@ const TeamOnboarding = () => {
     }
   };
 
+  // Show loading state during initialization
+  if (isInitializing) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state during profile checks
+  if (isCheckingProfile) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Verifying your profile...</p>
+        </div>
+      </div>
+    );
+  }
+
   const renderStep = () => {
     switch (currentStep) {
       case 'create-profile':
@@ -443,87 +538,118 @@ const TeamOnboarding = () => {
         ) : (
           <PDFUploadInput
             onUpload={async (fileUrl, fileName) => {
-              setAnalysisFileName(fileName);
-              const { data: { user } } = await supabase.auth.getUser();
-              if (!user) {
+              try {
+                setAnalysisFileName(fileName);
+                const { data: { user }, error: authError } = await supabase.auth.getUser();
+                
+                if (authError || !user) {
+                  toast({
+                    title: "Authentication Required",
+                    description: "Your session has expired. Please log in again.",
+                    variant: "destructive",
+                  });
+                  setAnalysisFileName(null);
+                  navigate('/auth');
+                  return;
+                }
+
+                // Fetch team_profile_id and validate it exists
+                const { data: teamProfile, error: profileError } = await supabase
+                  .from('team_profiles')
+                  .select('id')
+                  .eq('user_id', user.id)
+                  .maybeSingle();
+
+                if (profileError) {
+                  console.error('Error fetching team profile:', profileError);
+                  toast({
+                    title: "Profile Verification Failed",
+                    description: "We couldn't verify your team profile. Please try again or contact support.",
+                    variant: "destructive",
+                  });
+                  setAnalysisFileName(null);
+                  return;
+                }
+
+                if (!teamProfile) {
+                  toast({
+                    title: "Profile Required First",
+                    description: "Please complete your team profile before uploading a sponsorship document.",
+                    variant: "destructive",
+                  });
+                  setCurrentStep('create-profile');
+                  setAnalysisFileName(null);
+                  return;
+                }
+
                 toast({
-                  title: "Authentication required",
-                  description: "Please log in to continue.",
-                  variant: "destructive",
+                  title: "Analyzing Document",
+                  description: "We're extracting sponsorship details from your PDF. This may take a moment...",
                 });
-                return;
-              }
 
-              // Fetch team_profile_id and validate it exists
-              const { data: teamProfile, error: profileError } = await supabase
-                .from('team_profiles')
-                .select('id')
-                .eq('user_id', user.id)
-                .maybeSingle();
+                // Create sponsorship offer with required team_profile_id
+                const { data: offerData, error: offerError } = await supabase
+                  .from('sponsorship_offers')
+                  .insert({
+                    user_id: user.id,
+                    team_profile_id: teamProfile.id, // Required, not nullable
+                    title: `Sponsorship from ${fileName}`,
+                    fundraising_goal: 0,
+                    duration: 'TBD',
+                    impact: 'Analysis in progress...',
+                    pdf_public_url: fileUrl,
+                    source_file_name: fileName,
+                    analysis_status: 'pending',
+                    source: 'pdf',
+                    status: 'draft'
+                  })
+                  .select()
+                  .single();
 
-              if (profileError) {
-                console.error('Error fetching team profile:', profileError);
-                toast({
-                  title: "Error",
-                  description: "Failed to verify team profile. Please try again.",
-                  variant: "destructive",
-                });
-                setAnalysisFileName(null);
-                return;
-              }
+                if (offerError) {
+                  console.error('Error creating offer:', offerError);
+                  toast({
+                    title: "Failed to Create Offer",
+                    description: "We couldn't create your sponsorship offer. Please try again.",
+                    variant: "destructive",
+                  });
+                  setAnalysisFileName(null);
+                  return;
+                }
 
-              if (!teamProfile) {
-                toast({
-                  title: "Team profile required",
-                  description: "Please complete your team profile before creating a sponsorship offer.",
-                  variant: "destructive",
-                });
-                setCurrentStep('create-profile');
-                setAnalysisFileName(null);
-                return;
-              }
+                if (offerData) {
+                  setCurrentOfferId(offerData.id);
+                  
+                  const { error: functionError } = await supabase.functions.invoke('analyze-pdf-sponsorship', {
+                    body: { 
+                      pdfUrl: fileUrl, 
+                      offerId: offerData.id, 
+                      userId: user.id,
+                      teamProfileId: teamProfile.id
+                    }
+                  });
 
-              // Create sponsorship offer with required team_profile_id
-              const { data: offerData, error: offerError } = await supabase
-                .from('sponsorship_offers')
-                .insert({
-                  user_id: user.id,
-                  team_profile_id: teamProfile.id, // Required, not nullable
-                  title: `Sponsorship from ${fileName}`,
-                  fundraising_goal: 0,
-                  duration: 'TBD',
-                  impact: 'Analysis in progress...',
-                  pdf_public_url: fileUrl,
-                  source_file_name: fileName,
-                  analysis_status: 'pending',
-                  source: 'pdf',
-                  status: 'draft'
-                })
-                .select()
-                .single();
-
-              if (offerError) {
-                console.error('Error creating offer:', offerError);
-                toast({
-                  title: "Error",
-                  description: "Failed to create sponsorship offer. Please try again.",
-                  variant: "destructive",
-                });
-                setAnalysisFileName(null);
-                return;
-              }
-
-              if (offerData) {
-                setCurrentOfferId(offerData.id);
-                await supabase.functions.invoke('analyze-pdf-sponsorship', {
-                  body: { 
-                    pdfUrl: fileUrl, 
-                    offerId: offerData.id, 
-                    userId: user.id,
-                    teamProfileId: teamProfile.id
+                  if (functionError) {
+                    console.error('Error invoking analysis function:', functionError);
+                    toast({
+                      title: "Analysis Failed to Start",
+                      description: "We couldn't start analyzing your document. Please try uploading again.",
+                      variant: "destructive",
+                    });
+                    setAnalysisFileName(null);
+                    return;
                   }
+
+                  pollAnalysisStatus(offerData.id);
+                }
+              } catch (error) {
+                console.error('Unexpected error during PDF upload:', error);
+                toast({
+                  title: "Upload Failed",
+                  description: "An unexpected error occurred. Please try again.",
+                  variant: "destructive",
                 });
-                pollAnalysisStatus(offerData.id);
+                setAnalysisFileName(null);
               }
             }}
             onBack={handleCancelAnalysis}
@@ -540,7 +666,14 @@ const TeamOnboarding = () => {
 
       case 'review':
         if (!sponsorshipData) {
-          return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+          return (
+            <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+              <div className="text-center space-y-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                <p className="text-muted-foreground">Loading your offer details...</p>
+              </div>
+            </div>
+          );
         }
         return (
           <SponsorshipReview

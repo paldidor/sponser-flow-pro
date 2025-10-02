@@ -348,8 +348,8 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
 
     setIsSaving(true);
     
-    // Store old value for potential rollback
-    const oldValue = team ? team[field as keyof TeamProfile] : null;
+    // Store old team for rollback
+    const oldTeam = team;
     
     try {
       // Optimistically update UI first
@@ -360,12 +360,13 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
       
       if (!user) {
         // Revert optimistic update
-        setTeam(team);
+        setTeam(oldTeam);
         toast({
           title: "Error",
           description: "You must be logged in to save changes",
           variant: "destructive",
         });
+        setIsSaving(false);
         return;
       }
 
@@ -379,13 +380,15 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
 
       if (error) {
         // Revert optimistic update on error
-        setTeam(team);
+        setTeam(oldTeam);
         console.error('Error updating profile:', error);
         toast({
           title: "Error saving changes",
           description: error.message,
           variant: "destructive",
         });
+        setIsSaving(false);
+        return;
       } else {
         // Show success indicator
         toast({
@@ -405,7 +408,7 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
       }
     } catch (err) {
       // Revert optimistic update on error
-      setTeam(team);
+      setTeam(oldTeam);
       console.error('Unexpected error:', err);
       toast({
         title: "Error",

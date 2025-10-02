@@ -7,13 +7,12 @@ import LoadingState from "@/components/LoadingState";
 
 const CreateSponsorshipOffer = lazy(() => import("@/components/CreateSponsorshipOffer"));
 const QuestionnaireFlow = lazy(() => import("@/components/questionnaire/QuestionnaireFlow"));
-const PDFUploadInput = lazy(() => import("@/components/PDFUploadInput"));
 const PDFAnalysisProgress = lazy(() => import("@/components/PDFAnalysisProgress"));
 const WebsiteAnalysisInput = lazy(() => import("@/components/WebsiteAnalysisInput"));
 const AnalysisSpinner = lazy(() => import("@/components/AnalysisSpinner"));
 const SponsorshipReview = lazy(() => import("@/components/SponsorshipReview"));
 
-type FlowStep = 'select-method' | 'questionnaire' | 'pdf-upload' | 'pdf-analysis' | 'review' | 'website-input' | 'website-analysis';
+type FlowStep = 'select-method' | 'questionnaire' | 'pdf-analysis' | 'review' | 'website-input' | 'website-analysis';
 
 interface CreateOfferFlowProps {
   onComplete: () => void;
@@ -31,11 +30,8 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
       setCurrentStep('questionnaire');
     } else if (method === "website") {
       setCurrentStep('website-input');
-    } else {
-      // PDF method is now handled directly in CreateSponsorshipOffer
-      // This shouldn't be called anymore, but keep for backwards compatibility
-      setCurrentStep('pdf-upload');
     }
+    // PDF method is now handled directly in CreateSponsorshipOffer
   };
 
   const handleDirectPDFUpload = async (fileUrl: string, fileName: string, file: File) => {
@@ -241,11 +237,11 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
   };
 
   const handleBack = () => {
-    if (currentStep === 'questionnaire' || currentStep === 'pdf-upload' || currentStep === 'website-input') {
+    if (currentStep === 'questionnaire' || currentStep === 'website-input') {
       setCurrentStep('select-method');
       resetOffer();
     } else if (currentStep === 'pdf-analysis') {
-      setCurrentStep('pdf-upload');
+      setCurrentStep('select-method');
       setAnalysisFileName(null);
       resetOffer();
     } else if (currentStep === 'review') {
@@ -277,16 +273,6 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
           <Suspense fallback={<LoadingFallback />}>
             <QuestionnaireFlow
               onComplete={handleQuestionnaireComplete}
-              onBack={handleBack}
-            />
-          </Suspense>
-        );
-
-      case 'pdf-upload':
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <PDFUploadInput
-              onUpload={handlePDFUpload}
               onBack={handleBack}
             />
           </Suspense>

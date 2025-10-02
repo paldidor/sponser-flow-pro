@@ -293,17 +293,22 @@ ${extractedText}`;
 
     // Validate required fields with detailed error messages
     const missingFields = [];
-    if (!parsedData.funding_goal) missingFields.push('funding_goal');
+    // Allow 0 as valid value (means "not specified in PDF")
+    if (parsedData.funding_goal === undefined || parsedData.funding_goal === null) {
+      missingFields.push('funding_goal');
+    }
     if (!parsedData.sponsorship_term) missingFields.push('sponsorship_term');
     if (!parsedData.sponsorship_impact) missingFields.push('sponsorship_impact');
     
+    console.log('Validation check - funding_goal:', parsedData.funding_goal, 'missing:', missingFields);
+    
     if (missingFields.length > 0) {
       console.error('Missing required fields:', missingFields.join(', '));
-      console.error('Partial data received:', parsedData);
+      console.error('Partial data received:', JSON.stringify(parsedData, null, 2));
       
       // Still save partial data if we have at least the basic info
-      if (parsedData.funding_goal || parsedData.sponsorship_term) {
-        console.log('Saving partial data...');
+      if (parsedData.funding_goal !== undefined || parsedData.sponsorship_term) {
+        console.log('Saving partial data with funding_goal:', parsedData.funding_goal);
         await supabase
           .from('sponsorship_offers')
           .update({
@@ -312,7 +317,7 @@ ${extractedText}`;
             impact: parsedData.sponsorship_impact || 'Analysis incomplete - please review manually',
             supported_players: parsedData.total_players_supported || null,
             analysis_status: 'completed',
-            title: `Sponsorship Offer - Partial Data`,
+            title: parsedData.funding_goal ? `Sponsorship Offer - $${parsedData.funding_goal} Goal` : 'Sponsorship Offer - Goal TBD',
           })
           .eq('id', offerId)
           .eq('user_id', userId);
@@ -321,10 +326,16 @@ ${extractedText}`;
       throw new Error(`AI analysis incomplete. Missing: ${missingFields.join(', ')}. Please try again or enter information manually.`);
     }
 
-    // Validate data types
-    if (typeof parsedData.funding_goal !== 'number' || parsedData.funding_goal <= 0) {
-      console.warn('Invalid funding_goal, attempting conversion');
+    // Validate data types (allow 0 as valid value)
+    if (typeof parsedData.funding_goal !== 'number') {
+      console.warn('Invalid funding_goal type, attempting conversion');
       parsedData.funding_goal = parseFloat(String(parsedData.funding_goal).replace(/[^0-9.]/g, '')) || 0;
+    }
+    
+    // Ensure non-negative
+    if (parsedData.funding_goal < 0) {
+      console.warn('Negative funding_goal detected, setting to 0');
+      parsedData.funding_goal = 0;
     }
 
     if (!Array.isArray(parsedData.packages)) {
@@ -342,7 +353,7 @@ ${extractedText}`;
         impact: parsedData.sponsorship_impact,
         supported_players: parsedData.total_players_supported || null,
         analysis_status: 'completed',
-        title: `Sponsorship Offer - ${parsedData.funding_goal} Goal`,
+        title: parsedData.funding_goal > 0 ? `Sponsorship Offer - $${parsedData.funding_goal} Goal` : 'Sponsorship Offer - Goal TBD',
         team_profile_id: teamProfileId,
         status: 'published',
       })

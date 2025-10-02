@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 interface PDFAnalysisProgressProps {
   fileName: string;
   onCancel?: () => void;
+  onError?: () => void;
 }
 
 const PDFAnalysisProgress = ({ fileName, onCancel }: PDFAnalysisProgressProps) => {

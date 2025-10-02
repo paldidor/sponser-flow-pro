@@ -62,7 +62,45 @@ const TeamOnboarding = () => {
     setCurrentStep('select-method');
   };
 
-  const handleSelectMethod = (method: "form" | "website" | "pdf", url?: string) => {
+  const handleSelectMethod = async (method: "form" | "website" | "pdf", url?: string) => {
+    // Validate that team profile exists before allowing offer creation
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { data: teamProfile, error } = await supabase
+      .from('team_profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error checking team profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to verify team profile. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!teamProfile) {
+      toast({
+        title: "Team profile required",
+        description: "Please complete your team profile before creating a sponsorship offer.",
+        variant: "destructive",
+      });
+      setCurrentStep('create-profile');
+      return;
+    }
+
+    // Profile exists, proceed with selected method
     if (method === "form") {
       setCurrentStep('questionnaire');
     } else if (method === "website") {
@@ -195,10 +233,44 @@ const TeamOnboarding = () => {
 
 
   const handleQuestionnaireComplete = async (data: MultiStepOfferData) => {
-    // Load the most recent published offer from questionnaire source for review
+    // Validate team profile exists before loading offer
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to continue.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Verify team profile exists
+      const { data: teamProfile, error: profileError } = await supabase
+        .from('team_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Error checking team profile:', profileError);
+        toast({
+          title: "Error",
+          description: "Failed to verify team profile. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!teamProfile) {
+        toast({
+          title: "Team profile required",
+          description: "Please complete your team profile before creating a sponsorship offer.",
+          variant: "destructive",
+        });
+        setCurrentStep('create-profile');
+        return;
+      }
 
       // Find the most recent published questionnaire offer
       const { data: offer, error } = await supabase
@@ -373,20 +445,50 @@ const TeamOnboarding = () => {
             onUpload={async (fileUrl, fileName) => {
               setAnalysisFileName(fileName);
               const { data: { user } } = await supabase.auth.getUser();
-              if (!user) return;
+              if (!user) {
+                toast({
+                  title: "Authentication required",
+                  description: "Please log in to continue.",
+                  variant: "destructive",
+                });
+                return;
+              }
 
-              // Fetch team_profile_id
-              const { data: teamProfile } = await supabase
+              // Fetch team_profile_id and validate it exists
+              const { data: teamProfile, error: profileError } = await supabase
                 .from('team_profiles')
                 .select('id')
                 .eq('user_id', user.id)
                 .maybeSingle();
 
-              const { data: offerData } = await supabase
+              if (profileError) {
+                console.error('Error fetching team profile:', profileError);
+                toast({
+                  title: "Error",
+                  description: "Failed to verify team profile. Please try again.",
+                  variant: "destructive",
+                });
+                setAnalysisFileName(null);
+                return;
+              }
+
+              if (!teamProfile) {
+                toast({
+                  title: "Team profile required",
+                  description: "Please complete your team profile before creating a sponsorship offer.",
+                  variant: "destructive",
+                });
+                setCurrentStep('create-profile');
+                setAnalysisFileName(null);
+                return;
+              }
+
+              // Create sponsorship offer with required team_profile_id
+              const { data: offerData, error: offerError } = await supabase
                 .from('sponsorship_offers')
                 .insert({
                   user_id: user.id,
-                  team_profile_id: teamProfile?.id || null,
+                  team_profile_id: teamProfile.id, // Required, not nullable
                   title: `Sponsorship from ${fileName}`,
                   fundraising_goal: 0,
                   duration: 'TBD',
@@ -400,6 +502,17 @@ const TeamOnboarding = () => {
                 .select()
                 .single();
 
+              if (offerError) {
+                console.error('Error creating offer:', offerError);
+                toast({
+                  title: "Error",
+                  description: "Failed to create sponsorship offer. Please try again.",
+                  variant: "destructive",
+                });
+                setAnalysisFileName(null);
+                return;
+              }
+
               if (offerData) {
                 setCurrentOfferId(offerData.id);
                 await supabase.functions.invoke('analyze-pdf-sponsorship', {
@@ -407,7 +520,7 @@ const TeamOnboarding = () => {
                     pdfUrl: fileUrl, 
                     offerId: offerData.id, 
                     userId: user.id,
-                    teamProfileId: teamProfile?.id || null
+                    teamProfileId: teamProfile.id
                   }
                 });
                 pollAnalysisStatus(offerData.id);

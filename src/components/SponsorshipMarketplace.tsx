@@ -7,6 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Check, MapPin, Mail, Globe, Heart, Share2, Instagram, Twitter, Facebook, Linkedin, Youtube, TrendingUp, Trophy, BarChart3, ChevronDown, Users, Star, Target } from "lucide-react";
 import { SponsorshipData, TeamProfile } from "@/types/flow";
 import { useToast } from "@/hooks/use-toast";
+import { StatCard } from "@/components/marketplace/StatCard";
 
 interface SponsorshipMarketplaceProps {
   sponsorshipData: SponsorshipData;
@@ -167,61 +168,51 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
 
                 {/* Stats Grid - 8 Tiles */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mt-5 mb-5">
-                  <div className="bg-white rounded-lg p-2.5 shadow-sm border-2 border-[#00aafe] text-center">
-                    <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
-                      {sponsorshipData.duration.includes("yr") || sponsorshipData.duration.toLowerCase().includes("annual") ? "1 yr" : sponsorshipData.duration}
-                    </div>
-                    <div className="text-xs text-gray-600 leading-tight">Duration</div>
-                  </div>
+                  <StatCard
+                    value={
+                      sponsorshipData.duration.includes("yr") || 
+                      sponsorshipData.duration.toLowerCase().includes("annual") 
+                        ? "1 yr" 
+                        : sponsorshipData.duration
+                    }
+                    label="Duration"
+                  />
 
-                  <div className="bg-white rounded-lg p-2.5 shadow-sm border-2 border-[#00aafe] text-center">
-                    <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
-                      ${Number(sponsorshipData.fundraisingGoal).toLocaleString()}
-                    </div>
-                    <div className="text-xs text-gray-600 leading-tight">Fundraising Goal</div>
-                  </div>
+                  <StatCard
+                    value={`$${Number(sponsorshipData.fundraisingGoal).toLocaleString()}`}
+                    label="Fundraising Goal"
+                  />
 
-                  <div className="bg-white rounded-lg p-2.5 shadow-sm border-2 border-[#00aafe] text-center">
-                    <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
-                      {team.number_of_players}
-                    </div>
-                    <div className="text-xs text-gray-600 leading-tight">Players Supported</div>
-                  </div>
+                  <StatCard
+                    value={team.number_of_players}
+                    label="Players Supported"
+                  />
 
-                  <div className="bg-white rounded-lg p-2.5 shadow-sm border-2 border-[#00aafe] text-center">
-                    <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
-                      {team.competition_scope.charAt(0).toUpperCase() + team.competition_scope.slice(1)}
-                    </div>
-                    <div className="text-xs text-gray-600 leading-tight">Competition Level</div>
-                  </div>
+                  <StatCard
+                    value={team.competition_scope.charAt(0).toUpperCase() + team.competition_scope.slice(1)}
+                    label="Competition Level"
+                    forceAbbreviate={true}
+                  />
 
-                  <div className="bg-white rounded-lg p-2.5 shadow-sm border-2 border-[#00aafe] text-center">
-                    <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
-                      {(team.instagram_followers || 0).toLocaleString()}
-                    </div>
-                    <div className="text-xs text-gray-600 leading-tight">Families Reached</div>
-                  </div>
+                  <StatCard
+                    value={(team.instagram_followers || 0).toLocaleString()}
+                    label="Families Reached"
+                  />
 
-                  <div className="bg-white rounded-lg p-2.5 shadow-sm border-2 border-[#00aafe] text-center">
-                    <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
-                      24
-                    </div>
-                    <div className="text-xs text-gray-600 leading-tight">Games Per Season</div>
-                  </div>
+                  <StatCard
+                    value={24}
+                    label="Games Per Season"
+                  />
 
-                  <div className="bg-white rounded-lg p-2.5 shadow-sm border-2 border-[#00aafe] text-center">
-                    <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
-                      {totalReach.toLocaleString()}
-                    </div>
-                    <div className="text-xs text-gray-600 leading-tight">Total Social Reach</div>
-                  </div>
+                  <StatCard
+                    value={totalReach.toLocaleString()}
+                    label="Total Social Reach"
+                  />
 
-                  <div className="bg-white rounded-lg p-2.5 shadow-sm border-2 border-[#00aafe] text-center">
-                    <div className="text-lg sm:text-xl font-bold mb-0.5" style={{ color: '#00aafe' }}>
-                      340
-                    </div>
-                    <div className="text-xs text-gray-600 leading-tight">Weekly Attendance</div>
-                  </div>
+                  <StatCard
+                    value={340}
+                    label="Weekly Attendance"
+                  />
                 </div>
 
                 {/* Demographics Collapsible */}

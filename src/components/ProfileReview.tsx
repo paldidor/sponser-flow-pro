@@ -20,14 +20,8 @@ interface ProfileReviewProps {
 }
 
 const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUpdate }: ProfileReviewProps) => {
-  const [team, setTeam] = useState<TeamProfile | null>(teamData);
-  const [isLoading, setIsLoading] = useState(false);
-  const [editingField, setEditingField] = useState<string | null>(null);
-  const [editValue, setEditValue] = useState<any>("");
-  const [isSaving, setIsSaving] = useState(false);
-  const [newTagValue, setNewTagValue] = useState<string>("");
   const { toast } = useToast();
-
+  
   const defaultTeam: TeamProfile = {
     team_name: "",
     main_values: [],
@@ -53,6 +47,14 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
     email_list_size: 0,
     images: [],
   };
+
+  // Initialize with teamData if provided, otherwise use defaultTeam for manual entry
+  const [team, setTeam] = useState<TeamProfile>(teamData || defaultTeam);
+  const [isLoading, setIsLoading] = useState(false);
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState<any>("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [newTagValue, setNewTagValue] = useState<string>("");
 
   const fetchTeamProfile = async () => {
     setIsLoading(true);
@@ -122,7 +124,7 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
         
         console.log('Parsed main_values:', parsedMainValues);
         
-        setTeam({
+        const fetchedTeam: TeamProfile = {
           team_name: data.team_name || "",
           main_values: parsedMainValues,
           location: data.location || "",
@@ -141,10 +143,23 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
           twitter_link: data.twitter_link || "",
           instagram_followers: data.instagram_followers || 0,
           facebook_followers: data.facebook_followers || 0,
+          linkedin_followers: data.linkedin_followers || 0,
           twitter_followers: data.twitter_followers || 0,
+          youtube_followers: data.youtube_followers || 0,
           email_list_size: data.email_list_size || 0,
           images: [],
-        });
+        };
+        
+        setTeam(fetchedTeam);
+        
+        // Notify parent of the fetched profile
+        if (onProfileUpdate) {
+          onProfileUpdate(fetchedTeam);
+        }
+      } else {
+        // No existing profile found, use defaultTeam
+        console.log('No profile found, using defaultTeam');
+        setTeam(defaultTeam);
       }
     } catch (err) {
       console.error('Unexpected error:', err);
@@ -157,7 +172,7 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
     if (!teamData) {
       fetchTeamProfile();
     }
-  }, [teamData, toast]);
+  }, [teamData]);
 
   const handleEdit = (field: string, currentValue: any) => {
     setEditingField(field);
@@ -166,15 +181,19 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
   };
 
   const handleRemoveTag = async (tagToRemove: string) => {
-    const updatedValues = currentTeam.main_values.filter(v => v !== tagToRemove);
+    // Always use a valid base team
+    const baseTeam = team || defaultTeam;
+    const updatedValues = baseTeam.main_values.filter(v => v !== tagToRemove);
     setIsSaving(true);
     
     // Store old team for rollback
     const oldTeam = team;
     
     try {
+      // Build updated team from base
+      const updatedTeam: TeamProfile = { ...baseTeam, main_values: updatedValues };
+      
       // Optimistically update UI
-      const updatedTeam = team ? { ...team, main_values: updatedValues } : null;
       setTeam(updatedTeam);
       
       const { data: { user } } = await supabase.auth.getUser();
@@ -228,8 +247,8 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
           description: "Your profile has been updated",
         });
         
-        // Notify parent component
-        if (onProfileUpdate && updatedTeam) {
+        // Always notify parent component with the updated team
+        if (onProfileUpdate) {
           onProfileUpdate(updatedTeam);
         }
       }
@@ -243,6 +262,9 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
   };
 
   const handleAddTag = async () => {
+    // Always use a valid base team
+    const baseTeam = team || defaultTeam;
+    
     if (!newTagValue.trim()) {
       toast({
         title: "Empty Value",
@@ -252,7 +274,7 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
       return;
     }
 
-    if (currentTeam.main_values.includes(newTagValue.trim())) {
+    if (baseTeam.main_values.includes(newTagValue.trim())) {
       toast({
         title: "Duplicate Value",
         description: "This value already exists",
@@ -262,15 +284,17 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
       return;
     }
     
-    const updatedValues = [...currentTeam.main_values, newTagValue.trim()];
+    const updatedValues = [...baseTeam.main_values, newTagValue.trim()];
     setIsSaving(true);
     
     // Store old team for rollback
     const oldTeam = team;
     
     try {
+      // Build updated team from base
+      const updatedTeam: TeamProfile = { ...baseTeam, main_values: updatedValues };
+      
       // Optimistically update UI
-      const updatedTeam = team ? { ...team, main_values: updatedValues } : null;
       setTeam(updatedTeam);
       setNewTagValue("");
       
@@ -327,8 +351,8 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
           description: "Your profile has been updated",
         });
         
-        // Notify parent component
-        if (onProfileUpdate && updatedTeam) {
+        // Always notify parent component with the updated team
+        if (onProfileUpdate) {
           onProfileUpdate(updatedTeam);
         }
       }
@@ -384,12 +408,20 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
 
     setIsSaving(true);
     
+    // Always use a valid base team
+    const baseTeam = team || defaultTeam;
+    
     // Store old team for rollback
     const oldTeam = team;
     
     try {
+      // Prepare the value with proper type
+      const value = numericFields.includes(field) ? Number(editValue) : editValue;
+      
+      // Build updated team from base
+      const updatedTeam: TeamProfile = { ...baseTeam, [field]: value };
+      
       // Optimistically update UI first
-      const updatedTeam = team ? { ...team, [field]: editValue } : null;
       setTeam(updatedTeam);
       
       const { data: { user } } = await supabase.auth.getUser();
@@ -406,8 +438,7 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
         return;
       }
 
-      // Prepare the update object with proper types
-      const value = numericFields.includes(field) ? Number(editValue) : editValue;
+      // Prepare the update object
       const updateData: any = { [field]: value };
 
       // Ensure a profile row exists; insert if missing, otherwise update
@@ -451,8 +482,8 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
           description: "Your changes have been saved",
         });
         
-        // Notify parent component of update
-        if (onProfileUpdate && updatedTeam) {
+        // Always notify parent component with the updated team
+        if (onProfileUpdate) {
           onProfileUpdate(updatedTeam);
         }
         
@@ -481,7 +512,7 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
     onApprove();
   };
 
-  const currentTeam = team || defaultTeam;
+  const currentTeam = team;
   const totalReach = (currentTeam.instagram_followers || 0) + (currentTeam.facebook_followers || 0) + (currentTeam.linkedin_followers || 0) + (currentTeam.twitter_followers || 0) + (currentTeam.youtube_followers || 0) + (currentTeam.email_list_size || 0);
 
   return (

@@ -1,8 +1,8 @@
 import { useState, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useOfferCreation } from "@/hooks/useOfferCreation";
 import { Loader2 } from "lucide-react";
-import { Card } from "@/components/ui/card";
 
 const CreateSponsorshipOffer = lazy(() => import("@/components/CreateSponsorshipOffer"));
 const QuestionnaireFlow = lazy(() => import("@/components/questionnaire/QuestionnaireFlow"));
@@ -12,7 +12,7 @@ const WebsiteAnalysisInput = lazy(() => import("@/components/WebsiteAnalysisInpu
 const AnalysisSpinner = lazy(() => import("@/components/AnalysisSpinner"));
 const SponsorshipReview = lazy(() => import("@/components/SponsorshipReview"));
 
-type FlowStep = 'select-method' | 'questionnaire' | 'pdf-upload' | 'pdf-analysis' | 'pdf-review' | 'website-input' | 'website-analysis';
+type FlowStep = 'select-method' | 'questionnaire' | 'pdf-upload' | 'pdf-analysis' | 'review' | 'website-input' | 'website-analysis';
 
 interface CreateOfferFlowProps {
   onComplete: () => void;
@@ -22,9 +22,8 @@ interface CreateOfferFlowProps {
 const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
   const [currentStep, setCurrentStep] = useState<FlowStep>('select-method');
   const [analysisFileName, setAnalysisFileName] = useState<string | null>(null);
-  const [currentOfferId, setCurrentOfferId] = useState<string | null>(null);
-  const [analyzedOfferData, setAnalyzedOfferData] = useState<any>(null);
   const { toast } = useToast();
+  const { currentOfferId, offerData, loadOfferData, loadLatestQuestionnaireOffer, publishOffer, resetOffer } = useOfferCreation();
 
   const handleSelectMethod = (method: "form" | "website" | "pdf", url?: string) => {
     if (method === "form") {
@@ -95,7 +94,6 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
       return;
     }
 
-    setCurrentOfferId(offerData.id);
     setCurrentStep('pdf-analysis');
     
     const { error: invokeError } = await supabase.functions.invoke('analyze-pdf-sponsorship', {
@@ -116,59 +114,9 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
   };
 
   const loadPDFOfferData = async (offerId: string) => {
-    try {
-      const { data: offer, error: offerError } = await supabase
-        .from('sponsorship_offers')
-        .select(`
-          *,
-          sponsorship_packages (
-            id,
-            name,
-            price,
-            benefits,
-            description,
-            package_placements (
-              placement_option_id,
-              placement_options (
-                id,
-                name,
-                category,
-                description
-              )
-            )
-          )
-        `)
-        .eq('id', offerId)
-        .single();
-
-      if (offerError) throw offerError;
-
-      const formattedData = {
-        fundraisingGoal: offer.fundraising_goal?.toString() || '0',
-        duration: offer.duration || 'TBD',
-        description: offer.description || offer.impact || '',
-        packages: offer.sponsorship_packages?.map((pkg: any) => ({
-          id: pkg.id,
-          name: pkg.name,
-          price: pkg.price,
-          benefits: pkg.benefits || [],
-          placements: pkg.package_placements?.map((pp: any) => 
-            pp.placement_options?.name || ''
-          ).filter(Boolean) || []
-        })) || [],
-        source: 'pdf',
-        fileName: offer.source_file_name || undefined
-      };
-
-      setAnalyzedOfferData(formattedData);
-      setCurrentStep('pdf-review');
-    } catch (error) {
-      console.error('Error loading PDF offer data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load analyzed data. Please try again.",
-        variant: "destructive",
-      });
+    const data = await loadOfferData(offerId, 'pdf');
+    if (data) {
+      setCurrentStep('review');
     }
   };
 
@@ -243,49 +191,44 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
     }, 5000);
   };
 
-  const handleQuestionnaireComplete = () => {
+  const handleQuestionnaireComplete = async () => {
     toast({
-      title: "Success!",
-      description: "Your sponsorship offer has been created",
+      title: "Loading Your Offer",
+      description: "Preparing your sponsorship offer for review...",
     });
-    onComplete();
+
+    const data = await loadLatestQuestionnaireOffer();
+    
+    if (data) {
+      setCurrentStep('review');
+    } else {
+      // If we can't load for review, just go to completion
+      toast({
+        title: "Offer Created Successfully",
+        description: "Your sponsorship offer has been created!",
+      });
+      setTimeout(() => onComplete(), 1500);
+    }
   };
 
-  const handlePDFReviewApprove = async () => {
-    if (!currentOfferId) return;
-    
-    try {
-      const { error } = await supabase
-        .from('sponsorship_offers')
-        .update({ status: 'published' })
-        .eq('id', currentOfferId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success!",
-        description: "Your sponsorship offer has been published.",
-      });
+  const handleReviewApprove = async () => {
+    const success = await publishOffer();
+    if (success) {
       onComplete();
-    } catch (error) {
-      console.error('Error publishing offer:', error);
-      toast({
-        title: "Error",
-        description: "Failed to publish offer. Please try again.",
-        variant: "destructive",
-      });
     }
   };
 
   const handleBack = () => {
     if (currentStep === 'questionnaire' || currentStep === 'pdf-upload' || currentStep === 'website-input') {
       setCurrentStep('select-method');
+      resetOffer();
     } else if (currentStep === 'pdf-analysis') {
       setCurrentStep('pdf-upload');
       setAnalysisFileName(null);
-    } else if (currentStep === 'pdf-review') {
+      resetOffer();
+    } else if (currentStep === 'review') {
       setCurrentStep('select-method');
-      setAnalyzedOfferData(null);
+      resetOffer();
     } else if (currentStep === 'website-analysis') {
       setCurrentStep('website-input');
     }
@@ -348,16 +291,16 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
           </Suspense>
         );
 
-      case 'pdf-review':
-        if (!analyzedOfferData) {
+      case 'review':
+        if (!offerData) {
           return <LoadingFallback />;
         }
         return (
           <Suspense fallback={<LoadingFallback />}>
             <SponsorshipReview
-              sponsorshipData={analyzedOfferData}
+              sponsorshipData={offerData}
               teamData={null}
-              onApprove={handlePDFReviewApprove}
+              onApprove={handleReviewApprove}
               onBack={handleBack}
             />
           </Suspense>

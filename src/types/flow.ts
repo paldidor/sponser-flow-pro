@@ -83,7 +83,7 @@ export interface SponsorshipData {
     phone?: string;
     website?: string;
   };
-  source: "form" | "website" | "pdf";
+  source: "form" | "website" | "pdf" | "questionnaire";
   sourceUrl?: string;
   fileName?: string;
 }

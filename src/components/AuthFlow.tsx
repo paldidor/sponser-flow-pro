@@ -34,10 +34,10 @@ const AuthFlow = ({ onAuthComplete, onBack }: AuthFlowProps) => {
       return;
     }
 
-    if (!password || password.length === 0) {
+    if (!password || password.length < 6) {
       toast({
-        title: "Password required",
-        description: "Please enter a password",
+        title: "Invalid password",
+        description: "Password must be at least 6 characters",
         variant: "destructive",
       });
       return;
@@ -55,7 +55,19 @@ const AuthFlow = ({ onAuthComplete, onBack }: AuthFlowProps) => {
           },
         });
 
-        if (error) throw error;
+        if (error) {
+          // Handle specific signup errors
+          if (error.message.includes('already registered')) {
+            toast({
+              title: "Account exists",
+              description: "This email is already registered. Try signing in instead.",
+              variant: "destructive",
+            });
+            setIsSignUp(false);
+            return;
+          }
+          throw error;
+        }
 
         if (data.user) {
           toast({
@@ -70,7 +82,26 @@ const AuthFlow = ({ onAuthComplete, onBack }: AuthFlowProps) => {
           password,
         });
 
-        if (error) throw error;
+        if (error) {
+          // Handle specific sign-in errors
+          if (error.message.includes('Invalid login credentials')) {
+            toast({
+              title: "Invalid credentials",
+              description: "Email or password is incorrect. Please try again.",
+              variant: "destructive",
+            });
+            return;
+          }
+          if (error.message.includes('Email not confirmed')) {
+            toast({
+              title: "Email not confirmed",
+              description: "Please check your email and confirm your account.",
+              variant: "destructive",
+            });
+            return;
+          }
+          throw error;
+        }
 
         if (data.user) {
           toast({
@@ -81,9 +112,10 @@ const AuthFlow = ({ onAuthComplete, onBack }: AuthFlowProps) => {
         }
       }
     } catch (error: any) {
+      // Generic error handler for unexpected errors
       toast({
         title: "Authentication failed",
-        description: error.message || "An error occurred during authentication",
+        description: error.message || "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -101,13 +133,24 @@ const AuthFlow = ({ onAuthComplete, onBack }: AuthFlowProps) => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('popup')) {
+          toast({
+            title: "Popup blocked",
+            description: "Please allow popups for this site and try again.",
+            variant: "destructive",
+          });
+        } else {
+          throw error;
+        }
+      }
     } catch (error: any) {
       toast({
-        title: "Authentication failed",
-        description: error.message || "An error occurred with Google sign-in",
+        title: "Google sign-in failed",
+        description: error.message || "Please try again or use email/password instead.",
         variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -186,6 +229,7 @@ const AuthFlow = ({ onAuthComplete, onBack }: AuthFlowProps) => {
                   className="pl-10"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAuth()}
                 />
               </div>
             </div>
@@ -201,8 +245,25 @@ const AuthFlow = ({ onAuthComplete, onBack }: AuthFlowProps) => {
                   className="pl-10"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAuth()}
                 />
               </div>
+              {!isSignUp && (
+                <div className="text-right">
+                  <button
+                    className="text-sm text-primary hover:underline"
+                    onClick={() => {
+                      toast({
+                        title: "Password reset",
+                        description: "Password reset feature coming soon. Please contact support.",
+                      });
+                    }}
+                    type="button"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              )}
             </div>
 
             <Button

@@ -1,24 +1,25 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useSmartAuth } from "@/hooks/useSmartAuth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
   const [scrolled, setScrolled] = useState(false);
+  const { user, userRole } = useSmartAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
     };
@@ -26,7 +27,6 @@ const Header = () => {
     window.addEventListener('scroll', handleScroll);
 
     return () => {
-      subscription.unsubscribe();
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
@@ -97,19 +97,32 @@ const Header = () => {
         <div className="hidden md:flex items-center gap-3">
           {user ? (
             <>
-              <Link to="/team/dashboard">
+              <Link to={userRole === 'team' ? '/team/dashboard' : '/marketplace'}>
                 <Button variant="ghost" size="sm" className="text-white hover:text-accent hover:bg-white/10">
-                  Dashboard
+                  {userRole === 'team' ? 'Team Dashboard' : 'Marketplace'}
                 </Button>
               </Link>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleSignOut}
-                className="text-white hover:text-accent hover:bg-white/10"
-              >
-                Sign Out
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="text-white hover:text-accent hover:bg-white/10">
+                    <User className="h-4 w-4 mr-2" />
+                    Account
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium">{user.email}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{userRole} Account</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           ) : (
             <>
@@ -183,17 +196,22 @@ const Header = () => {
             </a>
             {user ? (
               <>
-                <Link to="/team/dashboard" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="ghost" size="sm" className="w-full text-white hover:text-accent hover:bg-white/10">
-                    Dashboard
+                <Link to={userRole === 'team' ? '/team/dashboard' : '/marketplace'} onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="ghost" size="sm" className="w-full text-white hover:text-accent hover:bg-white/10 justify-start">
+                    {userRole === 'team' ? 'Team Dashboard' : 'Marketplace'}
                   </Button>
                 </Link>
+                <div className="pt-2 border-t border-white/10">
+                  <p className="text-xs text-white/70 px-2 mb-2">{user.email}</p>
+                  <p className="text-xs text-white/50 px-2 mb-3 capitalize">{userRole} Account</p>
+                </div>
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   onClick={() => { handleSignOut(); setMobileMenuOpen(false); }}
-                  className="w-full text-white hover:text-accent hover:bg-white/10"
+                  className="w-full text-white hover:text-accent hover:bg-white/10 justify-start"
                 >
+                  <LogOut className="h-4 w-4 mr-2" />
                   Sign Out
                 </Button>
               </>

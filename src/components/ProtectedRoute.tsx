@@ -7,7 +7,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requiresProfile = false }: ProtectedRouteProps) => {
-  const { loading, user, hasTeamProfile } = useSmartAuth();
+  const { loading, user, userRole, hasTeamProfile } = useSmartAuth();
   const location = useLocation();
 
   if (loading) {
@@ -23,13 +23,19 @@ const ProtectedRoute = ({ children, requiresProfile = false }: ProtectedRoutePro
     return <Navigate to="/auth" replace />;
   }
 
-  // For dashboard route, check if profile exists
-  if (requiresProfile && !hasTeamProfile && location.pathname === '/team/dashboard') {
+  // Role-based access control for team routes
+  const isTeamRoute = location.pathname.startsWith('/team');
+  if (isTeamRoute && userRole !== 'team') {
+    return <Navigate to="/marketplace" replace />;
+  }
+
+  // For dashboard route, check if profile exists (team users only)
+  if (requiresProfile && userRole === 'team' && !hasTeamProfile && location.pathname === '/team/dashboard') {
     return <Navigate to="/team/onboarding" replace />;
   }
 
   // For onboarding route, redirect to dashboard if profile already exists
-  if (hasTeamProfile && location.pathname === '/team/onboarding') {
+  if (userRole === 'team' && hasTeamProfile && location.pathname === '/team/onboarding') {
     return <Navigate to="/team/dashboard" replace />;
   }
 

@@ -518,78 +518,24 @@ export type Database = {
         }
         Relationships: []
       }
-      teams: {
+      user_roles: {
         Row: {
-          competition_scope: string | null
           created_at: string
-          facebook_link: string | null
           id: string
-          instagram_link: string | null
-          level_of_play: string | null
-          linkedin_link: string | null
-          location: string | null
-          main_values: Json | null
-          number_of_players: string | null
-          seed_url: string
-          sources: Json | null
-          sport: string | null
-          team_bio: string | null
-          team_name: string | null
-          youtube_link: string | null
-        }
-        Insert: {
-          competition_scope?: string | null
-          created_at?: string
-          facebook_link?: string | null
-          id?: string
-          instagram_link?: string | null
-          level_of_play?: string | null
-          linkedin_link?: string | null
-          location?: string | null
-          main_values?: Json | null
-          number_of_players?: string | null
-          seed_url: string
-          sources?: Json | null
-          sport?: string | null
-          team_bio?: string | null
-          team_name?: string | null
-          youtube_link?: string | null
-        }
-        Update: {
-          competition_scope?: string | null
-          created_at?: string
-          facebook_link?: string | null
-          id?: string
-          instagram_link?: string | null
-          level_of_play?: string | null
-          linkedin_link?: string | null
-          location?: string | null
-          main_values?: Json | null
-          number_of_players?: string | null
-          seed_url?: string
-          sources?: Json | null
-          sport?: string | null
-          team_bio?: string | null
-          team_name?: string | null
-          youtube_link?: string | null
-        }
-        Relationships: []
-      }
-      "Websites Analysis": {
-        Row: {
-          created_at: string
-          id: number
-          website_link: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
         }
         Insert: {
           created_at?: string
-          id?: number
-          website_link?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
         }
         Update: {
           created_at?: string
-          id?: number
-          website_link?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -632,6 +578,13 @@ export type Database = {
         Args: { "": unknown }
         Returns: unknown
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       set_limit: {
         Args: { "": number }
         Returns: number
@@ -646,7 +599,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "team" | "business" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -773,6 +726,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["team", "business", "admin"],
+    },
   },
 } as const

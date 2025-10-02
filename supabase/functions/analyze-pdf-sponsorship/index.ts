@@ -390,7 +390,7 @@ ${extractedText}`;
             name: pkg.name,
             price: pkg.cost,
             description: `Package includes: ${pkg.placements?.join(', ') || 'various benefits'}`,
-            benefits: pkg.placements || [],
+            benefits: [],
             package_order: i + 1,
           })
           .select()

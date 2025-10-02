@@ -43,7 +43,7 @@ export const StatCard = ({
         <TooltipTrigger asChild>
           <div 
             className="bg-white rounded-lg p-2.5 shadow-sm border-2 border-[#00aafe] 
-                       flex flex-col justify-between items-center
+                       flex flex-col justify-center items-center gap-0
                        min-h-[100px] sm:min-h-[110px]
                        text-center"
             role="group"
@@ -51,7 +51,7 @@ export const StatCard = ({
           >
             {/* Value - single line with truncation */}
             <div 
-              className="text-lg sm:text-xl font-bold mb-0.5 w-full truncate px-1" 
+              className="text-lg sm:text-xl font-bold leading-tight mb-0 w-full truncate px-1" 
               style={{ color: '#00aafe' }}
               title={fullValue}
             >
@@ -60,7 +60,7 @@ export const StatCard = ({
             
             {/* Label - max 2 lines with clamp */}
             <div 
-              className="text-xs text-gray-600 leading-tight line-clamp-2 w-full px-1"
+              className="text-xs text-gray-600 leading-snug line-clamp-2 w-full px-1 mt-0.5"
               title={label}
             >
               {label}

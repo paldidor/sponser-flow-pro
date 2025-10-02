@@ -130,7 +130,7 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
         {/* Hero / Team Header */}
         <div className="bg-white border-b border-gray-200 mb-6">
           <div className="p-6 sm:p-8">
-            <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
+            <div className="grid lg:grid-cols-[1.5fr_1fr] gap-6 lg:gap-8">
               {/* Left: Team Info */}
               <div className="flex flex-col">
                 <div className="flex items-start gap-4 mb-4">
@@ -164,11 +164,134 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
                 <p className="text-sm sm:text-base text-gray-700 mb-6" style={{ maxWidth: '65ch', lineHeight: '1.55' }}>
                   {team.team_bio}
                 </p>
+
+                {/* Stats Grid - 8 Tiles */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 mt-6">
+                  <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
+                    <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
+                      {sponsorshipData.duration.includes("yr") || sponsorshipData.duration.toLowerCase().includes("annual") ? "1 yr" : sponsorshipData.duration}
+                    </div>
+                    <div className="text-xs text-gray-600 leading-tight">Duration</div>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
+                    <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
+                      ${Number(sponsorshipData.fundraisingGoal).toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-600 leading-tight">Fundraising Goal</div>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
+                    <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
+                      {team.number_of_players}
+                    </div>
+                    <div className="text-xs text-gray-600 leading-tight">Players Supported</div>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
+                    <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
+                      {team.competition_scope.charAt(0).toUpperCase() + team.competition_scope.slice(1)}
+                    </div>
+                    <div className="text-xs text-gray-600 leading-tight">Competition Level</div>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
+                    <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
+                      {(team.instagram_followers || 0).toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-600 leading-tight">Families Reached</div>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
+                    <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
+                      24
+                    </div>
+                    <div className="text-xs text-gray-600 leading-tight">Games Per Season</div>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
+                    <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
+                      {totalReach.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-600 leading-tight">Total Social Reach</div>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
+                    <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
+                      340
+                    </div>
+                    <div className="text-xs text-gray-600 leading-tight">Weekly Attendance</div>
+                  </div>
+                </div>
+
+                {/* Demographics Collapsible */}
+                <Collapsible open={isDemographicsOpen} onOpenChange={setIsDemographicsOpen} className="mb-6">
+                  <CollapsibleTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="w-full flex justify-between items-center h-auto py-3 px-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <BarChart3 className="w-4 h-4" />
+                        <span className="text-sm font-medium">Town Demographics - {team.location.split(",")[0]}</span>
+                      </div>
+                      <ChevronDown 
+                        className={`w-4 h-4 transition-transform duration-200 ${isDemographicsOpen ? 'rotate-180' : ''}`} 
+                      />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2">
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        <div>
+                          <div className="text-xs sm:text-sm text-gray-600">Population</div>
+                          <div className="text-xs sm:text-sm font-medium">{demographics.population}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs sm:text-sm text-gray-600">Median Age</div>
+                          <div className="text-xs sm:text-sm font-medium">{demographics.medianAge}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs sm:text-sm text-gray-600">Median Income</div>
+                          <div className="text-xs sm:text-sm font-medium">{demographics.medianIncome}</div>
+                        </div>
+                        <div className="sm:col-span-2">
+                          <div className="text-sm font-semibold mb-2" style={{ color: '#545454' }}>Age Distribution</div>
+                          <div className="text-xs sm:text-sm">{demographics.ageDistribution}</div>
+                        </div>
+                        <div className="sm:col-span-2">
+                          <div className="text-sm font-semibold mb-2" style={{ color: '#545454' }}>Education Level</div>
+                          <div className="text-xs sm:text-sm">{demographics.educationLevel}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                {/* Save Team & Share Actions */}
+                <div className="flex gap-3">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 border-gray-300 hover:border-gray-400"
+                    onClick={handleSaveTeam}
+                  >
+                    <Heart className={`w-4 h-4 mr-2 ${isSaved ? 'fill-current text-red-500' : ''}`} />
+                    {isSaved ? 'Saved' : 'Save Team'}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 border-gray-300 hover:border-gray-400"
+                    onClick={handleShare}
+                  >
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share
+                  </Button>
+                </div>
               </div>
 
               {/* Right: Images */}
               {team.images && team.images.length > 0 && (
-                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:self-start">
                   {team.images.slice(0, 2).map((img, idx) => (
                     <div key={idx} className="h-28 sm:h-32 lg:h-36 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
                       <img 
@@ -182,129 +305,6 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
               )}
             </div>
           </div>
-        </div>
-
-        {/* Stats Grid - 8 Tiles */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
-          <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
-            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
-              {sponsorshipData.duration.includes("yr") || sponsorshipData.duration.toLowerCase().includes("annual") ? "1 yr" : sponsorshipData.duration}
-            </div>
-            <div className="text-xs text-gray-600 leading-tight">Duration</div>
-          </div>
-
-          <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
-            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
-              ${Number(sponsorshipData.fundraisingGoal).toLocaleString()}
-            </div>
-            <div className="text-xs text-gray-600 leading-tight">Fundraising Goal</div>
-          </div>
-
-          <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
-            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
-              {team.number_of_players}
-            </div>
-            <div className="text-xs text-gray-600 leading-tight">Players Supported</div>
-          </div>
-
-          <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
-            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
-              {team.competition_scope.charAt(0).toUpperCase() + team.competition_scope.slice(1)}
-            </div>
-            <div className="text-xs text-gray-600 leading-tight">Competition Level</div>
-          </div>
-
-          <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
-            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
-              {(team.instagram_followers || 0).toLocaleString()}
-            </div>
-            <div className="text-xs text-gray-600 leading-tight">Families Reached</div>
-          </div>
-
-          <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
-            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
-              24
-            </div>
-            <div className="text-xs text-gray-600 leading-tight">Games Per Season</div>
-          </div>
-
-          <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
-            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
-              {totalReach.toLocaleString()}
-            </div>
-            <div className="text-xs text-gray-600 leading-tight">Total Social Reach</div>
-          </div>
-
-          <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
-            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
-              340
-            </div>
-            <div className="text-xs text-gray-600 leading-tight">Weekly Attendance</div>
-          </div>
-        </div>
-
-        {/* Demographics Collapsible */}
-        <Collapsible open={isDemographicsOpen} onOpenChange={setIsDemographicsOpen} className="mb-6">
-          <CollapsibleTrigger asChild>
-            <Button 
-              variant="outline" 
-              className="w-full flex justify-between items-center h-auto py-3 px-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <BarChart3 className="w-4 h-4" />
-                <span className="text-sm font-medium">Town Demographics - {team.location.split(",")[0]}</span>
-              </div>
-              <ChevronDown 
-                className={`w-4 h-4 transition-transform duration-200 ${isDemographicsOpen ? 'rotate-180' : ''}`} 
-              />
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="mt-2">
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <div className="text-xs sm:text-sm text-gray-600">Population</div>
-                  <div className="text-xs sm:text-sm font-medium">{demographics.population}</div>
-                </div>
-                <div>
-                  <div className="text-xs sm:text-sm text-gray-600">Median Age</div>
-                  <div className="text-xs sm:text-sm font-medium">{demographics.medianAge}</div>
-                </div>
-                <div>
-                  <div className="text-xs sm:text-sm text-gray-600">Median Income</div>
-                  <div className="text-xs sm:text-sm font-medium">{demographics.medianIncome}</div>
-                </div>
-                <div className="sm:col-span-2">
-                  <div className="text-sm font-semibold mb-2" style={{ color: '#545454' }}>Age Distribution</div>
-                  <div className="text-xs sm:text-sm">{demographics.ageDistribution}</div>
-                </div>
-                <div className="sm:col-span-2">
-                  <div className="text-sm font-semibold mb-2" style={{ color: '#545454' }}>Education Level</div>
-                  <div className="text-xs sm:text-sm">{demographics.educationLevel}</div>
-                </div>
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-
-        {/* Save Team & Share Actions */}
-        <div className="flex gap-3 mb-8">
-          <Button 
-            variant="outline" 
-            className="flex-1 border-gray-300 hover:border-gray-400"
-            onClick={handleSaveTeam}
-          >
-            <Heart className={`w-4 h-4 mr-2 ${isSaved ? 'fill-current text-red-500' : ''}`} />
-            {isSaved ? 'Saved' : 'Save Team'}
-          </Button>
-          <Button 
-            variant="outline" 
-            className="flex-1 border-gray-300 hover:border-gray-400"
-            onClick={handleShare}
-          >
-            <Share2 className="w-4 h-4 mr-2" />
-            Share
-          </Button>
         </div>
 
         {/* Two Column Layout */}

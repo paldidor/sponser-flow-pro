@@ -190,8 +190,8 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
     } catch (error) {
       console.error('Error refreshing packages:', error);
       toast({
-        title: "Error",
-        description: "Failed to refresh packages",
+        title: "Error Loading Packages",
+        description: "Unable to refresh package list. Please try refreshing the page.",
         variant: "destructive",
       });
     }
@@ -221,11 +221,11 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
       });
       setEditorMode("edit");
       setIsEditingPackage(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading package:', error);
       toast({
-        title: "Error",
-        description: "Failed to load package for editing",
+        title: "Failed to Load Package",
+        description: error.message || "Unable to load package details. Please try again.",
         variant: "destructive",
       });
     }
@@ -685,65 +685,78 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
           </div>
 
           <div className="space-y-4">
-            {packages.map((pkg) => (
-              <Card key={pkg.id} className="p-6 bg-secondary/30">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold">{pkg.name}</h3>
-                    <p className="text-2xl font-bold text-green-600 mt-1">
-                      ${pkg.price.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditPackage(pkg.id)}
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDeletePackageId(pkg.id)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                {pkg.benefits.length > 0 && (
-                  <div className="mb-4">
-                    <p className="text-sm font-medium text-muted-foreground mb-2">
-                      Benefits Included:
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {pkg.benefits.map((benefit, idx) => (
-                        <Badge key={idx} variant="secondary">
-                          {benefit}
-                        </Badge>
-                      ))}
+            {packages.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                <p className="text-lg font-medium mb-2">No packages created yet</p>
+                <p className="text-sm mb-4">Create your first sponsorship package to get started</p>
+                <Button onClick={handleAddPackage} size="lg">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Your First Package
+                </Button>
+              </div>
+            ) : (
+              packages.map((pkg) => (
+                <Card key={pkg.id} className="p-6 bg-secondary/30">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold">{pkg.name}</h3>
+                      <p className="text-2xl font-bold text-green-600 mt-1">
+                        ${pkg.price.toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditPackage(pkg.id)}
+                        disabled={savingField}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeletePackageId(pkg.id)}
+                        className="text-destructive hover:text-destructive"
+                        disabled={savingField}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
-                )}
 
-                {pkg.placements.length > 0 && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-2">
-                      Sponsorship Placements:
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {pkg.placements.map((placement, idx) => (
-                        <Badge key={idx} variant="outline">
-                          {placement}
-                        </Badge>
-                      ))}
+                  {pkg.benefits.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-sm font-medium text-muted-foreground mb-2">
+                        Benefits Included:
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {pkg.benefits.map((benefit, idx) => (
+                          <Badge key={idx} variant="secondary">
+                            {benefit}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </Card>
-            ))}
+                  )}
+
+                  {pkg.placements.length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">
+                        Sponsorship Placements:
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {pkg.placements.map((placement, idx) => (
+                          <Badge key={idx} variant="outline">
+                            {placement}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              ))
+            )}
           </div>
         </Card>
 
@@ -783,11 +796,21 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
         </AlertDialog>
 
         <div className="flex justify-center gap-4">
-          <Button variant="outline" size="lg" onClick={onBack}>
+          <Button 
+            variant="outline" 
+            size="lg" 
+            onClick={onBack}
+            disabled={savingField}
+          >
             Back
           </Button>
-          <Button size="lg" className="px-12" onClick={handleApprove}>
-            Launch Campaign
+          <Button 
+            size="lg" 
+            className="px-12" 
+            onClick={handleApprove}
+            disabled={savingField || packages.length === 0}
+          >
+            {packages.length === 0 ? "Add Packages to Launch" : "Launch Campaign"}
           </Button>
         </div>
       </div>

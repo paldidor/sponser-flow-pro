@@ -218,8 +218,8 @@ export const TeamProfileEditor = ({
 
       if (!user) {
         toast({
-          title: "Error",
-          description: "You must be logged in to save changes",
+          title: "Authentication Required",
+          description: "You must be logged in to save changes. Please refresh and try again.",
           variant: "destructive",
         });
         setSaving(false);
@@ -227,51 +227,76 @@ export const TeamProfileEditor = ({
       }
 
       // Check if profile exists
-      const { data: existingProfile } = await supabase
+      const { data: existingProfile, error: checkError } = await supabase
         .from("team_profiles")
         .select("id")
         .eq("user_id", user.id)
         .maybeSingle();
 
+      if (checkError) {
+        throw checkError;
+      }
+
       let error: any = null;
 
       if (!existingProfile) {
-        // Insert new profile
+        // Insert new profile with all required fields
         const { error: insertError } = await supabase
           .from("team_profiles")
-          .insert({ user_id: user.id, ...formData });
+          .insert({ 
+            user_id: user.id, 
+            ...formData,
+            // Ensure arrays are properly formatted
+            main_values: formData.main_values || [],
+          });
         error = insertError;
       } else {
         // Update existing profile
         const { error: updateError } = await supabase
           .from("team_profiles")
-          .update(formData)
+          .update({
+            ...formData,
+            // Ensure arrays are properly formatted
+            main_values: formData.main_values || [],
+          })
           .eq("user_id", user.id);
         error = updateError;
       }
 
       if (error) {
         console.error("Error saving profile:", error);
+        
+        let errorMessage = "Failed to save profile changes. Please try again.";
+        
+        if (error.code === "23505") {
+          errorMessage = "A profile already exists. Please refresh and try again.";
+        } else if (error.code === "42501") {
+          errorMessage = "Permission denied. Please check your access rights.";
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
         toast({
-          title: "Error",
-          description: "Failed to save profile changes",
+          title: "Failed to Save",
+          description: errorMessage,
           variant: "destructive",
         });
         return;
       }
 
       toast({
-        title: "Success",
-        description: "Team profile updated successfully",
+        title: "Profile Saved",
+        description: "Your team profile has been updated successfully",
       });
 
       onSave(formData);
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving profile:", error);
+      
       toast({
-        title: "Error",
-        description: "An unexpected error occurred",
+        title: "Unexpected Error",
+        description: error.message || "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {

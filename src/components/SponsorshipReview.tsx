@@ -52,12 +52,57 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
   const { toast } = useToast();
 
   const handleApprove = () => {
-    const validation = validateSponsorshipData(sponsorshipData);
-    
-    if (!validation.isValid) {
+    // Comprehensive validation before launching campaign
+    if (!team) {
       toast({
         title: "Validation Error",
-        description: validation.errors[0],
+        description: "Please create a team profile before launching your campaign",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!team.team_name || !team.sport || !team.location) {
+      toast({
+        title: "Incomplete Team Profile",
+        description: "Please complete your team profile (name, sport, and location are required)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (packages.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please create at least one sponsorship package before launching",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const invalidPackage = packages.find(pkg => !pkg.name || pkg.price <= 0 || !pkg.placements || pkg.placements.length === 0);
+    if (invalidPackage) {
+      toast({
+        title: "Invalid Package",
+        description: `Package "${invalidPackage.name || 'Unnamed'}" is incomplete. All packages must have a name, price, and at least one placement.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (Number(fundraisingGoal) <= 0) {
+      toast({
+        title: "Validation Error",
+        description: "Fundraising goal must be greater than 0",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!duration.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Campaign duration is required",
         variant: "destructive",
       });
       return;
@@ -195,8 +240,14 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
   const handleDeletePackage = async () => {
     if (!deletePackageId) return;
 
+    // Store original packages for rollback
+    const originalPackages = [...packages];
+
+    // Optimistic UI update
+    setPackages(packages.filter(pkg => pkg.id !== deletePackageId));
+
     try {
-      // Delete package placements first
+      // Delete package placements first (child records)
       const { error: placementsError } = await supabase
         .from('package_placements')
         .delete()
@@ -213,16 +264,21 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
       if (packageError) throw packageError;
 
       toast({
-        title: "Success",
-        description: "Package deleted successfully",
+        title: "Package Deleted",
+        description: "Sponsorship package has been removed successfully",
       });
 
+      // Refresh to ensure consistency
       await refreshPackages();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting package:', error);
+      
+      // Rollback on error
+      setPackages(originalPackages);
+      
       toast({
-        title: "Error",
-        description: "Failed to delete package",
+        title: "Failed to Delete",
+        description: error.message || "Unable to delete package. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -264,13 +320,18 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
       return;
     }
 
+    // Store original values for rollback
+    const originalFundraisingGoal = sponsorshipData.fundraisingGoal;
+    const originalDuration = sponsorshipData.duration;
+    const originalDescription = sponsorshipData.description;
+
     // Validate
     if (field === "fundraisingGoal") {
       const goalValue = Number(fundraisingGoal);
       if (isNaN(goalValue) || goalValue <= 0) {
         toast({
           title: "Validation Error",
-          description: "Fundraising goal must be a positive number",
+          description: "Fundraising goal must be a positive number greater than 0",
           variant: "destructive",
         });
         return;
@@ -280,7 +341,7 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
     if (field === "duration" && !duration.trim()) {
       toast({
         title: "Validation Error",
-        description: "Duration is required",
+        description: "Campaign duration cannot be empty",
         variant: "destructive",
       });
       return;
@@ -294,9 +355,9 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
       if (field === "fundraisingGoal") {
         updateData.fundraising_goal = Number(fundraisingGoal);
       } else if (field === "duration") {
-        updateData.duration = duration;
+        updateData.duration = duration.trim();
       } else if (field === "description") {
-        updateData.description = description;
+        updateData.description = description.trim();
       }
 
       const { error } = await supabase
@@ -306,17 +367,36 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
 
       if (error) throw error;
 
+      // Update the parent sponsorshipData on success
+      if (field === "fundraisingGoal") {
+        sponsorshipData.fundraisingGoal = fundraisingGoal;
+      } else if (field === "duration") {
+        sponsorshipData.duration = duration;
+      } else if (field === "description") {
+        sponsorshipData.description = description;
+      }
+
       toast({
-        title: "Success",
-        description: "Campaign details updated successfully",
+        title: "Saved Successfully",
+        description: `Campaign ${field === "fundraisingGoal" ? "goal" : field} has been updated`,
       });
 
       setEditingField(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating campaign details:", error);
+      
+      // Rollback on error
+      if (field === "fundraisingGoal") {
+        setFundraisingGoal(originalFundraisingGoal);
+      } else if (field === "duration") {
+        setDuration(originalDuration);
+      } else if (field === "description") {
+        setDescription(originalDescription || "");
+      }
+
       toast({
-        title: "Error",
-        description: "Failed to update campaign details",
+        title: "Failed to Save",
+        description: error.message || "An error occurred while updating campaign details. Please try again.",
         variant: "destructive",
       });
     } finally {

@@ -195,10 +195,20 @@ export const PackageEditor = ({
   };
 
   const handleSave = async () => {
+    // Comprehensive validation
     if (!name.trim()) {
       toast({
         title: "Validation Error",
-        description: "Package name is required",
+        description: "Package name is required and cannot be empty",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (name.trim().length > 100) {
+      toast({
+        title: "Validation Error",
+        description: "Package name must be less than 100 characters",
         variant: "destructive",
       });
       return;
@@ -207,7 +217,16 @@ export const PackageEditor = ({
     if (price <= 0) {
       toast({
         title: "Validation Error",
-        description: "Package price must be greater than 0",
+        description: "Package price must be greater than $0",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (price > 10000000) {
+      toast({
+        title: "Validation Error",
+        description: "Package price seems unusually high. Please verify the amount.",
         variant: "destructive",
       });
       return;
@@ -216,7 +235,7 @@ export const PackageEditor = ({
     if (placementIds.length === 0) {
       toast({
         title: "Validation Error",
-        description: "Please select at least one placement",
+        description: "Please select at least one placement option for this package",
         variant: "destructive",
       });
       return;
@@ -229,7 +248,7 @@ export const PackageEditor = ({
         // Update existing package
         const { error: updateError } = await supabase
           .from("sponsorship_packages")
-          .update({ name, price })
+          .update({ name: name.trim(), price })
           .eq("id", packageData.id)
           .eq("sponsorship_offer_id", sponsorshipOfferId);
 
@@ -256,16 +275,29 @@ export const PackageEditor = ({
         if (insertError) throw insertError;
 
         toast({
-          title: "Success",
-          description: "Package updated successfully",
+          title: "Package Updated",
+          description: `"${name}" has been updated successfully`,
         });
       } else {
+        // Create new package - verify offer exists first
+        const { data: offerExists, error: offerCheckError } = await supabase
+          .from("sponsorship_offers")
+          .select("id")
+          .eq("id", sponsorshipOfferId)
+          .maybeSingle();
+
+        if (offerCheckError) throw offerCheckError;
+
+        if (!offerExists) {
+          throw new Error("Sponsorship offer not found. Please refresh and try again.");
+        }
+
         // Create new package
         const { data: newPackage, error: createError } = await supabase
           .from("sponsorship_packages")
           .insert({
             sponsorship_offer_id: sponsorshipOfferId,
-            name,
+            name: name.trim(),
             price,
             package_order: 999, // Will be reordered on fetch
           })
@@ -284,21 +316,40 @@ export const PackageEditor = ({
             }))
           );
 
-        if (placementsError) throw placementsError;
+        if (placementsError) {
+          // Rollback: Delete the package we just created
+          await supabase
+            .from("sponsorship_packages")
+            .delete()
+            .eq("id", newPackage.id);
+          
+          throw placementsError;
+        }
 
         toast({
-          title: "Success",
-          description: "Package created successfully",
+          title: "Package Created",
+          description: `"${name}" has been added to your sponsorship offer`,
         });
       }
 
       onSave();
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving package:", error);
+      
+      let errorMessage = "An unexpected error occurred. Please try again.";
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.code === "23503") {
+        errorMessage = "Database constraint error. Please ensure all referenced data exists.";
+      } else if (error.code === "42501") {
+        errorMessage = "Permission denied. Please check your access rights.";
+      }
+      
       toast({
-        title: "Error",
-        description: "Failed to save package",
+        title: "Failed to Save Package",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

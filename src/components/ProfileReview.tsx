@@ -10,6 +10,7 @@ import ProgressIndicator from "./ProgressIndicator";
 import { TeamProfile } from "@/types/flow";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { validateSocialMediaURL, validateEmail } from "@/lib/validationUtils";
 
 interface ProfileReviewProps {
   teamData: TeamProfile | null;
@@ -224,7 +225,24 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
   };
 
   const handleAddTag = async () => {
-    if (!newTagValue.trim()) return;
+    if (!newTagValue.trim()) {
+      toast({
+        title: "Empty Value",
+        description: "Please enter a value to add",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (currentTeam.main_values.includes(newTagValue.trim())) {
+      toast({
+        title: "Duplicate Value",
+        description: "This value already exists",
+        variant: "destructive",
+      });
+      setNewTagValue("");
+      return;
+    }
     
     const updatedValues = [...currentTeam.main_values, newTagValue.trim()];
     setIsSaving(true);
@@ -289,6 +307,45 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
   };
 
   const handleSave = async (field: string) => {
+    // Validate before saving
+    if (field.includes('_link') && editValue) {
+      const platform = field.replace('_link', '');
+      const validation = validateSocialMediaURL(editValue, platform);
+      if (!validation.isValid) {
+        toast({
+          title: "Invalid URL",
+          description: validation.error,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    // Validate required text fields
+    const requiredFields = ['team_name', 'sport', 'location'];
+    if (requiredFields.includes(field) && (!editValue || editValue.trim().length === 0)) {
+      toast({
+        title: "Required Field",
+        description: `${field.replace('_', ' ')} cannot be empty`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate numeric fields
+    const numericFields = ['instagram_followers', 'facebook_followers', 'linkedin_followers', 'twitter_followers', 'youtube_followers', 'email_list_size'];
+    if (numericFields.includes(field)) {
+      const numValue = parseInt(editValue);
+      if (isNaN(numValue) || numValue < 0) {
+        toast({
+          title: "Invalid Number",
+          description: "Please enter a valid positive number",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setIsSaving(true);
     
     // Store old value for potential rollback

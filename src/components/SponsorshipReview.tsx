@@ -6,6 +6,8 @@ import ProgressIndicator from "./ProgressIndicator";
 import { SponsorshipData, TeamProfile } from "@/types/flow";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { validateSponsorshipData } from "@/lib/validationUtils";
+import { useToast } from "@/hooks/use-toast";
 
 interface SponsorshipReviewProps {
   sponsorshipData: SponsorshipData;
@@ -17,6 +19,22 @@ interface SponsorshipReviewProps {
 const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: SponsorshipReviewProps) => {
   const [team, setTeam] = useState<TeamProfile | null>(teamData);
   const [isLoading, setIsLoading] = useState(!teamData);
+  const { toast } = useToast();
+
+  const handleApprove = () => {
+    const validation = validateSponsorshipData(sponsorshipData);
+    
+    if (!validation.isValid) {
+      toast({
+        title: "Validation Error",
+        description: validation.errors[0],
+        variant: "destructive",
+      });
+      return;
+    }
+
+    onApprove();
+  };
 
   useEffect(() => {
     const fetchTeamProfile = async () => {
@@ -254,7 +272,7 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
           <Button variant="outline" size="lg" onClick={onBack}>
             Back
           </Button>
-          <Button size="lg" className="px-12" onClick={onApprove}>
+          <Button size="lg" className="px-12" onClick={handleApprove}>
             Launch Campaign
           </Button>
         </div>

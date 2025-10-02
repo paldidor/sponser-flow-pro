@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useOfferCreation } from "@/hooks/useOfferCreation";
+import { validateTeamProfile, validatePDFFile } from "@/lib/validationUtils";
 import CreateTeamProfile from "@/components/CreateTeamProfile";
 import ProfileReview from "@/components/ProfileReview";
 import CreateSponsorshipOffer from "@/components/CreateSponsorshipOffer";
@@ -102,6 +103,25 @@ const TeamOnboarding = () => {
   };
 
   const handleProfileApprove = () => {
+    if (!teamData) {
+      toast({
+        title: "Profile Required",
+        description: "Please complete your team profile first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const validation = validateTeamProfile(teamData);
+    if (!validation.isValid) {
+      toast({
+        title: "Incomplete Profile",
+        description: validation.errors[0],
+        variant: "destructive",
+      });
+      return;
+    }
+
     setCurrentStep('select-method');
   };
 
@@ -418,8 +438,21 @@ const TeamOnboarding = () => {
           />
         ) : (
           <PDFUploadInput
-            onUpload={async (fileUrl, fileName) => {
+            onUpload={async (fileUrl, fileName, file) => {
               try {
+                // Validate file if provided
+                if (file) {
+                  const fileValidation = validatePDFFile(file);
+                  if (!fileValidation.isValid) {
+                    toast({
+                      title: "Invalid File",
+                      description: fileValidation.error,
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                }
+
                 setAnalysisFileName(fileName);
                 const { data: { user }, error: authError } = await supabase.auth.getUser();
                 

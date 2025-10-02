@@ -2,6 +2,7 @@ import { useState, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useOfferCreation } from "@/hooks/useOfferCreation";
+import { validatePDFFile } from "@/lib/validationUtils";
 import { Loader2 } from "lucide-react";
 
 const CreateSponsorshipOffer = lazy(() => import("@/components/CreateSponsorshipOffer"));
@@ -35,7 +36,20 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
     }
   };
 
-  const handlePDFUpload = async (fileUrl: string, fileName: string) => {
+  const handlePDFUpload = async (fileUrl: string, fileName: string, file?: File) => {
+    // Validate file if provided
+    if (file) {
+      const fileValidation = validatePDFFile(file);
+      if (!fileValidation.isValid) {
+        toast({
+          title: "Invalid File",
+          description: fileValidation.error,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setAnalysisFileName(fileName);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

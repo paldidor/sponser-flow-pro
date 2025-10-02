@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface PDFUploadInputProps {
-  onUpload: (fileUrl: string, fileName: string) => void;
+  onUpload: (fileUrl: string, fileName: string, file?: File) => void;
   onBack: () => void;
 }
 
@@ -88,8 +88,8 @@ const PDFUploadInput = ({ onUpload, onBack }: PDFUploadInputProps) => {
         description: "Starting AI analysis...",
       });
 
-      // Pass the public URL and filename to parent
-      onUpload(publicUrl, selectedFile.name);
+      // Pass the public URL, filename, and file object to parent
+      onUpload(publicUrl, selectedFile.name, selectedFile);
     } catch (error) {
       console.error('Upload error:', error);
       toast({

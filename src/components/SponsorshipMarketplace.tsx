@@ -161,12 +161,12 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
                   </div>
                 </div>
                 
-                <p className="text-sm sm:text-base text-gray-700 mb-6" style={{ maxWidth: '65ch', lineHeight: '1.55' }}>
+                <p className="text-sm sm:text-base text-gray-700" style={{ maxWidth: '65ch', lineHeight: '1.55' }}>
                   {team.team_bio}
                 </p>
 
                 {/* Stats Grid - 8 Tiles */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 mt-6">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-5 mb-5">
                   <div className="bg-white rounded-lg p-3 shadow-sm border border-[#00aafe] text-center">
                     <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: '#00aafe' }}>
                       {sponsorshipData.duration.includes("yr") || sponsorshipData.duration.toLowerCase().includes("annual") ? "1 yr" : sponsorshipData.duration}
@@ -225,7 +225,7 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
                 </div>
 
                 {/* Demographics Collapsible */}
-                <Collapsible open={isDemographicsOpen} onOpenChange={setIsDemographicsOpen} className="mb-6">
+                <Collapsible open={isDemographicsOpen} onOpenChange={setIsDemographicsOpen} className="mb-5">
                   <CollapsibleTrigger asChild>
                     <Button 
                       variant="outline" 
@@ -291,9 +291,9 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
 
               {/* Right: Images */}
               {team.images && team.images.length > 0 && (
-                <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:self-start">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:self-start lg:max-h-[500px]">
                   {team.images.slice(0, 2).map((img, idx) => (
-                    <div key={idx} className="h-28 sm:h-32 lg:h-36 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
+                    <div key={idx} className="h-28 sm:h-32 lg:h-40 rounded-lg overflow-hidden border border-gray-200 bg-gray-100 shadow-sm">
                       <img 
                         src={img} 
                         alt={`${team.team_name} - Team photo ${idx + 1}`} 

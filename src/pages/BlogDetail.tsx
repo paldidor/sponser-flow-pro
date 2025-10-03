@@ -127,7 +127,26 @@ const BlogDetail = () => {
 
   return (
     <article className="container mx-auto px-4 py-16 max-w-4xl">
-      <img 
+      {/* Navigation Row */}
+      <div className="flex items-center gap-4 mb-8">
+        <Button 
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="text-[#545454] hover:text-[#00aafe] hover:bg-[#00aafe]/10 p-2"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/blog')}
+          className="text-[#00aafe] hover:text-[#00aafe]/80 hover:bg-[#00aafe]/10"
+        >
+          ← All Articles
+        </Button>
+      </div>
+
+      <img
         src={post.cover_image_url} 
         alt={post.cover_image_alt}
         className="w-full h-[400px] object-cover rounded-lg mb-8"

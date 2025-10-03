@@ -293,7 +293,7 @@ export type Database = {
           source_file_name: string | null
           status: string
           supported_players: number | null
-          team_profile_id: string | null
+          team_profile_id: string
           title: string
           updated_at: string
           user_id: string
@@ -312,7 +312,7 @@ export type Database = {
           source_file_name?: string | null
           status?: string
           supported_players?: number | null
-          team_profile_id?: string | null
+          team_profile_id: string
           title: string
           updated_at?: string
           user_id: string
@@ -331,7 +331,7 @@ export type Database = {
           source_file_name?: string | null
           status?: string
           supported_players?: number | null
-          team_profile_id?: string | null
+          team_profile_id?: string
           title?: string
           updated_at?: string
           user_id?: string

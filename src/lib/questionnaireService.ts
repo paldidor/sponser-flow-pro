@@ -43,11 +43,27 @@ export async function getOrCreateDraftOffer(userId: string): Promise<{ offerId: 
       return { offerId: draft.id, data: formData };
     }
 
-    // Create new draft
+    // Fetch user's team_profile_id before creating draft
+    const { data: teamProfile, error: teamError } = await supabase
+      .from('team_profiles')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (teamError) {
+      throw teamError;
+    }
+
+    if (!teamProfile) {
+      throw new Error('No team profile found. Please complete your team profile first.');
+    }
+
+    // Create new draft with team_profile_id
     const { data: newDraft, error: createError } = await supabase
       .from('sponsorship_offers')
       .insert({
         user_id: userId,
+        team_profile_id: teamProfile.id,
         title: 'Draft Sponsorship Offer',
         fundraising_goal: 0,
         impact: 'In progress...',

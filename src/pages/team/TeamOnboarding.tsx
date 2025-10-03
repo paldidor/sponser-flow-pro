@@ -160,7 +160,7 @@ const TeamOnboarding = () => {
     setTeamData(updatedProfile);
   };
 
-  const handleProfileApprove = () => {
+  const handleProfileApprove = async () => {
     if (!teamData) {
       toast({
         title: "Profile Required",
@@ -180,7 +180,56 @@ const TeamOnboarding = () => {
       return;
     }
 
-    setCurrentStep('select-method');
+    // Complete onboarding after profile approval
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to continue.",
+          variant: "destructive",
+        });
+        navigate('/auth');
+        return;
+      }
+
+      const { error: updateError } = await supabase
+        .from('team_profiles')
+        .update({ 
+          onboarding_completed: true,
+          current_onboarding_step: 'completed'
+        })
+        .eq('user_id', user.id);
+
+      if (updateError) {
+        console.error('Error completing onboarding:', updateError);
+        toast({
+          title: "Error",
+          description: "Failed to complete profile. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('[TeamOnboarding] Profile approved, onboarding completed');
+      
+      toast({
+        title: "Profile Approved!",
+        description: "Taking you to your dashboard...",
+      });
+      
+      // Navigate to dashboard
+      setTimeout(() => {
+        navigate('/team/dashboard', { replace: true });
+      }, 500);
+    } catch (error) {
+      console.error('Unexpected error approving profile:', error);
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSelectMethod = async (method: "form" | "website" | "pdf", url?: string) => {

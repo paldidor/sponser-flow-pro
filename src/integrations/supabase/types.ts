@@ -439,6 +439,7 @@ export type Database = {
           location: string | null
           main_values: Json
           number_of_players: string | null
+          onboarding_completed: boolean
           organization_status: string | null
           season_end_date: string | null
           season_start_date: string | null
@@ -470,6 +471,7 @@ export type Database = {
           location?: string | null
           main_values?: Json
           number_of_players?: string | null
+          onboarding_completed?: boolean
           organization_status?: string | null
           season_end_date?: string | null
           season_start_date?: string | null
@@ -501,6 +503,7 @@ export type Database = {
           location?: string | null
           main_values?: Json
           number_of_players?: string | null
+          onboarding_completed?: boolean
           organization_status?: string | null
           season_end_date?: string | null
           season_start_date?: string | null
@@ -517,6 +520,48 @@ export type Database = {
           youtube_link?: string | null
         }
         Relationships: []
+      }
+      team_sponsorship_combined: {
+        Row: {
+          created_at: string
+          fundraising_goal: number
+          location: string | null
+          sponsorship_offer_id: string
+          team_id: string
+          team_name: string
+        }
+        Insert: {
+          created_at?: string
+          fundraising_goal: number
+          location?: string | null
+          sponsorship_offer_id: string
+          team_id: string
+          team_name: string
+        }
+        Update: {
+          created_at?: string
+          fundraising_goal?: number
+          location?: string | null
+          sponsorship_offer_id?: string
+          team_id?: string
+          team_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_tsc_offer"
+            columns: ["sponsorship_offer_id"]
+            isOneToOne: true
+            referencedRelation: "sponsorship_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tsc_team"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "team_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

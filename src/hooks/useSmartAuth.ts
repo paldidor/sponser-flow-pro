@@ -8,6 +8,7 @@ interface SmartAuthState {
   user: any | null;
   userRole: UserRole;
   hasTeamProfile: boolean;
+  onboardingCompleted: boolean;
   redirectPath: string;
 }
 
@@ -17,6 +18,7 @@ export const useSmartAuth = () => {
     user: null,
     userRole: null,
     hasTeamProfile: false,
+    onboardingCompleted: false,
     redirectPath: '/team/onboarding',
   });
 
@@ -30,6 +32,7 @@ export const useSmartAuth = () => {
           user: null,
           userRole: null,
           hasTeamProfile: false,
+          onboardingCompleted: false,
           redirectPath: '/auth',
         });
         return;
@@ -50,10 +53,11 @@ export const useSmartAuth = () => {
 
       // Check if user has a team profile (only for team users)
       let hasProfile = false;
+      let onboardingCompleted = false;
       if (userRole === 'team') {
         const { data: teamProfile, error: profileError } = await supabase
           .from('team_profiles')
-          .select('id')
+          .select('id, onboarding_completed')
           .eq('user_id', session.user.id)
           .maybeSingle();
 
@@ -62,19 +66,15 @@ export const useSmartAuth = () => {
         }
 
         hasProfile = !!teamProfile;
+        onboardingCompleted = teamProfile?.onboarding_completed ?? false;
       }
 
-      // Check if onboarding is in progress - if so, don't redirect
-      const isOnboarding = sessionStorage.getItem('onboarding_in_progress') === 'true';
-      
-      // Determine redirect path based on role and profile status
+      // Determine redirect path based on role, profile status, and onboarding completion
       let redirectPath = '/auth';
       
-      if (isOnboarding) {
-        // Stay on current page during onboarding
-        redirectPath = window.location.pathname;
-      } else if (userRole === 'team') {
-        redirectPath = hasProfile ? '/team/dashboard' : '/team/onboarding';
+      if (userRole === 'team') {
+        // Only redirect to dashboard if profile exists AND onboarding is completed
+        redirectPath = (hasProfile && onboardingCompleted) ? '/team/dashboard' : '/team/onboarding';
       } else if (userRole === 'business') {
         redirectPath = '/marketplace'; // Future: /business/dashboard
       } else if (userRole === 'admin') {
@@ -86,6 +86,7 @@ export const useSmartAuth = () => {
         user: session.user,
         userRole,
         hasTeamProfile: hasProfile,
+        onboardingCompleted,
         redirectPath,
       });
     };
@@ -100,6 +101,7 @@ export const useSmartAuth = () => {
             user: null,
             userRole: null,
             hasTeamProfile: false,
+            onboardingCompleted: false,
             redirectPath: '/auth',
           });
         } else {

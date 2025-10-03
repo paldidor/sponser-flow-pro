@@ -90,9 +90,13 @@ const TeamOnboarding = () => {
 
         if (profile) {
           setTeamData(profile as TeamProfile);
-          sessionStorage.removeItem('onboarding_in_progress');
-          navigate('/team/dashboard', { replace: true });
-          return;
+          // Allow users to resume onboarding if not completed
+          if (profile.onboarding_completed) {
+            sessionStorage.removeItem('onboarding_in_progress');
+            navigate('/team/dashboard', { replace: true });
+            return;
+          }
+          // If profile exists but onboarding not completed, stay on onboarding
         }
       } catch (error) {
         console.error('Unexpected error during initialization:', error);
@@ -341,10 +345,28 @@ const TeamOnboarding = () => {
   };
 
   const handleReviewApprove = async () => {
-    const success = await publishOffer();
-    if (success) {
-      sessionStorage.removeItem('onboarding_in_progress');
-      navigate('/team/dashboard');
+    try {
+      const success = await publishOffer();
+      if (success) {
+        // Mark onboarding as completed
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase
+            .from('team_profiles')
+            .update({ onboarding_completed: true })
+            .eq('user_id', user.id);
+        }
+        
+        sessionStorage.removeItem('onboarding_in_progress');
+        navigate('/team/dashboard');
+      }
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      toast({
+        title: "Error",
+        description: "Failed to complete onboarding. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 

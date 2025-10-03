@@ -286,6 +286,24 @@ const BlogDetail = () => {
           <FallbackContent />
         )}
       </div>
+
+      {/* Bottom CTA Section */}
+      <div className="mt-16 pt-8 border-t border-gray-200">
+        <div className="text-center">
+          <h3 className="text-xl font-bold text-[#545454] mb-4">
+            Ready to Start Your Sponsorship Journey?
+          </h3>
+          <p className="text-[#545454] opacity-80 mb-6 max-w-2xl mx-auto">
+            Join thousands of teams and businesses already using Sponsa to make youth sports sponsorships easier and more impactful.
+          </p>
+          <Button
+            onClick={() => window.open('https://app.sponsa.ai', '_blank')}
+            className="bg-[#ffb82d] hover:bg-[#ffb82d]/90 text-white px-8 py-3 rounded-full font-medium transition-colors duration-300"
+          >
+            Get Started Today
+          </Button>
+        </div>
+      </div>
     </article>
   );
 };

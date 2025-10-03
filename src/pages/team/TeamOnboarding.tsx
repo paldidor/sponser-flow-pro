@@ -24,6 +24,27 @@ type OnboardingStep =
   | 'questionnaire'
   | 'review';
 
+// Map UI steps to DB enum values for step tracking
+const STEP_TO_DB_ENUM: Record<OnboardingStep, string> = {
+  'create-profile': 'account_created',
+  'profile-review': 'team_profile',
+  'select-method': 'team_profile',
+  'website-analysis': 'website_analyzed',
+  'pdf-upload': 'website_analyzed',
+  'questionnaire': 'packages',
+  'review': 'review',
+};
+
+// Map DB enum values back to UI steps for resume logic
+const DB_ENUM_TO_STEP: Record<string, OnboardingStep> = {
+  'account_created': 'create-profile',
+  'team_profile': 'profile-review',
+  'website_analyzed': 'select-method',
+  'packages': 'questionnaire',
+  'review': 'review',
+  'completed': 'review', // Should not happen, but safety net
+};
+
 const TeamOnboarding = () => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('create-profile');
   const [teamData, setTeamData] = useState<TeamProfile | null>(null);
@@ -35,14 +56,30 @@ const TeamOnboarding = () => {
   const { toast } = useToast();
   const { currentOfferId, offerData, isLoading, loadingMessage, loadOfferData, loadLatestQuestionnaireOffer, publishOffer, resetOffer } = useOfferCreation();
 
-  // Set onboarding flag to prevent auto-redirects during onboarding
+  // Update DB step when currentStep changes (source of truth for tab switches)
   useEffect(() => {
-    sessionStorage.setItem('onboarding_in_progress', 'true');
-    
-    return () => {
-      sessionStorage.removeItem('onboarding_in_progress');
+    const updateDBStep = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const dbStep = STEP_TO_DB_ENUM[currentStep] as 'account_created' | 'team_profile' | 'website_analyzed' | 'packages' | 'review' | 'completed';
+        console.log('[TeamOnboarding] Updating DB step:', currentStep, '→', dbStep);
+
+        await supabase
+          .from('team_profiles')
+          .update({ current_onboarding_step: dbStep })
+          .eq('user_id', user.id);
+      } catch (error) {
+        console.error('Error updating onboarding step:', error);
+      }
     };
-  }, []);
+
+    // Only update if we're past initialization
+    if (!isInitializing && currentStep !== 'create-profile') {
+      updateDBStep();
+    }
+  }, [currentStep, isInitializing]);
 
   // Check if user already has a profile
   useEffect(() => {
@@ -90,13 +127,19 @@ const TeamOnboarding = () => {
 
         if (profile) {
           setTeamData(profile as TeamProfile);
-          // Allow users to resume onboarding if not completed
-          if (profile.onboarding_completed) {
-            sessionStorage.removeItem('onboarding_in_progress');
+          
+          // CRITICAL: Only redirect to dashboard if FULLY completed
+          if (profile.onboarding_completed && profile.current_onboarding_step === 'completed') {
+            console.log('[TeamOnboarding] Onboarding fully complete, redirecting to dashboard');
             navigate('/team/dashboard', { replace: true });
             return;
           }
-          // If profile exists but onboarding not completed, stay on onboarding
+          
+          // Resume from last step if onboarding in progress
+          const dbStep = profile.current_onboarding_step || 'account_created';
+          const resumeStep = DB_ENUM_TO_STEP[dbStep] || 'create-profile';
+          console.log('[TeamOnboarding] Resuming from step:', dbStep, '→', resumeStep);
+          setCurrentStep(resumeStep);
         }
       } catch (error) {
         console.error('Unexpected error during initialization:', error);
@@ -325,22 +368,20 @@ const TeamOnboarding = () => {
       if (offerData) {
         setCurrentStep('review');
       } else {
-        // If we can't load for review, just go to dashboard
+        // If we can't load for review, stay in onboarding
         toast({
-          title: "Offer Created Successfully",
-          description: "Your sponsorship offer has been created! Redirecting to dashboard...",
+          title: "Offer Created",
+          description: "Your offer was created but couldn't be loaded for review. Please refresh or try again.",
+          variant: "destructive",
         });
-        sessionStorage.removeItem('onboarding_in_progress');
-        setTimeout(() => navigate('/team/dashboard'), 1500);
       }
     } catch (error) {
       console.error('Unexpected error during questionnaire completion:', error);
       toast({
-        title: "Something Went Wrong",
-        description: "Your offer was created, but we couldn't load it for review. Check your dashboard!",
+        title: "Error Loading Offer",
+        description: "Your offer may have been created. Please refresh and try again.",
+        variant: "destructive",
       });
-      sessionStorage.removeItem('onboarding_in_progress');
-      setTimeout(() => navigate('/team/dashboard'), 2000);
     }
   };
 
@@ -348,17 +389,40 @@ const TeamOnboarding = () => {
     try {
       const success = await publishOffer();
       if (success) {
-        // Mark onboarding as completed
+        // CRITICAL: Mark onboarding as FULLY completed
+        // Set BOTH onboarding_completed AND current_onboarding_step to 'completed'
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          await supabase
+          const { error: updateError } = await supabase
             .from('team_profiles')
-            .update({ onboarding_completed: true })
+            .update({ 
+              onboarding_completed: true,
+              current_onboarding_step: 'completed'
+            })
             .eq('user_id', user.id);
+
+          if (updateError) {
+            console.error('Error marking onboarding complete:', updateError);
+            toast({
+              title: "Warning",
+              description: "Offer published but onboarding status couldn't be updated.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          console.log('[TeamOnboarding] Onboarding completed successfully');
+          
+          toast({
+            title: "Welcome to Sponsa!",
+            description: "Your sponsorship offer is now live. Redirecting to dashboard...",
+          });
+          
+          // Small delay to show success message
+          setTimeout(() => {
+            navigate('/team/dashboard', { replace: true });
+          }, 1000);
         }
-        
-        sessionStorage.removeItem('onboarding_in_progress');
-        navigate('/team/dashboard');
       }
     } catch (error) {
       console.error('Error completing onboarding:', error);

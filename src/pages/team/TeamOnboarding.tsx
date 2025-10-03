@@ -193,6 +193,8 @@ const TeamOnboarding = () => {
         return;
       }
 
+      console.log('[handleProfileApprove] Starting update for user:', user.id);
+
       const { error: updateError } = await supabase
         .from('team_profiles')
         .update({ 
@@ -202,7 +204,7 @@ const TeamOnboarding = () => {
         .eq('user_id', user.id);
 
       if (updateError) {
-        console.error('Error completing onboarding:', updateError);
+        console.error('[handleProfileApprove] Update error:', updateError);
         toast({
           title: "Error",
           description: "Failed to complete profile. Please try again.",
@@ -211,19 +213,51 @@ const TeamOnboarding = () => {
         return;
       }
 
-      console.log('[TeamOnboarding] Profile approved, onboarding completed');
+      // CRITICAL: Verify the update persisted before navigating
+      const { data: verifyProfile, error: verifyError } = await supabase
+        .from('team_profiles')
+        .select('onboarding_completed, current_onboarding_step')
+        .eq('user_id', user.id)
+        .single();
+
+      if (verifyError || !verifyProfile) {
+        console.error('[handleProfileApprove] Verification failed:', verifyError);
+        toast({
+          title: "Verification Failed",
+          description: "Please try again. If the problem persists, contact support.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('[handleProfileApprove] Verification result:', verifyProfile);
+
+      if (!verifyProfile.onboarding_completed || verifyProfile.current_onboarding_step !== 'completed') {
+        console.error('[handleProfileApprove] Database update did not persist correctly', verifyProfile);
+        toast({
+          title: "Update Failed",
+          description: "Profile update did not save. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('[handleProfileApprove] Profile approved and verified, onboarding completed');
       
       toast({
         title: "Profile Approved!",
         description: "Taking you to your dashboard...",
       });
       
+      // Force auth state refresh before navigation to ensure ProtectedRoute sees updated data
+      await supabase.auth.refreshSession();
+      
       // Navigate to dashboard
       setTimeout(() => {
         navigate('/team/dashboard', { replace: true });
-      }, 500);
+      }, 800);
     } catch (error) {
-      console.error('Unexpected error approving profile:', error);
+      console.error('[handleProfileApprove] Unexpected error:', error);
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",

@@ -146,24 +146,50 @@ const BlogDetail = () => {
         </Button>
       </div>
 
-      <img
-        src={post.cover_image_url} 
-        alt={post.cover_image_alt}
-        className="w-full h-[400px] object-cover rounded-lg mb-8"
-      />
-      
-      <div className="flex items-center gap-4 mb-6 opacity-70">
-        <div className="flex items-center gap-2">
-          <img src="/icons/calendar.svg" alt="" className="w-4 h-4" />
-          <span className="text-sm">{formatBlogDate(post.created_at)}</span>
+      {/* Title & Meta */}
+      <header className="mb-8">
+        <h1 
+          className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-extrabold text-[#545454] mb-6 leading-tight"
+          style={{ 
+            fontFamily: 'Poppins, sans-serif', 
+            letterSpacing: '-0.05em' 
+          }}
+        >
+          {post.title}
+        </h1>
+        
+        <div className="flex flex-wrap items-center gap-6 text-[#545454] opacity-70">
+          {/* Author */}
+          <div className="flex items-center gap-2">
+            <User className="w-4 h-4" />
+            <span className="text-sm">By {post.author || "Sponsa Team"}</span>
+          </div>
+          
+          {/* Date */}
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4" />
+            <span className="text-sm">{formatBlogDate(post.created_at)}</span>
+          </div>
+          
+          {/* Reading Time */}
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4" />
+            <span className="text-sm">{post.readTime || calculateReadingTime(post.content)}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <img src="/icons/clock-small.svg" alt="" className="w-4 h-4" />
-          <span className="text-sm">{calculateReadingTime(post.content)}</span>
-        </div>
-      </div>
+      </header>
 
-      <h1 className="text-4xl font-bold mb-6">{post.title}</h1>
+      {post.cover_image_url && (
+        <div className="mb-8 lg:mb-12">
+          <div className="relative overflow-hidden rounded-xl shadow-lg">
+            <img 
+              src={post.cover_image_url} 
+              alt={post.cover_image_alt || post.title}
+              className="w-full h-auto object-contain"
+            />
+          </div>
+        </div>
+      )}
       
       <div 
         className="prose prose-lg max-w-none"

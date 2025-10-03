@@ -7,7 +7,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requiresProfile = false }: ProtectedRouteProps) => {
-  const { loading, user, userRole, hasTeamProfile, onboardingCompleted } = useSmartAuth();
+  const { loading, user, userRole, hasTeamProfile, onboardingCompleted, currentOnboardingStep } = useSmartAuth();
   const location = useLocation();
 
   if (loading) {
@@ -29,14 +29,30 @@ const ProtectedRoute = ({ children, requiresProfile = false }: ProtectedRoutePro
     return <Navigate to="/marketplace" replace />;
   }
 
-  // For dashboard route, check if profile exists AND onboarding is completed
-  if (requiresProfile && userRole === 'team' && (!hasTeamProfile || !onboardingCompleted) && location.pathname === '/team/dashboard') {
-    return <Navigate to="/team/onboarding" replace />;
+  // CRITICAL: Dashboard requires profile + onboarding_completed + step === 'completed'
+  // This prevents tab-switch issues by using DB step as source of truth
+  if (requiresProfile && userRole === 'team' && location.pathname === '/team/dashboard') {
+    const canAccessDashboard = hasTeamProfile && onboardingCompleted && currentOnboardingStep === 'completed';
+    
+    if (!canAccessDashboard) {
+      console.log('[ProtectedRoute] Blocking dashboard, redirecting to onboarding', {
+        hasTeamProfile,
+        onboardingCompleted,
+        currentOnboardingStep,
+      });
+      return <Navigate to="/team/onboarding" replace />;
+    }
   }
 
-  // For onboarding route, redirect to dashboard only if profile exists AND onboarding is completed
-  if (userRole === 'team' && hasTeamProfile && onboardingCompleted && location.pathname === '/team/onboarding') {
-    return <Navigate to="/team/dashboard" replace />;
+  // For onboarding route, redirect to dashboard ONLY if step === 'completed'
+  // This ensures users can't be redirected out of onboarding prematurely
+  if (userRole === 'team' && location.pathname === '/team/onboarding') {
+    const isFullyComplete = hasTeamProfile && onboardingCompleted && currentOnboardingStep === 'completed';
+    
+    if (isFullyComplete) {
+      console.log('[ProtectedRoute] Onboarding fully complete, allowing dashboard access');
+      return <Navigate to="/team/dashboard" replace />;
+    }
   }
 
   return <>{children}</>;

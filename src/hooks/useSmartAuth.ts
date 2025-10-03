@@ -72,6 +72,12 @@ export const useSmartAuth = () => {
         hasProfile = !!teamProfile;
         onboardingCompleted = teamProfile?.onboarding_completed ?? false;
         currentStep = teamProfile?.current_onboarding_step ?? null;
+        
+        console.log('[useSmartAuth] Team profile status:', {
+          hasProfile,
+          onboardingCompleted,
+          currentStep,
+        });
       }
 
       // Determine redirect path based on role, profile status, and onboarding completion
@@ -79,9 +85,13 @@ export const useSmartAuth = () => {
       
       if (userRole === 'team') {
         // Only redirect to dashboard if onboarding is completed AND step is 'completed'
-        redirectPath = (hasProfile && onboardingCompleted && currentStep === 'completed') 
-          ? '/team/dashboard' 
-          : '/team/onboarding';
+        const canAccessDashboard = hasProfile && onboardingCompleted && currentStep === 'completed';
+        redirectPath = canAccessDashboard ? '/team/dashboard' : '/team/onboarding';
+        
+        console.log('[useSmartAuth] Redirect decision:', {
+          canAccessDashboard,
+          redirectPath,
+        });
       } else if (userRole === 'business') {
         redirectPath = '/marketplace'; // Future: /business/dashboard
       } else if (userRole === 'admin') {

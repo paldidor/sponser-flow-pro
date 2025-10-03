@@ -426,6 +426,7 @@ export type Database = {
         Row: {
           competition_scope: string | null
           created_at: string
+          current_onboarding_step: Database["public"]["Enums"]["onboarding_step"]
           domain: string | null
           email_list_size: number | null
           facebook_followers: number | null
@@ -458,6 +459,7 @@ export type Database = {
         Insert: {
           competition_scope?: string | null
           created_at?: string
+          current_onboarding_step?: Database["public"]["Enums"]["onboarding_step"]
           domain?: string | null
           email_list_size?: number | null
           facebook_followers?: number | null
@@ -490,6 +492,7 @@ export type Database = {
         Update: {
           competition_scope?: string | null
           created_at?: string
+          current_onboarding_step?: Database["public"]["Enums"]["onboarding_step"]
           domain?: string | null
           email_list_size?: number | null
           facebook_followers?: number | null
@@ -645,6 +648,13 @@ export type Database = {
     }
     Enums: {
       app_role: "team" | "business" | "admin"
+      onboarding_step:
+        | "account_created"
+        | "team_profile"
+        | "website_analyzed"
+        | "packages"
+        | "review"
+        | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -773,6 +783,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["team", "business", "admin"],
+      onboarding_step: [
+        "account_created",
+        "team_profile",
+        "website_analyzed",
+        "packages",
+        "review",
+        "completed",
+      ],
     },
   },
 } as const

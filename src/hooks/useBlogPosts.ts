@@ -5,12 +5,14 @@ export interface BlogPost {
   id: string;
   title: string;
   slug: string;
-  cover_image_url: string;
-  cover_image_alt: string;
+  cover_image_url?: string;
+  cover_image_alt?: string;
   preview_text: string;
-  content: string;
+  content?: string;
   created_at: string;
   status: string;
+  author?: string;
+  readTime?: string;
 }
 
 export const useBlogPosts = (limit?: number) => {

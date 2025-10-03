@@ -8,9 +8,9 @@ interface BlogCardProps {
     slug: string;
     title: string;
     preview_text: string;
-    cover_image_url: string;
-    cover_image_alt: string;
-    content: string;
+    cover_image_url?: string;
+    cover_image_alt?: string;
+    content?: string;
     created_at: string;
   };
 }
@@ -26,13 +26,15 @@ export const BlogCard = ({ post }: BlogCardProps) => {
       }}
     >
       {/* Image */}
-      <div className="overflow-hidden" style={{ borderTopLeftRadius: '8.75px', borderTopRightRadius: '8.75px' }}>
-        <img 
-          src={post.cover_image_url} 
-          alt={post.cover_image_alt}
-          className="w-full h-[196px] object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-      </div>
+      {post.cover_image_url && (
+        <div className="overflow-hidden" style={{ borderTopLeftRadius: '8.75px', borderTopRightRadius: '8.75px' }}>
+          <img 
+            src={post.cover_image_url} 
+            alt={post.cover_image_alt || post.title}
+            className="w-full h-[196px] object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        </div>
+      )}
 
       {/* Content */}
       <div className="p-[21px] flex flex-col gap-[10.50px] flex-1">
@@ -47,7 +49,7 @@ export const BlogCard = ({ post }: BlogCardProps) => {
           <div className="flex items-center gap-[3.50px]">
             <img src="/icons/clock-small.svg" alt="" className="w-[10.50px] h-[10.50px]" />
             <span style={{ color: '#545454', fontSize: '10.50px', fontWeight: 400, lineHeight: '14px' }}>
-              {calculateReadingTime(post.content)}
+              {post.content ? calculateReadingTime(post.content) : "5 min read"}
             </span>
           </div>
         </div>

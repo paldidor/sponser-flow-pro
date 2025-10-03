@@ -18,7 +18,13 @@ const BlogDetail = () => {
         .single();
 
       if (error) throw error;
-      return data as any;
+      
+      // Enhance with computed fields
+      return {
+        ...data,
+        author: data.author_id || "Sponsa Team",
+        readTime: data.content ? calculateReadingTime(data.content) : "5 min read"
+      };
     },
   });
 

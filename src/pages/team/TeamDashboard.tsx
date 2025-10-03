@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardHeader } from "@/components/team/DashboardHeader";
 import { OverviewSection } from "@/components/team/OverviewSection";
@@ -10,13 +10,16 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { QueryErrorBoundary } from "@/components/QueryErrorBoundary";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import CreateOfferFlow from "@/components/team/CreateOfferFlow";
 
 const TeamDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: metrics, isLoading, isError, error, refetch } = useTeamDashboardData();
+  const [showCreateOfferModal, setShowCreateOfferModal] = useState(false);
 
   // DEFENSIVE CHECK: Verify onboarding is actually completed
   // Safety net in case route guards fail
@@ -65,6 +68,38 @@ const TeamDashboard = () => {
 
     verifyOnboardingComplete();
   }, [navigate, toast]);
+
+  // FIRST-RUN CHECK: Auto-open Create Offer modal if no published offers exist
+  useEffect(() => {
+    const checkFirstRun = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: offers, error } = await supabase
+          .from('sponsorship_offers')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('status', 'published')
+          .limit(1);
+
+        if (error) {
+          console.error('[TeamDashboard] Error checking offers:', error);
+          return;
+        }
+
+        // No published offers = first time user, auto-open modal
+        if (!offers || offers.length === 0) {
+          console.log('[TeamDashboard] No offers found, opening Create Offer modal');
+          setShowCreateOfferModal(true);
+        }
+      } catch (error) {
+        console.error('[TeamDashboard] Unexpected error checking first run:', error);
+      }
+    };
+
+    checkFirstRun();
+  }, []);
 
   if (isLoading) {
     return (
@@ -121,6 +156,24 @@ const TeamDashboard = () => {
           
           <ActiveSponsorsSection />
         </main>
+
+        {/* First-Run Create Offer Modal */}
+        <Dialog open={showCreateOfferModal} onOpenChange={setShowCreateOfferModal}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogTitle className="sr-only">Create Your First Sponsorship Offer</DialogTitle>
+            <CreateOfferFlow
+              onComplete={() => {
+                setShowCreateOfferModal(false);
+                refetch(); // Refresh dashboard data
+                toast({
+                  title: "Offer Created!",
+                  description: "Your sponsorship offer has been created successfully.",
+                });
+              }}
+              onCancel={() => setShowCreateOfferModal(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </ErrorBoundary>
   );

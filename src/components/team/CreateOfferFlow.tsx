@@ -22,6 +22,7 @@ interface CreateOfferFlowProps {
 const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
   const [currentStep, setCurrentStep] = useState<FlowStep>('select-method');
   const [analysisFileName, setAnalysisFileName] = useState<string | null>(null);
+  const [failedOfferId, setFailedOfferId] = useState<string | null>(null);
   const { toast } = useToast();
   const { currentOfferId, offerData, isLoading: isLoadingOffer, loadingMessage, loadOfferData, loadLatestQuestionnaireOffer, publishOffer, resetOffer } = useOfferCreation();
 
@@ -137,13 +138,13 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
   };
 
   const pollAnalysisStatus = async (offerId: string) => {
-    const maxAttempts = 30;
+    const maxAttempts = 60; // Increased from 30 to 60 (120 seconds total)
     let attempts = 0;
 
     const checkStatus = async (): Promise<'completed' | 'failed' | 'pending'> => {
       const { data, error } = await supabase
         .from('sponsorship_offers')
-        .select('analysis_status')
+        .select('analysis_status, impact')
         .eq('id', offerId)
         .maybeSingle();
 
@@ -173,27 +174,123 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
         await loadPDFOfferData(offerId);
         return;
       } else if (status === 'failed') {
+        // Fetch detailed error message
+        const { data: offerData } = await supabase
+          .from('sponsorship_offers')
+          .select('impact')
+          .eq('id', offerId)
+          .maybeSingle();
+        
+        const errorMessage = offerData?.impact || "We couldn't process your PDF. Let's try the questionnaire instead - it only takes 2-3 minutes!";
+        
+        setFailedOfferId(offerId);
         toast({
           title: "PDF Analysis Failed",
-          description: "We couldn't process your PDF. Let's try the questionnaire instead - it only takes 2-3 minutes!",
+          description: errorMessage,
           variant: "destructive",
         });
-        setCurrentStep('questionnaire');
-        setAnalysisFileName(null);
-        resetOffer();
+        
+        // Auto-redirect to questionnaire after showing error
+        setTimeout(() => {
+          setCurrentStep('questionnaire');
+          setAnalysisFileName(null);
+          resetOffer();
+        }, 3000);
         return;
       }
       
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Exponential backoff: 2s for first 30 attempts, then 3s
+      const waitTime = attempts < 30 ? 2000 : 3000;
+      await new Promise(resolve => setTimeout(resolve, waitTime));
       attempts++;
     }
 
+    // Timeout - auto-redirect to questionnaire instead of dashboard
+    setFailedOfferId(offerId);
     toast({
       title: "Analysis Timeout",
-      description: "The analysis is taking longer than expected. Please check your dashboard or try again.",
+      description: "The analysis is taking longer than expected. Let's try the questionnaire instead - it only takes 2-3 minutes!",
       variant: "destructive",
     });
-    onComplete(); // Still navigate to dashboard even on timeout
+    
+    setTimeout(() => {
+      setCurrentStep('questionnaire');
+      setAnalysisFileName(null);
+      resetOffer();
+    }, 3000);
+  };
+
+  const handleRetryAnalysis = async (retryOfferId: string) => {
+    // Fetch the existing offer
+    const { data: existingOffer, error: fetchError } = await supabase
+      .from('sponsorship_offers')
+      .select('pdf_public_url, source_file_name')
+      .eq('id', retryOfferId)
+      .maybeSingle();
+
+    if (fetchError || !existingOffer || !existingOffer.pdf_public_url) {
+      toast({
+        title: "Retry Failed",
+        description: "Could not find the original PDF. Please upload it again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Reset analysis status
+    const { error: resetError } = await supabase
+      .from('sponsorship_offers')
+      .update({ 
+        analysis_status: 'pending',
+        impact: 'Analysis in progress...'
+      })
+      .eq('id', retryOfferId);
+
+    if (resetError) {
+      toast({
+        title: "Retry Failed",
+        description: "Failed to reset analysis. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Get user data
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Get team profile
+    const { data: teamProfile } = await supabase
+      .from('team_profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    // Re-invoke the edge function
+    setAnalysisFileName(existingOffer.source_file_name || 'Sponsorship PDF');
+    setCurrentStep('pdf-analysis');
+    
+    const { error: invokeError } = await supabase.functions.invoke('analyze-pdf-sponsorship', {
+      body: { 
+        pdfUrl: existingOffer.pdf_public_url, 
+        offerId: retryOfferId, 
+        userId: user.id,
+        teamProfileId: teamProfile?.id || null
+      }
+    });
+
+    if (invokeError) {
+      toast({
+        title: "Analysis Error",
+        description: "Failed to restart PDF analysis. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Reset failed state and start polling
+    setFailedOfferId(null);
+    pollAnalysisStatus(retryOfferId);
   };
 
   const handleWebsiteAnalyze = async (url: string) => {
@@ -285,6 +382,8 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
               <PDFAnalysisProgress
                 fileName={analysisFileName}
                 onCancel={onCancel}
+                offerId={failedOfferId}
+                onRetry={failedOfferId ? () => handleRetryAnalysis(failedOfferId) : undefined}
               />
             )}
           </Suspense>

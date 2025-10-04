@@ -8,22 +8,37 @@ interface PDFAnalysisProgressProps {
   fileName: string;
   onCancel?: () => void;
   onError?: () => void;
+  offerId?: string | null;
+  onRetry?: () => void;
 }
 
-const PDFAnalysisProgress = ({ fileName, onCancel }: PDFAnalysisProgressProps) => {
+const PDFAnalysisProgress = ({ fileName, onCancel, offerId, onRetry }: PDFAnalysisProgressProps) => {
   const [progress, setProgress] = useState(0);
   const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState(25);
+  const [currentStage, setCurrentStage] = useState<string>("Downloading your PDF...");
+
+  const getProgressStage = (elapsedSeconds: number): string => {
+    if (elapsedSeconds < 10) return "Downloading your PDF...";
+    if (elapsedSeconds < 25) return "Extracting text and data...";
+    if (elapsedSeconds < 45) return "AI analyzing sponsorship details...";
+    if (elapsedSeconds < 60) return "Saving packages to your offer...";
+    return "Almost done, finalizing...";
+  };
 
   useEffect(() => {
     let elapsed = 0;
-    const totalDuration = 25000; // 25 seconds
+    const totalDuration = 25000; // 25 seconds for visual progress
 
     const interval = setInterval(() => {
       elapsed += 100;
+      const elapsedSeconds = Math.floor(elapsed / 1000);
       
       // Calculate progress (stop at 95% until actual completion)
       const newProgress = Math.min((elapsed / totalDuration) * 100, 95);
       setProgress(newProgress);
+
+      // Update current stage based on elapsed time
+      setCurrentStage(getProgressStage(elapsedSeconds));
 
       // Calculate estimated time remaining
       const remainingTime = Math.max(0, Math.ceil((totalDuration - elapsed) / 1000));
@@ -74,26 +89,31 @@ const PDFAnalysisProgress = ({ fileName, onCancel }: PDFAnalysisProgressProps) =
           </div>
         </div>
 
-        {/* Analyzing Message */}
+        {/* Dynamic Stage Message */}
         <div className="flex items-center justify-center gap-3 p-4 bg-muted/50 rounded-lg">
           <Loader2 className="w-5 h-5 text-primary animate-spin" />
-          <p className="text-sm font-medium">Analyzing your PDF...</p>
+          <p className="text-sm font-medium">{currentStage}</p>
         </div>
 
-        {/* Info & Cancel */}
+        {/* Info & Actions */}
         <div className="space-y-4 pt-4 border-t">
           <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
             <Loader2 className="w-3 h-3 animate-spin" />
             <span>AI-powered analysis • Secure processing</span>
           </div>
           
-          {onCancel && (
-            <div className="flex justify-center">
+          <div className="flex justify-center gap-2">
+            {onRetry && offerId && (
+              <Button variant="default" size="sm" onClick={onRetry}>
+                Retry Analysis
+              </Button>
+            )}
+            {onCancel && (
               <Button variant="ghost" size="sm" onClick={onCancel}>
                 Cancel Analysis
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Tips */}

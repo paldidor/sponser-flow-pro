@@ -438,6 +438,7 @@ Return ONLY valid JSON with this exact structure:
     }
     
     // Update the sponsorship offer with normalized extracted data
+    // Status set to 'draft' to require review before publishing
     console.log('Updating sponsorship offer in database...');
     const { error: updateError } = await supabase
       .from('sponsorship_offers')
@@ -449,7 +450,7 @@ Return ONLY valid JSON with this exact structure:
         analysis_status: 'completed',
         title: offerTitle,
         team_profile_id: teamProfileId,
-        status: 'published',
+        status: 'draft',  // Changed from 'published' to require review
       })
       .eq('id', offerId)
       .eq('user_id', userId);
@@ -458,6 +459,8 @@ Return ONLY valid JSON with this exact structure:
       console.error('Database update error:', updateError);
       throw new Error(`Failed to update offer: ${updateError.message}`);
     }
+
+    console.log('Offer saved as draft - ready for review before publishing');
 
     // Fetch all available placement options to match against
     console.log('Fetching placement options...');

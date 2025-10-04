@@ -338,69 +338,116 @@ Return ONLY valid JSON with this exact structure:
       throw new Error(`Failed to parse AI response: ${errorMessage}`);
     }
 
-    // Validate required fields with detailed error messages
-    const missingFields = [];
-    // Allow 0 as valid value (means "not specified in PDF")
-    if (parsedData.funding_goal === undefined || parsedData.funding_goal === null) {
-      missingFields.push('funding_goal');
-    }
-    if (!parsedData.sponsorship_term) missingFields.push('sponsorship_term');
-    if (!parsedData.sponsorship_impact) missingFields.push('sponsorship_impact');
+    // Enhanced validation: Accept null for missing numbers, empty strings for missing text
+    console.log('Raw parsed data:', JSON.stringify(parsedData, null, 2));
     
-    console.log('Validation check - funding_goal:', parsedData.funding_goal, 'missing:', missingFields);
-    
-    if (missingFields.length > 0) {
-      console.error('Missing required fields:', missingFields.join(', '));
-      console.error('Partial data received:', JSON.stringify(parsedData, null, 2));
-      
-      // Still save partial data if we have at least the basic info
-      if (parsedData.funding_goal !== undefined || parsedData.sponsorship_term) {
-        console.log('Saving partial data with funding_goal:', parsedData.funding_goal);
-        await supabase
-          .from('sponsorship_offers')
-          .update({
-            fundraising_goal: parsedData.funding_goal || 0,
-            duration: parsedData.sponsorship_term || 'Not specified',
-            impact: parsedData.sponsorship_impact || 'Analysis incomplete - please review manually',
-            supported_players: parsedData.total_players_supported || null,
-            analysis_status: 'completed',
-            title: parsedData.funding_goal ? `Sponsorship Offer - $${parsedData.funding_goal} Goal` : 'Sponsorship Offer - Goal TBD',
-          })
-          .eq('id', offerId)
-          .eq('user_id', userId);
+    // Normalize funding_goal
+    let normalizedFundingGoal: number | null = null;
+    if (parsedData.funding_goal !== undefined && parsedData.funding_goal !== null && parsedData.funding_goal !== "") {
+      if (typeof parsedData.funding_goal === 'number') {
+        normalizedFundingGoal = parsedData.funding_goal >= 0 ? parsedData.funding_goal : null;
+      } else if (typeof parsedData.funding_goal === 'string') {
+        // Strip $, commas, and convert to number
+        const cleaned = String(parsedData.funding_goal).replace(/[$,\s]/g, '');
+        const parsed = parseFloat(cleaned);
+        normalizedFundingGoal = !isNaN(parsed) && parsed >= 0 ? parsed : null;
       }
-      
-      throw new Error(`AI analysis incomplete. Missing: ${missingFields.join(', ')}. Please try again or enter information manually.`);
-    }
-
-    // Validate data types (allow 0 as valid value)
-    if (typeof parsedData.funding_goal !== 'number') {
-      console.warn('Invalid funding_goal type, attempting conversion');
-      parsedData.funding_goal = parseFloat(String(parsedData.funding_goal).replace(/[^0-9.]/g, '')) || 0;
     }
     
-    // Ensure non-negative
-    if (parsedData.funding_goal < 0) {
-      console.warn('Negative funding_goal detected, setting to 0');
-      parsedData.funding_goal = 0;
+    // Normalize sponsorship_term (preserve AI format, accept empty string)
+    const normalizedTerm = typeof parsedData.sponsorship_term === 'string' 
+      ? parsedData.sponsorship_term.trim() 
+      : "";
+    
+    // Normalize sponsorship_impact (preserve AI format, accept empty string)
+    const normalizedImpact = typeof parsedData.sponsorship_impact === 'string' 
+      ? parsedData.sponsorship_impact.trim() 
+      : "";
+    
+    // Normalize total_players_supported (accept null for missing/approximate)
+    let normalizedPlayersSupported: number | null = null;
+    if (parsedData.total_players_supported !== undefined && parsedData.total_players_supported !== null) {
+      if (typeof parsedData.total_players_supported === 'number') {
+        normalizedPlayersSupported = parsedData.total_players_supported >= 0 ? parsedData.total_players_supported : null;
+      } else if (typeof parsedData.total_players_supported === 'string') {
+        const parsed = parseInt(String(parsedData.total_players_supported).replace(/[^0-9]/g, ''));
+        normalizedPlayersSupported = !isNaN(parsed) && parsed >= 0 ? parsed : null;
+      }
+    }
+    
+    // Validate and normalize packages array
+    let normalizedPackages: Array<{name: string, cost: number | null, placements: string[]}> = [];
+    if (Array.isArray(parsedData.packages)) {
+      normalizedPackages = parsedData.packages
+        .filter((pkg: any) => pkg && typeof pkg === 'object' && pkg.name)
+        .map((pkg: any) => {
+          // Normalize package cost
+          let normalizedCost: number | null = null;
+          if (pkg.cost !== undefined && pkg.cost !== null && pkg.cost !== "") {
+            if (typeof pkg.cost === 'number') {
+              normalizedCost = pkg.cost >= 0 ? pkg.cost : null;
+            } else if (typeof pkg.cost === 'string') {
+              const cleaned = String(pkg.cost).replace(/[$,\s]/g, '');
+              const parsed = parseFloat(cleaned);
+              normalizedCost = !isNaN(parsed) && parsed >= 0 ? parsed : null;
+            }
+          }
+          
+          // Normalize placements (ensure short labels, remove full sentences)
+          let normalizedPlacements: string[] = [];
+          if (Array.isArray(pkg.placements)) {
+            normalizedPlacements = pkg.placements
+              .filter((p: any) => typeof p === 'string' && p.trim().length > 0)
+              .map((p: string) => {
+                // Keep short labels, truncate if too long (likely a full sentence)
+                const trimmed = p.trim();
+                return trimmed.length > 100 ? trimmed.substring(0, 100) + '...' : trimmed;
+              });
+          }
+          
+          return {
+            name: String(pkg.name).trim(),
+            cost: normalizedCost,
+            placements: normalizedPlacements
+          };
+        });
+    }
+    
+    console.log('Normalized data:', {
+      funding_goal: normalizedFundingGoal,
+      sponsorship_term: normalizedTerm,
+      sponsorship_impact: normalizedImpact,
+      total_players_supported: normalizedPlayersSupported,
+      packages_count: normalizedPackages.length
+    });
+    
+    // Check if we have at least packages (most important data)
+    if (normalizedPackages.length === 0) {
+      console.error('No valid packages found in AI response');
+      throw new Error('PDF analysis did not extract any sponsorship packages. Please ensure your PDF contains clearly labeled package tiers with pricing information, or try manual entry.');
     }
 
-    if (!Array.isArray(parsedData.packages)) {
-      console.warn('Packages is not an array, converting');
-      parsedData.packages = parsedData.packages ? [parsedData.packages] : [];
+    // Generate title based on normalized data
+    let offerTitle = 'Sponsorship Offer';
+    if (normalizedFundingGoal && normalizedFundingGoal > 0) {
+      offerTitle = `Sponsorship Offer - $${normalizedFundingGoal.toLocaleString()} Goal`;
+    } else if (normalizedTerm) {
+      offerTitle = `Sponsorship Offer - ${normalizedTerm}`;
+    } else if (normalizedPackages.length > 0) {
+      offerTitle = `Sponsorship Offer - ${normalizedPackages.length} Package${normalizedPackages.length > 1 ? 's' : ''}`;
     }
-
-    // Update the sponsorship offer with extracted data
+    
+    // Update the sponsorship offer with normalized extracted data
     console.log('Updating sponsorship offer in database...');
     const { error: updateError } = await supabase
       .from('sponsorship_offers')
       .update({
-        fundraising_goal: parsedData.funding_goal,
-        duration: parsedData.sponsorship_term,
-        impact: parsedData.sponsorship_impact,
-        supported_players: parsedData.total_players_supported || null,
+        fundraising_goal: normalizedFundingGoal,
+        duration: normalizedTerm || 'Not specified',
+        impact: normalizedImpact || 'Details pending review',
+        supported_players: normalizedPlayersSupported,
         analysis_status: 'completed',
-        title: parsedData.funding_goal > 0 ? `Sponsorship Offer - $${parsedData.funding_goal} Goal` : 'Sponsorship Offer - Goal TBD',
+        title: offerTitle,
         team_profile_id: teamProfileId,
         status: 'published',
       })
@@ -423,66 +470,89 @@ Return ONLY valid JSON with this exact structure:
       throw new Error(`Failed to fetch placement options: ${placementError.message}`);
     }
 
-    // Create sponsorship packages and their placements
-    console.log('Creating sponsorship packages...');
-    if (parsedData.packages && Array.isArray(parsedData.packages)) {
-      for (let i = 0; i < parsedData.packages.length; i++) {
-        const pkg = parsedData.packages[i];
+    // Create sponsorship packages and their placements using normalized data
+    console.log(`Creating ${normalizedPackages.length} sponsorship packages...`);
+    for (let i = 0; i < normalizedPackages.length; i++) {
+      const pkg = normalizedPackages[i];
+      
+      // Generate package description from placements
+      const placementsList = pkg.placements.length > 0 
+        ? pkg.placements.join(', ') 
+        : 'various benefits';
+      
+      // Insert package with normalized data
+      const { data: packageData, error: packageError } = await supabase
+        .from('sponsorship_packages')
+        .insert({
+          sponsorship_offer_id: offerId,
+          name: pkg.name,
+          price: pkg.cost,  // Can be null if not specified
+          description: `Package includes: ${placementsList}`,
+          benefits: [],
+          package_order: i + 1,
+        })
+        .select()
+        .single();
+
+      if (packageError) {
+        console.error(`Failed to create package ${pkg.name}:`, packageError);
+        continue; // Continue with other packages
+      }
+
+      console.log(`Created package: ${pkg.name} (cost: ${pkg.cost !== null ? '$' + pkg.cost : 'TBD'})`);
+
+      // Match placements to placement_options and create links
+      if (pkg.placements.length > 0) {
+        let matchedCount = 0;
+        let unmatchedPlacements: string[] = [];
         
-        // Insert package
-        const { data: packageData, error: packageError } = await supabase
-          .from('sponsorship_packages')
-          .insert({
-            sponsorship_offer_id: offerId,
-            name: pkg.name,
-            price: pkg.cost,
-            description: `Package includes: ${pkg.placements?.join(', ') || 'various benefits'}`,
-            benefits: [],
-            package_order: i + 1,
-          })
-          .select()
-          .single();
+        for (const placementName of pkg.placements) {
+          // Find matching placement option (case-insensitive partial match)
+          const matchedOption = placementOptions?.find((opt: any) => 
+            opt.name.toLowerCase().includes(placementName.toLowerCase()) ||
+            placementName.toLowerCase().includes(opt.name.toLowerCase())
+          );
 
-        if (packageError) {
-          console.error(`Failed to create package ${pkg.name}:`, packageError);
-          continue; // Continue with other packages
-        }
+          if (matchedOption) {
+            const { error: linkError } = await supabase
+              .from('package_placements')
+              .insert({
+                package_id: packageData.id,
+                placement_option_id: matchedOption.id,
+              });
 
-        console.log(`Created package: ${pkg.name}`);
-
-        // Match placements to placement_options and create links
-        if (pkg.placements && Array.isArray(pkg.placements)) {
-          for (const placementName of pkg.placements) {
-            // Find matching placement option (case-insensitive partial match)
-            const matchedOption = placementOptions?.find((opt: any) => 
-              opt.name.toLowerCase().includes(placementName.toLowerCase()) ||
-              placementName.toLowerCase().includes(opt.name.toLowerCase())
-            );
-
-            if (matchedOption) {
-              const { error: linkError } = await supabase
-                .from('package_placements')
-                .insert({
-                  package_id: packageData.id,
-                  placement_option_id: matchedOption.id,
-                });
-
-              if (linkError) {
-                console.error(`Failed to link placement ${placementName}:`, linkError);
-              } else {
-                console.log(`Linked placement: ${placementName} -> ${matchedOption.name}`);
-              }
+            if (linkError) {
+              console.error(`Failed to link placement ${placementName}:`, linkError);
             } else {
-              console.log(`No matching placement option found for: ${placementName}`);
+              matchedCount++;
+              console.log(`✓ Linked placement: "${placementName}" -> ${matchedOption.name}`);
             }
+          } else {
+            unmatchedPlacements.push(placementName);
+            console.log(`✗ No match found for placement: "${placementName}"`);
           }
+        }
+        
+        console.log(`Package "${pkg.name}": ${matchedCount}/${pkg.placements.length} placements matched`);
+        if (unmatchedPlacements.length > 0) {
+          console.log(`Unmatched placements for review:`, unmatchedPlacements);
         }
       }
     }
 
     console.log('Analysis completed successfully');
-
-    return { success: true, data: parsedData };
+    
+    // Return normalized data for logging/debugging
+    return { 
+      success: true, 
+      data: {
+        funding_goal: normalizedFundingGoal,
+        sponsorship_term: normalizedTerm,
+        sponsorship_impact: normalizedImpact,
+        total_players_supported: normalizedPlayersSupported,
+        packages: normalizedPackages
+      }
+    };
 
   } catch (error) {
     console.error('Error in performAnalysis:', error);

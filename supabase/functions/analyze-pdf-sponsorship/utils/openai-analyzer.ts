@@ -63,7 +63,7 @@ export async function analyzeWithOpenAI(
                 content: userPrompt
               }
             ],
-            max_completion_tokens: 2000,
+            max_completion_tokens: 4000, // Increased from 2000 to prevent JSON truncation
           }),
           signal: controller.signal,
         });
@@ -110,8 +110,16 @@ export async function analyzeWithOpenAI(
 
   const aiResult = await openAIResponse.json();
   console.log('OpenAI analysis completed');
-
+  
+  // Validation logging for debugging
+  const finishReason = aiResult.choices[0].finish_reason;
   const analysisText = aiResult.choices[0].message.content;
+  
+  if (finishReason === "length") {
+    console.warn('⚠️ AI response may be truncated due to token limit. Consider increasing max_completion_tokens.');
+  }
+  
+  console.log(`Response length: ${analysisText.length} characters, finish_reason: ${finishReason}`);
   
   // Parse the JSON response
   let parsedData;
@@ -120,6 +128,14 @@ export async function analyzeWithOpenAI(
     const jsonText = analysisText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     parsedData = JSON.parse(jsonText);
     console.log('Successfully parsed AI response:', parsedData);
+    
+    // Log package extraction success
+    const packageCount = parsedData.packages?.length || 0;
+    console.log(`✓ Extracted ${packageCount} sponsorship packages from PDF`);
+    
+    if (packageCount === 0) {
+      console.warn('⚠️ No packages were extracted - this may indicate parsing issues');
+    }
   } catch (parseError) {
     console.error('Failed to parse AI response:', analysisText);
     const errorMessage = parseError instanceof Error ? parseError.message : 'Unknown error';

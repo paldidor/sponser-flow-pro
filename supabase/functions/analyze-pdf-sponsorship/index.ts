@@ -189,10 +189,30 @@ async function saveAnalysisResults(
 ) {
   const { funding_goal, sponsorship_term, sponsorship_impact, total_players_supported, packages } = analysisResult;
 
+  // Calculate intelligent default for funding_goal if not provided by AI
+  let finalFundingGoal = funding_goal;
+  
+  if (!finalFundingGoal || finalFundingGoal === 0) {
+    // Calculate total package value
+    const totalPackageValue = packages.reduce((sum, pkg) => {
+      return sum + (pkg.cost || 0);
+    }, 0);
+    
+    if (totalPackageValue > 0) {
+      // Use 2x total package value as suggested fundraising goal
+      finalFundingGoal = totalPackageValue * 2;
+      console.log(`📊 Calculated fundraising_goal: $${finalFundingGoal} (2x package total of $${totalPackageValue})`);
+    } else {
+      // Default to 0 if no packages have costs
+      finalFundingGoal = 0;
+      console.log('⚠️ No funding_goal found and no package costs available, defaulting to 0');
+    }
+  }
+
   // Generate title based on normalized data
   let offerTitle = 'Sponsorship Offer';
-  if (funding_goal && funding_goal > 0) {
-    offerTitle = `Sponsorship Offer - $${funding_goal.toLocaleString()} Goal`;
+  if (finalFundingGoal && finalFundingGoal > 0) {
+    offerTitle = `Sponsorship Offer - $${finalFundingGoal.toLocaleString()} Goal`;
   } else if (sponsorship_term) {
     offerTitle = `Sponsorship Offer - ${sponsorship_term}`;
   } else if (packages.length > 0) {
@@ -205,7 +225,7 @@ async function saveAnalysisResults(
   const { error: updateError } = await supabase
     .from('sponsorship_offers')
     .update({
-      fundraising_goal: funding_goal,
+      fundraising_goal: finalFundingGoal,
       duration: sponsorship_term || 'Not specified',
       impact: sponsorship_impact || 'Details pending review',
       supported_players: total_players_supported,

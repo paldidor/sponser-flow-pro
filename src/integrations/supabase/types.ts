@@ -285,7 +285,7 @@ export type Database = {
           description: string | null
           draft_data: Json | null
           duration: string
-          fundraising_goal: number
+          fundraising_goal: number | null
           id: string
           impact: string
           pdf_public_url: string | null
@@ -304,7 +304,7 @@ export type Database = {
           description?: string | null
           draft_data?: Json | null
           duration: string
-          fundraising_goal: number
+          fundraising_goal?: number | null
           id?: string
           impact: string
           pdf_public_url?: string | null
@@ -323,7 +323,7 @@ export type Database = {
           description?: string | null
           draft_data?: Json | null
           duration?: string
-          fundraising_goal?: number
+          fundraising_goal?: number | null
           id?: string
           impact?: string
           pdf_public_url?: string | null
@@ -438,6 +438,8 @@ export type Database = {
           linkedin_followers: number | null
           linkedin_link: string | null
           location: string | null
+          location_lat: number | null
+          location_lon: number | null
           main_values: Json
           number_of_players: string | null
           onboarding_completed: boolean
@@ -471,6 +473,8 @@ export type Database = {
           linkedin_followers?: number | null
           linkedin_link?: string | null
           location?: string | null
+          location_lat?: number | null
+          location_lon?: number | null
           main_values?: Json
           number_of_players?: string | null
           onboarding_completed?: boolean
@@ -504,6 +508,8 @@ export type Database = {
           linkedin_followers?: number | null
           linkedin_link?: string | null
           location?: string | null
+          location_lat?: number | null
+          location_lon?: number | null
           main_values?: Json
           number_of_players?: string | null
           onboarding_completed?: boolean

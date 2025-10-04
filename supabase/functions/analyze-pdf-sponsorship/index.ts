@@ -6,6 +6,11 @@ import { extractTextFromPDF } from './utils/pdf-extractor.ts';
 import { analyzeWithOpenAI, type AnalysisResult } from './utils/openai-analyzer.ts';
 import { categorizeError } from './utils/error-handler.ts';
 
+// Declare EdgeRuntime for background task support
+declare const EdgeRuntime: {
+  waitUntil(promise: Promise<any>): void;
+};
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -58,12 +63,13 @@ serve(async (req) => {
       .eq('user_id', userId);
 
     // Start background task for heavy processing
-    const analysisPromise = performAnalysis(pdfUrl, offerId, userId, finalTeamProfileId, supabase);
-    
-    // Start analysis asynchronously (fire and forget)
-    analysisPromise.catch((err) => {
-      console.error('Background analysis error:', err);
-    });
+    // Use EdgeRuntime.waitUntil to keep function alive until analysis completes
+    EdgeRuntime.waitUntil(
+      performAnalysis(pdfUrl, offerId, userId, finalTeamProfileId, supabase)
+        .catch((err) => {
+          console.error('Background analysis error:', err);
+        })
+    );
 
     // Return immediate response
     return new Response(
@@ -129,20 +135,37 @@ async function performAnalysis(
     // Categorize error and provide helpful message
     const categorized = categorizeError(error as Error);
 
-    // Update status to error with helpful message
-    try {
-      await supabase
-        .from('sponsorship_offers')
-        .update({ 
-          analysis_status: 'error',
-          impact: `Analysis incomplete: ${categorized.message}. ${categorized.suggestedAction}`
-        })
-        .eq('id', offerId)
-        .eq('user_id', userId);
-      
-      console.log('Updated offer status to error with user-friendly message');
-    } catch (updateError) {
-      console.error('Failed to update error status:', updateError);
+    // Update status to error with helpful message - with retry logic
+    let updateSuccess = false;
+    const maxUpdateRetries = 3;
+    
+    for (let retry = 0; retry < maxUpdateRetries && !updateSuccess; retry++) {
+      try {
+        const { error: updateError } = await supabase
+          .from('sponsorship_offers')
+          .update({ 
+            analysis_status: 'error',
+            impact: `Analysis incomplete: ${categorized.message}. ${categorized.suggestedAction}`
+          })
+          .eq('id', offerId)
+          .eq('user_id', userId);
+        
+        if (!updateError) {
+          updateSuccess = true;
+          console.log('Updated offer status to error with user-friendly message');
+        } else {
+          throw updateError;
+        }
+      } catch (updateError) {
+        console.error(`Failed to update error status (attempt ${retry + 1}/${maxUpdateRetries}):`, updateError);
+        if (retry < maxUpdateRetries - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * (retry + 1)));
+        }
+      }
+    }
+    
+    if (!updateSuccess) {
+      console.error('CRITICAL: Failed to update error status after all retries. Offer may be stuck in analyzing state.');
     }
 
     return { 

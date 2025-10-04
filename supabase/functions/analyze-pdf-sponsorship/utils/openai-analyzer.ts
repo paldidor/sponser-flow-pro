@@ -40,27 +40,41 @@ export async function analyzeWithOpenAI(
   
   while (retryCount < maxRetries) {
     try {
-      openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-5-mini-2025-08-07',
-          messages: [
-            {
-              role: 'system',
-              content: systemPrompt
-            },
-            {
-              role: 'user',
-              content: userPrompt
-            }
-          ],
-          max_completion_tokens: 2000,
-        }),
-      });
+      // Add 60-second timeout to prevent indefinite hangs
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
+      
+      try {
+        openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-5-mini-2025-08-07',
+            messages: [
+              {
+                role: 'system',
+                content: systemPrompt
+              },
+              {
+                role: 'user',
+                content: userPrompt
+              }
+            ],
+            max_completion_tokens: 2000,
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+          throw new Error('OpenAI API timeout after 60 seconds. The analysis took too long to complete.');
+        }
+        throw fetchError;
+      }
 
       if (openAIResponse.ok) {
         break; // Success, exit retry loop

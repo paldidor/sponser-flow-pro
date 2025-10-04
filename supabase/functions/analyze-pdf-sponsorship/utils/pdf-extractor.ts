@@ -31,38 +31,50 @@ export async function extractTextFromPDF(pdfUrl: string): Promise<ExtractedPDFCo
   console.log(`PDF downloaded, size: ${pdfBuffer.byteLength} bytes`);
 
   // Extract text from PDF using pdfjs-serverless (designed for Deno/Edge Functions)
+  // Add 45-second timeout to prevent hanging on complex PDFs
   console.log('Extracting text from PDF...');
-  const pdfjsServerless = await import('https://esm.sh/pdfjs-serverless@0.5.0');
   
-  // Resolve the PDF.js library (no worker setup needed with pdfjs-serverless)
-  const pdfjsLib = await pdfjsServerless.resolvePDFJS();
+  const extractionPromise = (async () => {
+    const pdfjsServerless = await import('https://esm.sh/pdfjs-serverless@0.5.0');
+    
+    // Resolve the PDF.js library (no worker setup needed with pdfjs-serverless)
+    const pdfjsLib = await pdfjsServerless.resolvePDFJS();
 
-  // Load PDF document
-  const loadingTask = pdfjsLib.getDocument({ data: pdfBuffer });
-  const pdfDoc = await loadingTask.promise;
+    // Load PDF document
+    const loadingTask = pdfjsLib.getDocument({ data: pdfBuffer });
+    const pdfDoc = await loadingTask.promise;
+    
+    console.log(`PDF loaded, ${pdfDoc.numPages} pages`);
+
+    if (pdfDoc.numPages === 0) {
+      throw new Error('PDF has no pages');
+    }
+
+    if (pdfDoc.numPages > 50) {
+      console.warn(`PDF has ${pdfDoc.numPages} pages, processing first 50 only`);
+    }
+
+    // Extract text from all pages (max 50)
+    let extractedText = '';
+    const maxPages = Math.min(pdfDoc.numPages, 50);
+    
+    for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
+      const page = await pdfDoc.getPage(pageNum);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items
+        .map((item: any) => item.str)
+        .join(' ');
+      extractedText += `\n--- Page ${pageNum} ---\n${pageText}\n`;
+    }
+    
+    return { extractedText, pageCount: pdfDoc.numPages };
+  })();
   
-  console.log(`PDF loaded, ${pdfDoc.numPages} pages`);
-
-  if (pdfDoc.numPages === 0) {
-    throw new Error('PDF has no pages');
-  }
-
-  if (pdfDoc.numPages > 50) {
-    console.warn(`PDF has ${pdfDoc.numPages} pages, processing first 50 only`);
-  }
-
-  // Extract text from all pages (max 50)
-  let extractedText = '';
-  const maxPages = Math.min(pdfDoc.numPages, 50);
+  const timeoutPromise = new Promise<never>((_, reject) => 
+    setTimeout(() => reject(new Error('PDF extraction timeout after 45 seconds. The PDF may be too complex or large.')), 45000)
+  );
   
-  for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
-    const page = await pdfDoc.getPage(pageNum);
-    const textContent = await page.getTextContent();
-    const pageText = textContent.items
-      .map((item: any) => item.str)
-      .join(' ');
-    extractedText += `\n--- Page ${pageNum} ---\n${pageText}\n`;
-  }
+  const { extractedText, pageCount } = await Promise.race([extractionPromise, timeoutPromise]);
 
   console.log(`Text extraction completed, ${extractedText.length} characters extracted`);
 
@@ -93,6 +105,6 @@ export async function extractTextFromPDF(pdfUrl: string): Promise<ExtractedPDFCo
 
   return {
     text: textToAnalyze,
-    pageCount: pdfDoc.numPages
+    pageCount: pageCount
   };
 }

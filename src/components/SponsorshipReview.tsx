@@ -7,7 +7,7 @@ import { Pencil, MapPin, Users, DollarSign, Calendar, Target, Plus, Trash2 } fro
 import ProgressIndicator from "./ProgressIndicator";
 import LoadingState from "./LoadingState";
 import { SponsorshipData, TeamProfile, SponsorshipPackage } from "@/types/flow";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { validateSponsorshipData } from "@/lib/validationUtils";
 import { useToast } from "@/hooks/use-toast";
@@ -206,7 +206,20 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
     }
   };
 
-  // Real-time subscription for package creation
+  // Real-time subscription for package creation with debounced refetch
+  const refreshDebounceRef = useRef<NodeJS.Timeout>();
+
+  const debouncedRefreshPackages = useCallback(() => {
+    if (refreshDebounceRef.current) {
+      clearTimeout(refreshDebounceRef.current);
+    }
+    
+    refreshDebounceRef.current = setTimeout(() => {
+      console.log('🔄 Debounced refresh triggered');
+      refreshPackages();
+    }, 500); // Wait 500ms after last INSERT before refetching
+  }, []);
+
   useEffect(() => {
     if (!offerId) return;
 
@@ -226,15 +239,18 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
         },
         (payload) => {
           console.log('✅ New package created:', payload.new);
-          refreshPackages();
+          debouncedRefreshPackages(); // Use debounced version to batch updates
         }
       )
       .subscribe();
 
     return () => {
+      if (refreshDebounceRef.current) {
+        clearTimeout(refreshDebounceRef.current);
+      }
       supabase.removeChannel(channel);
     };
-  }, [offerId]);
+  }, [offerId, debouncedRefreshPackages]);
 
   const handleEditPackage = async (packageId: string) => {
     if (!offerId) {

@@ -444,6 +444,7 @@ export type Database = {
           number_of_players: string | null
           onboarding_completed: boolean
           organization_status: string | null
+          reach: number | null
           season_end_date: string | null
           season_start_date: string | null
           seed_url: string | null
@@ -479,6 +480,7 @@ export type Database = {
           number_of_players?: string | null
           onboarding_completed?: boolean
           organization_status?: string | null
+          reach?: number | null
           season_end_date?: string | null
           season_start_date?: string | null
           seed_url?: string | null
@@ -514,6 +516,7 @@ export type Database = {
           number_of_players?: string | null
           onboarding_completed?: boolean
           organization_status?: string | null
+          reach?: number | null
           season_end_date?: string | null
           season_start_date?: string | null
           seed_url?: string | null
@@ -532,45 +535,42 @@ export type Database = {
       }
       team_sponsorship_combined: {
         Row: {
-          created_at: string
-          fundraising_goal: number
+          fundraising_goal: number | null
+          level_of_play: string | null
           location: string | null
+          location_lat: number | null
+          location_lon: number | null
+          number_of_players: number | null
           sponsorship_offer_id: string
-          team_id: string
-          team_name: string
+          sport: string | null
+          team_name: string | null
+          team_profile_id: string
         }
         Insert: {
-          created_at?: string
-          fundraising_goal: number
+          fundraising_goal?: number | null
+          level_of_play?: string | null
           location?: string | null
+          location_lat?: number | null
+          location_lon?: number | null
+          number_of_players?: number | null
           sponsorship_offer_id: string
-          team_id: string
-          team_name: string
+          sport?: string | null
+          team_name?: string | null
+          team_profile_id: string
         }
         Update: {
-          created_at?: string
-          fundraising_goal?: number
+          fundraising_goal?: number | null
+          level_of_play?: string | null
           location?: string | null
+          location_lat?: number | null
+          location_lon?: number | null
+          number_of_players?: number | null
           sponsorship_offer_id?: string
-          team_id?: string
-          team_name?: string
+          sport?: string | null
+          team_name?: string | null
+          team_profile_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_tsc_offer"
-            columns: ["sponsorship_offer_id"]
-            isOneToOne: true
-            referencedRelation: "sponsorship_offers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_tsc_team"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "team_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_roles: {
         Row: {

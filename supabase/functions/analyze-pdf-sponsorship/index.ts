@@ -244,9 +244,9 @@ async function saveAnalysisResults(
     }, 0);
     
     if (totalPackageValue > 0) {
-      // Use 2x total package value as suggested fundraising goal
-      finalFundingGoal = totalPackageValue * 2;
-      console.log(`📊 Calculated fundraising_goal: $${finalFundingGoal} (2x package total of $${totalPackageValue})`);
+      // Use sum of all packages as maximum fundraising potential
+      finalFundingGoal = totalPackageValue;
+      console.log(`📊 Calculated fundraising_goal: $${finalFundingGoal} (sum of ${packages.length} packages)`);
     } else {
       // Default to 0 if no packages have costs
       finalFundingGoal = 0;

@@ -206,6 +206,36 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
     }
   };
 
+  // Real-time subscription for package creation
+  useEffect(() => {
+    if (!offerId) return;
+
+    // Initial fetch
+    refreshPackages();
+
+    // Subscribe to real-time package inserts
+    const channel = supabase
+      .channel('package-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'sponsorship_packages',
+          filter: `sponsorship_offer_id=eq.${offerId}`
+        },
+        (payload) => {
+          console.log('✅ New package created:', payload.new);
+          refreshPackages();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [offerId]);
+
   const handleEditPackage = async (packageId: string) => {
     if (!offerId) {
       toast({

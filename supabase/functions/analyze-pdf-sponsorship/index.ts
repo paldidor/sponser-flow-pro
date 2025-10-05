@@ -345,9 +345,60 @@ async function saveAnalysisResults(
       
       for (const { raw, match } of matches) {
         if (!match) {
-          unmatchedPlacements.push(raw);
-          displayBenefits.push(raw); // Fallback to raw placement
-          console.log(`✗ No match found for: "${raw}"`);
+          // Auto-create placement for completely unmatched raw placement
+          console.log(`✗ No match found for: "${raw}" - creating custom placement`);
+          
+          // Check if placement already exists (case-insensitive)
+          const { data: existingPlacement } = await supabase
+            .from('placement_options')
+            .select('id, name')
+            .ilike('name', raw)
+            .maybeSingle();
+          
+          let createdPlacement = existingPlacement;
+          
+          if (!existingPlacement) {
+            const { data: newPlacement, error: createError } = await supabase
+              .from('placement_options')
+              .insert({
+                name: raw,
+                category: 'custom',
+                is_popular: false,
+                description: 'Auto-created from PDF analysis - needs review'
+              })
+              .select()
+              .single();
+            
+            if (!createError && newPlacement) {
+              createdPlacement = newPlacement;
+              console.log(`✓ Created new custom placement: "${raw}"`);
+            } else {
+              console.error(`Failed to create custom placement "${raw}":`, createError);
+            }
+          }
+          
+          if (createdPlacement) {
+            // Link the newly created or existing placement
+            const { error: linkError } = await supabase
+              .from('package_placements')
+              .insert({
+                package_id: packageData.id,
+                placement_option_id: createdPlacement.id,
+              });
+            
+            if (!linkError) {
+              linkedCount++;
+              displayBenefits.push(createdPlacement.name);
+              console.log(`✓ Linked custom placement: "${createdPlacement.name}"`);
+            } else {
+              console.error(`Failed to link custom placement:`, linkError);
+              displayBenefits.push(raw);
+            }
+          } else {
+            unmatchedPlacements.push(raw);
+            displayBenefits.push(raw);
+          }
+          
           continue;
         }
 
@@ -402,7 +453,57 @@ async function saveAnalysisResults(
           }
         }
 
-        // Step 4: Link to DB or fallback
+        // Step 4: Auto-create placement if not found in DB
+        if (!matchedOption) {
+          console.log(`⚠ "${match.standardName}" not found in DB - auto-creating...`);
+          
+          // Check if placement already exists (case-insensitive)
+          const { data: existingPlacement } = await supabase
+            .from('placement_options')
+            .select('id, name, category')
+            .ilike('name', match.standardName)
+            .maybeSingle();
+          
+          if (existingPlacement) {
+            matchedOption = existingPlacement;
+            console.log(`✓ Found existing placement: "${existingPlacement.name}"`);
+          } else {
+            // Create new placement with matched category
+            const dbCategory = getCategoryFilter(match.category)[0] || 'custom';
+            
+            const { data: newPlacement, error: createError } = await supabase
+              .from('placement_options')
+              .insert({
+                name: match.standardName,
+                category: dbCategory,
+                is_popular: false,
+                description: `Auto-created from PDF analysis (${match.category})`
+              })
+              .select()
+              .single();
+            
+            if (!createError && newPlacement) {
+              matchedOption = newPlacement;
+              console.log(`✓ Created new placement: "${match.standardName}" in category "${dbCategory}"`);
+            } else if (createError?.code === '23505') {
+              // Duplicate key error - fetch the existing one
+              const { data: duplicate } = await supabase
+                .from('placement_options')
+                .select('id, name, category')
+                .ilike('name', match.standardName)
+                .maybeSingle();
+              
+              if (duplicate) {
+                matchedOption = duplicate;
+                console.log(`✓ Found duplicate placement: "${duplicate.name}"`);
+              }
+            } else {
+              console.error(`Failed to create placement "${match.standardName}":`, createError);
+            }
+          }
+        }
+        
+        // Step 5: Link to DB or fallback
         if (matchedOption) {
           const { error: linkError } = await supabase
             .from('package_placements')
@@ -421,12 +522,12 @@ async function saveAnalysisResults(
             console.log(`${confidenceIcon} Linked "${raw}" -> ${matchedOption.name} [${match.category}] via ${matchMethod} (${match.confidence} confidence)`);
           }
         } else {
-          // No DB match found, use standardized name for display
+          // Last resort fallback - should rarely happen now
           displayBenefits.push(match.standardName);
           if (match.confidence === 'low') {
             lowConfidenceMatches.push({ raw, standardName: match.standardName });
           }
-          console.log(`⚠ Matched "${raw}" to "${match.standardName}" but not found in placement_options table`);
+          console.log(`⚠ Could not create or link placement for "${raw}"`);
         }
       }
 

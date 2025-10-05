@@ -64,48 +64,70 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
       return;
     }
 
-    // Fetch user's team profile
+    // Fetch user's team profile with deterministic query
     const { data: teamProfile, error: profileError } = await supabase
       .from('team_profiles')
       .select('id')
       .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (profileError) {
       console.error('Error fetching team profile:', profileError);
       toast({
-        title: "Error",
-        description: "Failed to load team profile. Please try again.",
+        title: "Failed to Load Profile",
+        description: "Could not retrieve your team profile. Please try again.",
         variant: "destructive",
       });
       return;
     }
 
-    const teamProfileId = teamProfile?.id || null;
+    if (!teamProfile?.id) {
+      console.error('No team profile found for user:', user.id);
+      toast({
+        title: "Profile Required",
+        description: "Please complete your team profile first before creating offers.",
+        variant: "destructive",
+      });
+      onCancel();
+      return;
+    }
+
+    const teamProfileId = teamProfile.id;
+    
+    const payload = {
+      user_id: user.id,
+      team_profile_id: teamProfileId,
+      title: `Sponsorship from ${fileName}`,
+      fundraising_goal: 0,
+      duration: 'TBD',
+      impact: 'Analysis in progress...',
+      pdf_public_url: fileUrl,
+      source_file_name: fileName,
+      analysis_status: 'pending',
+      source: 'pdf',
+      status: 'draft'
+    };
+    
+    console.debug('[CreateOfferFlow] Inserting offer with payload:', { ...payload, team_profile_id: teamProfileId });
 
     const { data: offerData, error: createError } = await supabase
       .from('sponsorship_offers')
-      .insert({
-        user_id: user.id,
-        team_profile_id: teamProfileId,
-        title: `Sponsorship from ${fileName}`,
-        fundraising_goal: 0,
-        duration: 'TBD',
-        impact: 'Analysis in progress...',
-        pdf_public_url: fileUrl,
-        source_file_name: fileName,
-        analysis_status: 'pending',
-        source: 'pdf',
-        status: 'draft'
-      })
+      .insert(payload)
       .select()
       .single();
 
     if (createError || !offerData) {
-      console.error('Error creating offer:', createError);
+      console.error('[CreateOfferFlow] Error creating offer:', {
+        message: createError?.message,
+        details: createError?.details,
+        hint: createError?.hint,
+        code: createError?.code
+      });
       toast({
-        title: "Error",
-        description: "Failed to create sponsorship offer. Please try again.",
+        title: "Error Creating Offer",
+        description: createError?.message || "Failed to create sponsorship offer. Please try again.",
         variant: "destructive",
       });
       return;
@@ -257,14 +279,44 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
 
     // Get user data
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Authentication Error",
+        description: "Please log in to retry analysis.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    // Get team profile
-    const { data: teamProfile } = await supabase
+    // Get team profile with deterministic query
+    const { data: teamProfile, error: profileError } = await supabase
       .from('team_profiles')
       .select('id')
       .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
+
+    if (profileError) {
+      console.error('Error fetching team profile for retry:', profileError);
+      toast({
+        title: "Profile Fetch Failed",
+        description: "Could not retrieve your team profile. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!teamProfile?.id) {
+      console.error('No team profile found for user during retry:', user.id);
+      toast({
+        title: "Profile Required",
+        description: "Please complete your team profile first.",
+        variant: "destructive",
+      });
+      onCancel();
+      return;
+    }
 
     // Re-invoke the edge function
     setAnalysisFileName(existingOffer.source_file_name || 'Sponsorship PDF');
@@ -275,7 +327,7 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
         pdfUrl: existingOffer.pdf_public_url, 
         offerId: retryOfferId, 
         userId: user.id,
-        teamProfileId: teamProfile?.id || null
+        teamProfileId: teamProfile.id
       }
     });
 

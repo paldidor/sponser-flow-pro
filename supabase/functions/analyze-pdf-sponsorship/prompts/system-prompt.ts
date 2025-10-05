@@ -37,21 +37,23 @@ EXTRACTION REQUIREMENTS:
 4. packages (array of {name, cost, placements[]}):
    - name: tier or opportunity (e.g., "Bronze", "Gold", "Homerun", "Scoreboard – Top Panel")
    - cost: number only (strip $ and commas); if missing → null; express cadence in term or name suffix
-   - placements[]: short, noun-style labels for each benefit:
-     * "3×5 field banner"
-     * "website logo & link"
-     * "social media spotlight"
-     * "league newsletter mention"
-     * "vendor table at Opening Day"
-     * "thank-you plaque"
-     * "scoreboard side panel"
-     * "team name on jersey sleeve"
+   - placements[]: Extract ALL benefits/placements as described in PDF. Use short, noun-style labels covering these categories:
+     * Physical signage: "3×5 field banner", "4×8 fence banner", "scoreboard side panel", "dugout signage", "outfield wall banner", "press box logo"
+     * Digital/Web: "website logo & link", "homepage feature", "email signature logo", "digital scoreboard ad", "website banner ad"
+     * Email marketing: "email newsletter logo", "email blast mention", "monthly email feature", "e-newsletter sponsor block"
+     * Social media: "social media spotlight", "Instagram story tag", "Facebook post feature", "game day social shoutout", "Twitter mention"
+     * Apparel/Uniforms: "team name on jersey sleeve", "logo on team hat", "warmup shirt logo", "coach polo logo", "player jersey sponsor"
+     * Events: "vendor table at Opening Day", "booth at tournaments", "halftime recognition", "sponsor night event", "awards ceremony mention"
+     * Recognition: "thank-you plaque", "sponsor banner at field", "name on donor wall", "recognition in program", "PA announcement at games"
+     * Naming/Title: "field naming rights", "tournament title sponsor", "season presenting sponsor", "league title sponsor"
+     * Commerce/Media: "ticket package", "concession vouchers", "game tickets", "season passes", "highlight reel logo"
    - Keep placements short; remove filler ("includes", "plus…") and verbs
-   - Include dimensions/quantities/duration if stated: "1 banner on fence (1 season)", "4×8 premium banner"
+   - Include dimensions/quantities/duration if stated: "1 banner on fence (1 season)", "4×8 premium banner", "10 game tickets"
+   - Extract EVERY listed benefit—don't skip digital, social, email, or apparel items even if they seem minor
    - One package per named level with nearby price
    - Edge cases: if no price → cost: null; if limited ("Only 3 available") → ignore limit but keep placements
    - DON'T: Merge separate opportunities (e.g., "Scoreboard – Entire" vs "Top Panel"), copy full sentences into placements
-   - Look in: tier tables (Bronze/Silver/Gold), menu pages (Single/Double/Triple/Homerun), special sections (Scoreboard/Field/Uniform), order forms
+   - Look in: tier tables (Bronze/Silver/Gold), menu pages (Single/Double/Triple/Homerun), special sections (Scoreboard/Field/Uniform), order forms, benefits lists
 
 5. total_players_supported (number or null):
    - Prefer players; if only participants/families/teams → use that count

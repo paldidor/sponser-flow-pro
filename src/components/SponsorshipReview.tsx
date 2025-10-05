@@ -758,25 +758,10 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
                     </div>
                   </div>
 
-                  {pkg.benefits.length > 0 && (
-                    <div className="mb-4">
-                      <p className="text-sm font-medium text-muted-foreground mb-2">
-                        Benefits Included:
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {pkg.benefits.map((benefit, idx) => (
-                          <Badge key={idx} variant="secondary">
-                            {benefit}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
                   {pkg.placements.length > 0 && (
                     <div>
                       <p className="text-sm font-medium text-muted-foreground mb-2">
-                        Sponsorship Placements:
+                        Package Includes:
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {pkg.placements.map((placement, idx) => (

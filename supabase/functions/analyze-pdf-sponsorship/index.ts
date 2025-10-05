@@ -430,19 +430,11 @@ async function saveAnalysisResults(
         }
       }
 
-      // Update package with displayBenefits for UI fallback
+      // displayBenefits collected for logging only (no longer updating DB)
       if (displayBenefits.length > 0) {
-        const { error: benefitsError } = await supabase
-          .from('sponsorship_packages')
-          .update({ benefits: displayBenefits })
-          .eq('id', packageData.id);
-
-        if (benefitsError) {
-          console.error(`Failed to update benefits for package ${pkg.name}:`, benefitsError);
-        } else {
-          console.log(`✓ Updated displayBenefits: [${displayBenefits.join(', ')}]`);
-        }
+        console.log(`✓ Package placements: [${displayBenefits.join(', ')}]`);
       }
+      
       
       // Enhanced logging with statistics
       console.log(`\n📊 Package "${pkg.name}" Matching Results:`);

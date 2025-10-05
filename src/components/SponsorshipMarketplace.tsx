@@ -346,12 +346,12 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
                       </div>
                     </div>
 
-                    {pkg.benefits.length > 0 && (
+                    {pkg.placements && pkg.placements.length > 0 && (
                       <div className="space-y-2">
-                        {pkg.benefits.map((benefit, idx) => (
+                        {pkg.placements.map((placement, idx) => (
                           <div key={idx} className="flex items-start gap-2">
                             <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#ffb82d' }} />
-                            <span className="text-sm">{benefit}</span>
+                            <span className="text-sm">{placement}</span>
                           </div>
                         ))}
                       </div>

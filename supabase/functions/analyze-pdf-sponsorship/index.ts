@@ -5,6 +5,7 @@ import { SYSTEM_PROMPT } from './prompts/system-prompt.ts';
 import { extractTextFromPDF } from './utils/pdf-extractor.ts';
 import { analyzeWithOpenAI, type AnalysisResult } from './utils/openai-analyzer.ts';
 import { categorizeError } from './utils/error-handler.ts';
+import { batchMatchPlacements } from './utils/placement-matcher.ts';
 
 // Declare EdgeRuntime for background task support
 declare const EdgeRuntime: {
@@ -286,16 +287,29 @@ async function saveAnalysisResults(
 
     console.log(`Created package: ${pkg.name} (cost: ${pkg.cost !== null ? '$' + pkg.cost : 'TBD'})`);
 
-    // Match placements to placement_options and create links
+    // Match placements using enhanced placement matcher
     if (pkg.placements.length > 0) {
-      let matchedCount = 0;
-      let unmatchedPlacements: string[] = [];
+      console.log(`\n🔍 Matching ${pkg.placements.length} placements for package "${pkg.name}"...`);
       
-      for (const placementName of pkg.placements) {
-        // Find matching placement option (case-insensitive partial match)
+      // Use batch matcher for statistics
+      const { matches, stats } = batchMatchPlacements(pkg.placements);
+      
+      let linkedCount = 0;
+      const unmatchedPlacements: string[] = [];
+      const lowConfidenceMatches: Array<{ raw: string; standardName: string }> = [];
+      
+      for (const { raw, match } of matches) {
+        if (!match) {
+          unmatchedPlacements.push(raw);
+          console.log(`✗ No match found for: "${raw}"`);
+          continue;
+        }
+
+        // Find the placement option in database that matches the standard name
         const matchedOption = placementOptions?.find((opt: any) => 
-          opt.name.toLowerCase().includes(placementName.toLowerCase()) ||
-          placementName.toLowerCase().includes(opt.name.toLowerCase())
+          opt.name.toLowerCase() === match.standardName.toLowerCase() ||
+          opt.name.toLowerCase().includes(match.standardName.toLowerCase()) ||
+          match.standardName.toLowerCase().includes(opt.name.toLowerCase())
         );
 
         if (matchedOption) {
@@ -307,20 +321,38 @@ async function saveAnalysisResults(
             });
 
           if (linkError) {
-            console.error(`Failed to link placement ${placementName}:`, linkError);
+            console.error(`Failed to link placement "${raw}":`, linkError);
           } else {
-            matchedCount++;
-            console.log(`✓ Linked placement: "${placementName}" -> ${matchedOption.name}`);
+            linkedCount++;
+            const confidenceIcon = match.confidence === 'high' ? '✓✓' : match.confidence === 'medium' ? '✓' : '~';
+            console.log(`${confidenceIcon} Linked "${raw}" -> ${matchedOption.name} [${match.category}] (${match.confidence} confidence)`);
           }
         } else {
-          unmatchedPlacements.push(placementName);
-          console.log(`✗ No match found for placement: "${placementName}"`);
+          // Matched to standard name but not found in database
+          if (match.confidence === 'low') {
+            lowConfidenceMatches.push({ raw, standardName: match.standardName });
+          }
+          console.log(`⚠ Matched "${raw}" to "${match.standardName}" but not found in placement_options table`);
         }
       }
       
-      console.log(`Package "${pkg.name}": ${matchedCount}/${pkg.placements.length} placements matched`);
+      // Enhanced logging with statistics
+      console.log(`\n📊 Package "${pkg.name}" Matching Results:`);
+      console.log(`   Total placements: ${stats.total}`);
+      console.log(`   Linked to DB: ${linkedCount}/${stats.total} (${Math.round(linkedCount/stats.total*100)}%)`);
+      console.log(`   Match quality: ${stats.highConfidence} high, ${stats.mediumConfidence} medium, ${stats.lowConfidence} low confidence`);
+      console.log(`   Unmatched: ${stats.unmatched}`);
+      
       if (unmatchedPlacements.length > 0) {
-        console.log(`Unmatched placements for review:`, unmatchedPlacements);
+        console.log(`\n❌ Unmatched placements (${unmatchedPlacements.length}):`);
+        unmatchedPlacements.forEach(p => console.log(`   - "${p}"`));
+      }
+      
+      if (lowConfidenceMatches.length > 0) {
+        console.log(`\n⚠️ Low confidence matches (${lowConfidenceMatches.length}) - may need review:`);
+        lowConfidenceMatches.forEach(({ raw, standardName }) => 
+          console.log(`   - "${raw}" -> "${standardName}"`)
+        );
       }
     }
   }

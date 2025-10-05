@@ -12,6 +12,50 @@ declare const EdgeRuntime: {
   waitUntil(promise: Promise<any>): void;
 };
 
+// DB Alias Mapping: Maps standardized names to database placement_options names
+const DB_ALIASES: Record<string, string[]> = {
+  "Scoreboard Panel": ["Scoreboard Sponsor"],
+  "Fence Banner (Standard)": ["Fence/Wall Signage", "Banner at Games"],
+  "Fence Banner (Premium)": ["Fence/Wall Signage", "Premium Banner"],
+  "Event Booth Space": ["Tent Set-up", "Vendor Table"],
+  "Social Media Announcement": ["Social Media Mentions", "Social Media Sponsor"],
+  "Website Logo & Link": ["Website Logo", "Website Sponsor"],
+  "Newsletter Feature": ["Email Newsletter Sponsor", "Newsletter Sponsor"],
+  "Entrance/Welcome Sign": ["Entrance Banner"],
+  "Dugout/Seating Branding": ["Dugout/Sideline Signage"],
+  "Field Naming Rights": ["Field/Court Naming Rights"],
+  "App Placement": ["Mobile App Sponsor"],
+  "Plaque/Certificate": ["Recognition Plaque", "Certificate"],
+  "Team Sponsorship": ["Team Sponsor Recognition"]
+};
+
+// Calculate token-overlap similarity for fuzzy matching
+function calculateSimilarity(str1: string, str2: string): number {
+  const normalize = (s: string) => s.toLowerCase().replace(/[^\w\s]/g, ' ').trim();
+  const tokens1 = new Set(normalize(str1).split(/\s+/));
+  const tokens2 = new Set(normalize(str2).split(/\s+/));
+  
+  const intersection = new Set([...tokens1].filter(x => tokens2.has(x)));
+  const union = new Set([...tokens1, ...tokens2]);
+  
+  return union.size > 0 ? intersection.size / union.size : 0;
+}
+
+// Map standardized category to DB category
+function getCategoryFilter(standardCategory: string): string[] {
+  const map: Record<string, string[]> = {
+    "Digital & Web": ["digital", "web"],
+    "On-Site Signage": ["facility", "signage"],
+    "Social Media": ["digital", "social"],
+    "Email & CRM": ["digital", "email"],
+    "Events & Activations": ["events", "activation"],
+    "Uniforms & Apparel": ["uniform", "apparel"],
+    "Community & Recognition": ["events", "custom", "recognition"]
+  };
+  
+  return map[standardCategory] || ["custom"];
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -287,7 +331,7 @@ async function saveAnalysisResults(
 
     console.log(`Created package: ${pkg.name} (cost: ${pkg.cost !== null ? '$' + pkg.cost : 'TBD'})`);
 
-    // Match placements using enhanced placement matcher
+    // Match placements using enhanced placement matcher with DB linking
     if (pkg.placements.length > 0) {
       console.log(`\n🔍 Matching ${pkg.placements.length} placements for package "${pkg.name}"...`);
       
@@ -297,21 +341,68 @@ async function saveAnalysisResults(
       let linkedCount = 0;
       const unmatchedPlacements: string[] = [];
       const lowConfidenceMatches: Array<{ raw: string; standardName: string }> = [];
+      const displayBenefits: string[] = [];
       
       for (const { raw, match } of matches) {
         if (!match) {
           unmatchedPlacements.push(raw);
+          displayBenefits.push(raw); // Fallback to raw placement
           console.log(`✗ No match found for: "${raw}"`);
           continue;
         }
 
-        // Find the placement option in database that matches the standard name
-        const matchedOption = placementOptions?.find((opt: any) => 
-          opt.name.toLowerCase() === match.standardName.toLowerCase() ||
-          opt.name.toLowerCase().includes(match.standardName.toLowerCase()) ||
-          match.standardName.toLowerCase().includes(opt.name.toLowerCase())
-        );
+        let matchedOption: any = null;
+        let matchMethod = 'unknown';
 
+        // Step 1: Try DB alias mapping first
+        const aliases = DB_ALIASES[match.standardName] || [];
+        for (const alias of aliases) {
+          matchedOption = placementOptions?.find((opt: any) => 
+            opt.name.toLowerCase() === alias.toLowerCase()
+          );
+          if (matchedOption) {
+            matchMethod = `alias: "${alias}"`;
+            break;
+          }
+        }
+
+        // Step 2: Try exact/substring matching on standard name
+        if (!matchedOption) {
+          matchedOption = placementOptions?.find((opt: any) => 
+            opt.name.toLowerCase() === match.standardName.toLowerCase() ||
+            opt.name.toLowerCase().includes(match.standardName.toLowerCase()) ||
+            match.standardName.toLowerCase().includes(opt.name.toLowerCase())
+          );
+          if (matchedOption) {
+            matchMethod = 'exact/substring';
+          }
+        }
+
+        // Step 3: Category-aware fuzzy matching as last resort
+        if (!matchedOption) {
+          const categoryFilters = getCategoryFilter(match.category);
+          const filteredOptions = placementOptions?.filter((opt: any) => 
+            categoryFilters.some(cat => opt.category.toLowerCase().includes(cat))
+          ) || [];
+
+          let bestScore = 0;
+          let bestOption: any = null;
+
+          for (const opt of filteredOptions) {
+            const score = calculateSimilarity(match.standardName, opt.name);
+            if (score > bestScore && score >= 0.4) {
+              bestScore = score;
+              bestOption = opt;
+            }
+          }
+
+          if (bestOption) {
+            matchedOption = bestOption;
+            matchMethod = `fuzzy (score: ${bestScore.toFixed(2)})`;
+          }
+        }
+
+        // Step 4: Link to DB or fallback
         if (matchedOption) {
           const { error: linkError } = await supabase
             .from('package_placements')
@@ -322,17 +413,34 @@ async function saveAnalysisResults(
 
           if (linkError) {
             console.error(`Failed to link placement "${raw}":`, linkError);
+            displayBenefits.push(match.standardName); // Fallback
           } else {
             linkedCount++;
+            displayBenefits.push(matchedOption.name);
             const confidenceIcon = match.confidence === 'high' ? '✓✓' : match.confidence === 'medium' ? '✓' : '~';
-            console.log(`${confidenceIcon} Linked "${raw}" -> ${matchedOption.name} [${match.category}] (${match.confidence} confidence)`);
+            console.log(`${confidenceIcon} Linked "${raw}" -> ${matchedOption.name} [${match.category}] via ${matchMethod} (${match.confidence} confidence)`);
           }
         } else {
-          // Matched to standard name but not found in database
+          // No DB match found, use standardized name for display
+          displayBenefits.push(match.standardName);
           if (match.confidence === 'low') {
             lowConfidenceMatches.push({ raw, standardName: match.standardName });
           }
           console.log(`⚠ Matched "${raw}" to "${match.standardName}" but not found in placement_options table`);
+        }
+      }
+
+      // Update package with displayBenefits for UI fallback
+      if (displayBenefits.length > 0) {
+        const { error: benefitsError } = await supabase
+          .from('sponsorship_packages')
+          .update({ benefits: displayBenefits })
+          .eq('id', packageData.id);
+
+        if (benefitsError) {
+          console.error(`Failed to update benefits for package ${pkg.name}:`, benefitsError);
+        } else {
+          console.log(`✓ Updated displayBenefits: [${displayBenefits.join(', ')}]`);
         }
       }
       

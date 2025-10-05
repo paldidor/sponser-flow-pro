@@ -429,14 +429,7 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
       setSavingField(false);
     }
   };
-  const totalReach = team ? (
-    (team.instagram_followers || 0) + 
-    (team.facebook_followers || 0) + 
-    (team.twitter_followers || 0) + 
-    (team.linkedin_followers || 0) + 
-    (team.youtube_followers || 0) + 
-    (team.email_list_size || 0)
-  ) : 0;
+  const totalReach = team?.reach || 0;
   const totalPotential = packages.reduce((sum, pkg) => sum + pkg.price, 0);
   const totalReachValue = totalReach.toLocaleString();
 

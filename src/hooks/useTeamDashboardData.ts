@@ -7,6 +7,7 @@ export interface DashboardMetrics {
   activeSponsors: number;
   openTasks: number;
   teamName: string;
+  reach: number;
 }
 
 export const useTeamDashboardData = () => {
@@ -21,10 +22,10 @@ export const useTeamDashboardData = () => {
       
       if (!user) throw new Error("Not authenticated");
 
-      // Fetch team profile for team name
+      // Fetch team profile for team name and reach
       const { data: teamProfile } = await supabase
         .from("team_profiles")
-        .select("team_name")
+        .select("team_name, reach")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -78,6 +79,7 @@ export const useTeamDashboardData = () => {
         activeSponsors,
         openTasks,
         teamName: teamProfile?.team_name || "Your Team",
+        reach: teamProfile?.reach || 0,
       } as DashboardMetrics;
     },
   });

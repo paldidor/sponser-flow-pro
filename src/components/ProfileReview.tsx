@@ -513,7 +513,7 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
   };
 
   const currentTeam = team;
-  const totalReach = (currentTeam.instagram_followers || 0) + (currentTeam.facebook_followers || 0) + (currentTeam.linkedin_followers || 0) + (currentTeam.twitter_followers || 0) + (currentTeam.youtube_followers || 0) + (currentTeam.email_list_size || 0);
+  const totalReach = currentTeam.reach || 0;
 
   return (
     <div className="min-h-screen py-12 px-4">

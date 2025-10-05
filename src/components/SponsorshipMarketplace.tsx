@@ -41,7 +41,7 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
   };
 
   const team = teamData || defaultTeam;
-  const totalReach = (team.instagram_followers || 0) + (team.facebook_followers || 0) + (team.twitter_followers || 0) + (team.email_list_size || 0);
+  const totalReach = team.reach || 0;
   const selectedPkg = sponsorshipData.packages.find(pkg => pkg.id === selectedPackage);
 
   const contactEmail = sponsorshipData.contact?.email;

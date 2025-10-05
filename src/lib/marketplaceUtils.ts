@@ -78,20 +78,11 @@ export const parseDuration = (duration: string): number => {
   return numberMatch ? parseInt(numberMatch[1]) : 3; // Default to 3 months
 };
 
-// Calculate estimated weekly reach based on social followers and players
-export const calculateEstWeekly = (
-  instagramFollowers: number | null,
-  facebookFollowers: number | null,
-  twitterFollowers: number | null,
-  players: number
-): number => {
-  const socialReach = 
-    (instagramFollowers || 0) + 
-    (facebookFollowers || 0) + 
-    (twitterFollowers || 0);
-  
-  // Estimate: social reach / 4 weeks + players * 10 (family/friends per player) / 4 weeks
-  return Math.round((socialReach + players * 10) / 4);
+// Calculate estimated weekly reach from total reach
+// Note: Team reach is now calculated in database (followers + players)
+export const calculateEstWeekly = (totalReach: number): number => {
+  // Weekly reach is roughly 1/4 of total potential reach
+  return Math.round(totalReach / 4);
 };
 
 // Format currency
@@ -139,6 +130,7 @@ export const transformToOpportunity = (
       instagram_followers: number | null;
       facebook_followers: number | null;
       twitter_followers: number | null;
+      reach: number | null;
     } | null;
     packages?: Array<{
       id: string;
@@ -151,6 +143,7 @@ export const transformToOpportunity = (
   const { city, state } = parseLocation(teamProfile?.location || null);
   const players = parsePlayerCount(teamProfile?.number_of_players || null);
   const sport = mapSport(teamProfile?.sport || null);
+  const totalReach = teamProfile?.reach || 0;
   
   const packages = offer.packages || [];
   const sponsors = offer.sponsors || [];
@@ -169,12 +162,7 @@ export const transformToOpportunity = (
       teamProfile?.competition_scope || null
     ),
     packagesCount: packages.length,
-    estWeekly: calculateEstWeekly(
-      teamProfile?.instagram_followers || null,
-      teamProfile?.facebook_followers || null,
-      teamProfile?.twitter_followers || null,
-      players
-    ),
+    estWeekly: calculateEstWeekly(totalReach),
     durationMonths: parseDuration(offer.duration),
     raised: sponsors.length * 1000, // Placeholder: $1k per sponsor
     goal: offer.fundraising_goal,

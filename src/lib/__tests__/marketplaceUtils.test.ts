@@ -133,19 +133,19 @@ describe('marketplaceUtils', () => {
   });
 
   describe('calculateEstWeekly', () => {
-    it('should calculate estimated weekly reach', () => {
-      const result = calculateEstWeekly(1000, 500, 200, 20);
-      expect(result).toBe(Math.round((1700 + 200) / 4));
-    });
-
-    it('should handle null social followers', () => {
-      const result = calculateEstWeekly(null, null, null, 30);
-      expect(result).toBe(Math.round(300 / 4));
+    it('should calculate estimated weekly reach from total reach', () => {
+      const result = calculateEstWeekly(2000);
+      expect(result).toBe(500); // 2000 / 4
     });
 
     it('should handle zero values', () => {
-      const result = calculateEstWeekly(0, 0, 0, 0);
+      const result = calculateEstWeekly(0);
       expect(result).toBe(0);
+    });
+
+    it('should round to nearest integer', () => {
+      const result = calculateEstWeekly(1000);
+      expect(result).toBe(250);
     });
   });
 
@@ -197,6 +197,7 @@ describe('marketplaceUtils', () => {
           instagram_followers: 5000,
           facebook_followers: 3000,
           twitter_followers: 2000,
+          reach: 10025, // Total reach includes followers + players
         },
         packages: [
           { id: 'pkg-1', price: 5000 },

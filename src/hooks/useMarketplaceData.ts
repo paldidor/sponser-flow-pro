@@ -29,7 +29,8 @@ export const useMarketplaceData = () => {
             competition_scope,
             instagram_followers,
             facebook_followers,
-            twitter_followers
+            twitter_followers,
+            reach
           ),
           sponsorship_packages (
             id,

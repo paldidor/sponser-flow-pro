@@ -62,6 +62,7 @@ export interface TeamProfile {
   twitter_followers?: number;
   youtube_followers?: number;
   email_list_size?: number;
+  reach?: number;
   images?: string[];
 }
 

@@ -147,6 +147,7 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
           twitter_followers: data.twitter_followers || 0,
           youtube_followers: data.youtube_followers || 0,
           email_list_size: data.email_list_size || 0,
+          reach: data.reach || 0,
           images: [],
         };
         

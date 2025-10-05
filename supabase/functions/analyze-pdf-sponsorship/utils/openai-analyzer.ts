@@ -40,9 +40,9 @@ export async function analyzeWithOpenAI(
   
   while (retryCount < maxRetries) {
     try {
-      // Add 60-second timeout to prevent indefinite hangs
+      // Add 90-second timeout to prevent indefinite hangs
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000);
+      const timeoutId = setTimeout(() => controller.abort(), 90000);
       
       try {
         openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -52,7 +52,7 @@ export async function analyzeWithOpenAI(
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'gpt-5-mini-2025-08-07',
+            model: 'gpt-4o-mini',
             messages: [
               {
                 role: 'system',
@@ -71,7 +71,7 @@ export async function analyzeWithOpenAI(
       } catch (fetchError) {
         clearTimeout(timeoutId);
         if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-          throw new Error('OpenAI API timeout after 60 seconds. The analysis took too long to complete.');
+          throw new Error('OpenAI API timeout after 90 seconds. The analysis took too long to complete.');
         }
         throw fetchError;
       }

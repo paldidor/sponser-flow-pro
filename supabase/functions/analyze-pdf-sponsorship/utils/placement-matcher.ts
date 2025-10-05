@@ -21,7 +21,9 @@ export const PLACEMENT_SYNONYMS: Record<string, { category: string; synonyms: st
     category: 'Digital & Web',
     synonyms: ['website logo', 'sponsor page', 'partners page', 'sponsor listing', 'featured logo', 
                'homepage logo', 'footer logo', 'header logo', 'clickable logo', 'website link', 
-               'backlink', 'do-follow link', 'web logo', 'site logo']
+               'backlink', 'do-follow link', 'web logo', 'site logo', 'your logo on our website',
+               'logo on our website', 'logo on website', 'special thank you on our website with a link',
+               'thank you on website with link to your website', 'website thank you with link']
   },
   'Dedicated Sponsor Page': {
     category: 'Digital & Web',
@@ -36,7 +38,8 @@ export const PLACEMENT_SYNONYMS: Record<string, { category: string; synonyms: st
   'Newsletter Feature': {
     category: 'Digital & Web',
     synonyms: ['email newsletter', 'edm', 'e-blast', 'club email', 'mailout', 'e-bulletin', 
-               'campaign email', 'shout in email', 'email highlight', 'newsletter mention']
+               'campaign email', 'shout in email', 'email highlight', 'newsletter mention',
+               'league newsletter mention', 'newsletter logo', 'email newsletter logo']
   },
   'App Placement': {
     category: 'Digital & Web',
@@ -53,7 +56,9 @@ export const PLACEMENT_SYNONYMS: Record<string, { category: string; synonyms: st
   'Social Media Announcement': {
     category: 'Social Media',
     synonyms: ['announcement post', 'welcome post', 'thank-you post', 'sponsor shoutout', 
-               'partner intro', 'social announcement', 'welcome announcement']
+               'partner intro', 'social announcement', 'welcome announcement', 'shout out on our social media',
+               'shoutout on social media platforms', 'shout out on social media platforms',
+               'social media shout out', 'social media mention', 'social platforms shoutout']
   },
   'Social Media Spotlight Series': {
     category: 'Social Media',
@@ -97,17 +102,24 @@ export const PLACEMENT_SYNONYMS: Record<string, { category: string; synonyms: st
   'Fence Banner (Standard)': {
     category: 'On-Site Signage',
     synonyms: ['outfield banner', 'field fence sign', '3x5 banner', '4x6 banner', 'mesh banner', 
-               'vinyl banner', 'fence sign', 'field banner', 'perimeter banner']
+               'vinyl banner', 'fence sign', 'field banner', 'perimeter banner', '3x5 banner at the park',
+               '3x5 banner at park', 'banner at the park', 'banner at park', '3 x 5 banner',
+               '4 x 6 banner', '3x5 field banner', '4x6 field banner']
   },
   'Fence Banner (Premium)': {
     category: 'On-Site Signage',
     synonyms: ['premier location', 'home plate', 'prime placement', 'backstop banner', 
-               'high-traffic spot', 'premium banner', 'premium location']
+               'high-traffic spot', 'premium banner', 'premium location', '4x8 banner in premium location',
+               '4x6 banner in premium location', 'banner in premium location', '4 x 8 banner',
+               '4x8 premium banner', '4x6 premium banner', '4x8 banner in a premium location']
   },
   'Scoreboard Panel': {
     category: 'On-Site Signage',
     synonyms: ['scoreboard sign', 'scoreboard panel', 'top panel', 'bottom panel', 'side panel', 
-               'digital scoreboard ad', 'scoreboard logo', 'scoreboard placement']
+               'digital scoreboard ad', 'scoreboard logo', 'scoreboard placement', 
+               'scoreboard top or bottom panel advertising', 'scoreboard top panel advertising',
+               'scoreboard bottom panel advertising', 'prominent display of logo across the scoreboard',
+               'logo across scoreboard', 'prominent scoreboard logo', 'scoreboard advertising']
   },
   'Entrance/Welcome Sign': {
     category: 'On-Site Signage',
@@ -179,7 +191,9 @@ export const PLACEMENT_SYNONYMS: Record<string, { category: string; synonyms: st
   'Event Booth Space': {
     category: 'Events & Activations',
     synonyms: ['booth', 'vendor table', 'tent space', 'activation space', 'pop-up', 'kiosk', 
-               'vendor booth', 'exhibition space']
+               'vendor booth', 'exhibition space', 'set up a vendor table at opening day',
+               'vendor table at opening ceremonies', 'vendor table at closing ceremonies',
+               'set up vendor table at opening or closing ceremonies', 'vendor table at events']
   },
   'Sampling/Product Trial': {
     category: 'Events & Activations',
@@ -221,7 +235,8 @@ export const PLACEMENT_SYNONYMS: Record<string, { category: string; synonyms: st
   'Plaque/Certificate': {
     category: 'Community & Recognition',
     synonyms: ['thank-you plaque', 'framed team photo', 'certificate of appreciation', 
-               'recognition plaque', 'award', 'commemorative plaque']
+               'recognition plaque', 'award', 'commemorative plaque', 'community partnership plaque',
+               'community partnership plaque for your business', 'partnership plaque', 'sponsor plaque']
   },
   'Community Partner Recognition': {
     category: 'Community & Recognition',
@@ -231,7 +246,8 @@ export const PLACEMENT_SYNONYMS: Record<string, { category: string; synonyms: st
   'Team Sponsorship': {
     category: 'Community & Recognition',
     synonyms: ['team naming', 'team sponsor', 'name on team shirts', 'rec league sponsor', 
-               'youth team sponsor']
+               'youth team sponsor', 'team sponsorship recognition', 'team sponsorship recognition on sign',
+               'recognition on team sign', 'sponsor recognition on sign']
   },
 
   // H) Content & Rights
@@ -335,12 +351,12 @@ export function matchPlacement(rawPlacement: string): PlacementMatch | null {
       
       // Check for word overlap similarity
       const similarity = calculateSimilarity(normalized, normalizedSynonym);
-      if (similarity > 0.6 && similarity > bestScore * 0.9) {
+      if (similarity > 0.4 && similarity > bestScore * 0.9) {
         bestScore = similarity;
         bestMatch = {
           standardName,
           category,
-          confidence: similarity > 0.8 ? 'high' : 'low',
+          confidence: similarity > 0.75 ? 'high' : (similarity > 0.6 ? 'medium' : 'low'),
           matchedSynonym: synonym
         };
       }
@@ -348,7 +364,7 @@ export function matchPlacement(rawPlacement: string): PlacementMatch | null {
   }
 
   // Only return matches with reasonable confidence
-  return bestScore > 0.5 ? bestMatch : null;
+  return bestScore > 0.35 ? bestMatch : null;
 }
 
 /**

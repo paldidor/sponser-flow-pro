@@ -29,13 +29,8 @@ export const SponsorshipCard = ({ package: pkg, onEdit }: SponsorshipCardProps) 
     }).format(price);
   };
 
-  // Group placements by type
-  const booleanPlacements = pkg.placements.filter(p => 
-    p.name.includes("Uniform") || p.name.includes("Banner") || p.name.includes("Scoreboard")
-  );
-  const countPlacements = pkg.placements.filter(p => 
-    p.name.includes("Social") || p.name.includes("Email") || p.name.includes("Post")
-  );
+  // Display all placements (up to 5)
+  const displayPlacements = pkg.placements.slice(0, 5);
 
   return (
     <Card className="w-[264px] flex-shrink-0 overflow-hidden border-2 border-primary/20 hover:border-primary/40 transition-all hover:shadow-lg bg-gradient-to-br from-white to-primary/5">
@@ -72,13 +67,7 @@ export const SponsorshipCard = ({ package: pkg, onEdit }: SponsorshipCardProps) 
             WHAT'S INCLUDED
           </div>
           <div className="space-y-2">
-            {booleanPlacements.slice(0, 3).map((placement) => (
-              <div key={placement.id} className="flex items-center gap-2 text-sm">
-                <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                <span className="text-foreground">{placement.name}</span>
-              </div>
-            ))}
-            {countPlacements.slice(0, 2).map((placement) => (
+            {displayPlacements.map((placement) => (
               <div key={placement.id} className="flex items-center gap-2 text-sm">
                 <Check className="h-4 w-4 text-primary flex-shrink-0" />
                 <span className="text-foreground">{placement.name}</span>

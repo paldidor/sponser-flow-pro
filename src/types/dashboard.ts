@@ -19,7 +19,7 @@ export interface PlacementOption {
   name: string;
   category: string;
   description?: string;
-  is_popular?: boolean;
+  is_popular: boolean;
   value?: number; // For quantity-based placements like social posts
 }
 

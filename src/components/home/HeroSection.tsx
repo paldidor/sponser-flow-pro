@@ -59,7 +59,7 @@ const HeroSection = () => {
       {/* Content Container */}
       <div className="container mx-auto max-w-7xl relative z-20">
         {/* Heading + Subheading */}
-        <div className="text-center pt-12 sm:pt-16 lg:pt-20 mb-8 sm:mb-10 lg:mb-14">
+        <div className="text-center pt-12 sm:pt-16 lg:pt-20 mb-4 sm:mb-6 lg:mb-8">
           <h1 
             className="font-extrabold leading-tight drop-shadow-sm mb-4 text-[32px] sm:text-[40px] md:text-[44px] lg:text-[52px] xl:text-[60px]"
             style={{ 
@@ -78,7 +78,7 @@ const HeroSection = () => {
         </div>
 
         {/* Three Wooden Sign Cards */}
-        <div className="relative z-5 grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-8 max-w-5xl md:max-w-5xl lg:max-w-7xl mx-auto mb-12 sm:mb-16">
+        <div className="relative z-5 grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-8 max-w-5xl md:max-w-5xl lg:max-w-7xl mx-auto mb-[-40px] sm:mb-[-48px] lg:mb-[-64px]">
           {cardData.map((card, index) => (
             <div 
               key={index}
@@ -132,7 +132,7 @@ const HeroSection = () => {
       </div>
 
       {/* Grass ground strip */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 overflow-hidden h-12 sm:h-16 lg:h-24">
+      <div className="absolute bottom-0 left-0 right-0 z-15 overflow-hidden h-12 sm:h-16 lg:h-24">
         <img
           src="/images/grass-background.png"
           alt="Grass ground"
@@ -141,44 +141,6 @@ const HeroSection = () => {
         />
       </div>
 
-      {/* Animation keyframes */}
-      <style>{`
-        @keyframes drift-very-slow {
-          0% {
-            transform: translateX(0) translateY(0);
-          }
-          50% {
-            transform: translateX(20px) translateY(-10px);
-          }
-          100% {
-            transform: translateX(0) translateY(0);
-          }
-        }
-        
-        @keyframes drift-slow {
-          0% {
-            transform: translateX(0) translateY(0);
-          }
-          50% {
-            transform: translateX(-15px) translateY(-8px);
-          }
-          100% {
-            transform: translateX(0) translateY(0);
-          }
-        }
-        
-        @keyframes drift-moderate {
-          0% {
-            transform: translateX(0) translateY(0);
-          }
-          50% {
-            transform: translateX(25px) translateY(-12px);
-          }
-          100% {
-            transform: translateX(0) translateY(0);
-          }
-        }
-      `}</style>
     </section>
   );
 };

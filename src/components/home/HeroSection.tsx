@@ -1,9 +1,11 @@
 import { Mail } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
 const HeroSection = () => {
   const [email, setEmail] = useState("");
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -143,6 +145,35 @@ const HeroSection = () => {
                style={{ color: '#545454' }}>
               Get and manage all your youth sports sponsorships in one place. Support local communities while driving measurable results for your brand or business.
             </p>
+          </div>
+
+          {/* CTA Buttons - responsive layout */}
+          <div className="w-full max-w-full sm:max-w-[500px] flex flex-col sm:flex-row gap-4 mb-6">
+            <button
+              onClick={() => navigate('/select-user-type')}
+              className="h-[50px] flex-1 transition-all"
+              style={{ 
+                background: '#00AAFE',
+                borderRadius: '12.75px',
+                boxShadow: '0px 4px 6px -4px rgba(0, 0, 0, 0.10)',
+                color: 'white',
+                fontSize: '16px',
+                fontWeight: 700,
+                lineHeight: '24px',
+                fontFamily: 'Poppins, sans-serif',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '10px 28px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.02)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              Get Started Free
+            </button>
           </div>
 
           {/* Form - responsive layout */}

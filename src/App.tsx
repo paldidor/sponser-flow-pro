@@ -7,6 +7,7 @@ import Layout from "@/components/layout/Layout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "@/pages/Index";
+import SelectUserType from "@/pages/SelectUserType";
 import Auth from "@/pages/Auth";
 import Marketplace from "@/pages/Marketplace";
 import MarketplaceDetail from "@/pages/MarketplaceDetail";
@@ -39,6 +40,7 @@ const App = () => {
             <Routes>
               <Route element={<Layout />}>
                 <Route path="/" element={<Index />} />
+                <Route path="/select-user-type" element={<SelectUserType />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/marketplace" element={<Marketplace />} />
                 <Route path="/marketplace/:id" element={<MarketplaceDetail />} />

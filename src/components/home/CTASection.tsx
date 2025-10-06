@@ -15,7 +15,7 @@ const CTASection = () => {
           </h2>
           <Button 
             size="lg"
-            onClick={() => navigate('/auth')}
+            onClick={() => navigate('/select-user-type')}
             className="bg-accent text-foreground hover:bg-accent/90 font-bold text-lg px-12 py-6 h-auto whitespace-nowrap"
           >
             Get Started Free

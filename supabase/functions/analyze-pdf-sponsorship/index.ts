@@ -232,37 +232,38 @@ async function saveAnalysisResults(
   teamProfileId: string | null,
   supabase: any
 ) {
-  const { funding_goal, sponsorship_term, sponsorship_impact, total_players_supported, packages } = analysisResult;
+  const { sponsorship_term, sponsorship_impact, total_players_supported, packages } = analysisResult;
 
-  // Calculate intelligent default for funding_goal if not provided by AI
-  let finalFundingGoal = funding_goal;
-  
-  if (!finalFundingGoal || finalFundingGoal === 0) {
-    // Calculate total package value
-    const totalPackageValue = packages.reduce((sum, pkg) => {
-      return sum + (pkg.cost || 0);
-    }, 0);
-    
-    if (totalPackageValue > 0) {
-      // Use sum of all packages as maximum fundraising potential
-      finalFundingGoal = totalPackageValue;
-      console.log(`📊 Calculated fundraising_goal: $${finalFundingGoal} (sum of ${packages.length} packages)`);
-    } else {
-      // Default to 0 if no packages have costs
-      finalFundingGoal = 0;
-      console.log('⚠️ No funding_goal found and no package costs available, defaulting to 0');
-    }
+  // ALWAYS calculate fundraising_goal as sum of all package prices
+  const totalPackageValue = packages.reduce((sum, pkg) => {
+    return sum + (pkg.cost || 0);
+  }, 0);
+
+  const finalFundingGoal = totalPackageValue;
+
+  console.log(`💰 Calculated fundraising_goal: $${finalFundingGoal.toLocaleString()} (sum of ${packages.length} packages)`);
+
+  // Log warning if any packages have null/missing prices
+  const packagesWithNullPrice = packages.filter(pkg => pkg.cost === null || pkg.cost === undefined);
+  if (packagesWithNullPrice.length > 0) {
+    console.warn(`⚠️ ${packagesWithNullPrice.length} package(s) have no price. These are excluded from the funding goal calculation.`);
+    console.warn('Packages with missing prices:', packagesWithNullPrice.map(p => p.name).join(', '));
   }
 
-  // Generate title based on normalized data
+  // Generate title based on calculated funding goal and packages
   let offerTitle = 'Sponsorship Offer';
-  if (finalFundingGoal && finalFundingGoal > 0) {
-    offerTitle = `Sponsorship Offer - $${finalFundingGoal.toLocaleString()} Goal`;
-  } else if (sponsorship_term) {
-    offerTitle = `Sponsorship Offer - ${sponsorship_term}`;
+
+  if (finalFundingGoal > 0) {
+    offerTitle = `Sponsorship Packages - $${finalFundingGoal.toLocaleString()} Total`;
   } else if (packages.length > 0) {
-    offerTitle = `Sponsorship Offer - ${packages.length} Package${packages.length > 1 ? 's' : ''}`;
+    // Edge case: packages exist but no prices set
+    offerTitle = `Sponsorship Packages - ${packages.length} Option${packages.length > 1 ? 's' : ''}`;
+  } else {
+    // Fallback: no packages found
+    offerTitle = 'Sponsorship Offer - Pending Review';
   }
+
+  console.log(`📝 Generated title: "${offerTitle}"`);
   
   // Update the sponsorship offer with normalized extracted data
   // Status set to 'draft' to require review before publishing

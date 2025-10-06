@@ -41,27 +41,27 @@ const HeroSection = () => {
         src="/images/cloud-animation.png"
         alt=""
         className="absolute top-[10%] left-[5%] w-32 sm:w-40 lg:w-48 h-auto opacity-70 xl:block hidden"
-        style={{ animation: 'drift-very-slow 60s ease-in-out infinite' }}
+        style={{ animation: 'drift-very-slow 60s ease-in-out infinite', willChange: 'transform' }}
       />
       <img
         src="/images/cloud-animation.png"
         alt=""
         className="absolute top-[20%] right-[10%] w-28 sm:w-36 lg:w-44 h-auto opacity-60"
-        style={{ animation: 'drift-slow 45s ease-in-out infinite' }}
+        style={{ animation: 'drift-slow 45s ease-in-out infinite', willChange: 'transform' }}
       />
       <img
         src="/images/cloud-animation.png"
         alt=""
         className="absolute top-[35%] left-[15%] w-36 sm:w-44 lg:w-52 h-auto opacity-50 xl:hidden"
-        style={{ animation: 'drift-moderate 50s ease-in-out infinite' }}
+        style={{ animation: 'drift-moderate 50s ease-in-out infinite', willChange: 'transform' }}
       />
 
       {/* Content Container */}
-      <div className="container mx-auto max-w-7xl relative z-20">
+      <div className="container mx-auto max-w-6xl relative z-20">
         {/* Heading + Subheading */}
         <div className="text-center pt-12 sm:pt-16 lg:pt-20 mb-4 sm:mb-6 lg:mb-8">
           <h1 
-            className="font-extrabold leading-tight drop-shadow-sm mb-4 text-[32px] sm:text-[40px] md:text-[44px] lg:text-[52px] xl:text-[60px]"
+            className="font-extrabold leading-tight drop-shadow-sm mb-4 text-[28px] sm:text-[36px] md:text-[40px] lg:text-[48px] xl:text-[54px]"
             style={{ 
               color: '#545454',
               letterSpacing: '-0.02em'
@@ -78,7 +78,7 @@ const HeroSection = () => {
         </div>
 
         {/* Three Wooden Sign Cards */}
-        <div className="relative z-5 grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-8 max-w-5xl md:max-w-5xl lg:max-w-7xl mx-auto mb-[-40px] sm:mb-[-48px] lg:mb-[-64px]">
+        <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-6 max-w-4xl md:max-w-4xl lg:max-w-6xl mx-auto mb-[-40px] sm:mb-[-48px] lg:mb-[-64px]">
           {cardData.map((card, index) => (
             <div 
               key={index}
@@ -132,7 +132,7 @@ const HeroSection = () => {
       </div>
 
       {/* Grass ground strip */}
-      <div className="absolute bottom-0 left-0 right-0 z-15 overflow-hidden h-12 sm:h-16 lg:h-24">
+      <div className="absolute bottom-0 left-0 right-0 z-10 overflow-hidden h-12 sm:h-16 lg:h-24">
         <img
           src="/images/grass-background.png"
           alt="Grass ground"

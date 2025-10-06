@@ -10,6 +10,9 @@ interface SmartAuthState {
   hasTeamProfile: boolean;
   onboardingCompleted: boolean;
   currentOnboardingStep: string | null;
+  hasBusinessProfile: boolean;
+  businessOnboardingCompleted: boolean;
+  businessOnboardingStep: string | null;
   redirectPath: string;
 }
 
@@ -21,6 +24,9 @@ export const useSmartAuth = () => {
     hasTeamProfile: false,
     onboardingCompleted: false,
     currentOnboardingStep: null,
+    hasBusinessProfile: false,
+    businessOnboardingCompleted: false,
+    businessOnboardingStep: null,
     redirectPath: '/team/onboarding',
   });
 
@@ -36,6 +42,9 @@ export const useSmartAuth = () => {
           hasTeamProfile: false,
           onboardingCompleted: false,
           currentOnboardingStep: null,
+          hasBusinessProfile: false,
+          businessOnboardingCompleted: false,
+          businessOnboardingStep: null,
           redirectPath: '/auth',
         });
         return;
@@ -88,6 +97,12 @@ export const useSmartAuth = () => {
       let hasProfile = false;
       let onboardingCompleted = false;
       let currentStep: string | null = null;
+      
+      // Check if user has a business profile (only for business users)
+      let hasBusinessProfile = false;
+      let businessOnboardingCompleted = false;
+      let businessCurrentStep: string | null = null;
+
       if (userRole === 'team') {
         const { data: teamProfile, error: profileError } = await supabase
           .from('team_profiles')
@@ -108,6 +123,26 @@ export const useSmartAuth = () => {
           onboardingCompleted,
           currentStep,
         });
+      } else if (userRole === 'business') {
+        const { data: businessProfile, error: profileError } = await supabase
+          .from('business_profiles')
+          .select('id, onboarding_completed, current_onboarding_step')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error('Error checking business profile:', profileError);
+        }
+
+        hasBusinessProfile = !!businessProfile;
+        businessOnboardingCompleted = businessProfile?.onboarding_completed ?? false;
+        businessCurrentStep = businessProfile?.current_onboarding_step ?? null;
+        
+        console.log('[useSmartAuth] Business profile status:', {
+          hasBusinessProfile,
+          businessOnboardingCompleted,
+          businessCurrentStep,
+        });
       }
 
       // Determine redirect path based on role, profile status, and onboarding completion
@@ -118,12 +153,19 @@ export const useSmartAuth = () => {
         const canAccessDashboard = hasProfile && onboardingCompleted && currentStep === 'completed';
         redirectPath = canAccessDashboard ? '/team/dashboard' : '/team/onboarding';
         
-        console.log('[useSmartAuth] Redirect decision:', {
+        console.log('[useSmartAuth] Team redirect decision:', {
           canAccessDashboard,
           redirectPath,
         });
       } else if (userRole === 'business') {
-        redirectPath = '/marketplace'; // Future: /business/dashboard
+        // Only redirect to dashboard if onboarding is completed AND step is 'completed'
+        const canAccessDashboard = hasBusinessProfile && businessOnboardingCompleted && businessCurrentStep === 'completed';
+        redirectPath = canAccessDashboard ? '/business/dashboard' : '/business/onboarding';
+        
+        console.log('[useSmartAuth] Business redirect decision:', {
+          canAccessDashboard,
+          redirectPath,
+        });
       } else if (userRole === 'admin') {
         redirectPath = '/team/dashboard'; // Future: /admin/dashboard
       }
@@ -135,6 +177,9 @@ export const useSmartAuth = () => {
         hasTeamProfile: hasProfile,
         onboardingCompleted,
         currentOnboardingStep: currentStep,
+        hasBusinessProfile,
+        businessOnboardingCompleted,
+        businessOnboardingStep: businessCurrentStep,
         redirectPath,
       });
     };
@@ -151,6 +196,9 @@ export const useSmartAuth = () => {
             hasTeamProfile: false,
             onboardingCompleted: false,
             currentOnboardingStep: null,
+            hasBusinessProfile: false,
+            businessOnboardingCompleted: false,
+            businessOnboardingStep: null,
             redirectPath: '/auth',
           });
         } else {

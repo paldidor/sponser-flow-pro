@@ -126,7 +126,7 @@ const Header = () => {
             </>
           ) : (
             <>
-              <Link to="/auth">
+              <Link to="/sign-in">
                 <Button variant="ghost" size="sm" className="text-white hover:text-accent hover:bg-white/10">
                   Sign In
                 </Button>
@@ -217,7 +217,7 @@ const Header = () => {
               </>
             ) : (
               <>
-                <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+                <Link to="/sign-in" onClick={() => setMobileMenuOpen(false)}>
                   <Button variant="ghost" size="sm" className="w-full text-white hover:text-accent hover:bg-white/10">
                     Sign In
                   </Button>

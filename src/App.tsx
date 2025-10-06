@@ -9,6 +9,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "@/pages/Index";
 import SelectUserType from "@/pages/SelectUserType";
 import Auth from "@/pages/Auth";
+import SignIn from "@/pages/SignIn";
 import Marketplace from "@/pages/Marketplace";
 import MarketplaceDetail from "@/pages/MarketplaceDetail";
 import Blog from "@/pages/Blog";
@@ -43,6 +44,7 @@ const App = () => {
                 <Route path="/" element={<Index />} />
                 <Route path="/select-user-type" element={<SelectUserType />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/sign-in" element={<SignIn />} />
                 <Route path="/marketplace" element={<Marketplace />} />
                 <Route path="/marketplace/:id" element={<MarketplaceDetail />} />
                 <Route path="/blog" element={<Blog />} />

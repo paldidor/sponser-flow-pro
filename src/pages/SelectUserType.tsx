@@ -144,7 +144,7 @@ const SelectUserType = () => {
         <p className="text-center text-sm text-muted-foreground mt-8">
           Already have an account?{' '}
           <button
-            onClick={() => navigate('/auth')}
+            onClick={() => navigate('/sign-in')}
             className="text-primary hover:underline font-medium"
           >
             Sign in here

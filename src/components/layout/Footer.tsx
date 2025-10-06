@@ -132,7 +132,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link 
-                  to="/auth" 
+                  to="/sign-in" 
                   style={{ 
                     color: 'rgba(255, 255, 255, 0.80)', 
                     fontSize: '14px', 

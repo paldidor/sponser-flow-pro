@@ -106,6 +106,54 @@ export type Database = {
         }
         Relationships: []
       }
+      business_profiles: {
+        Row: {
+          business_name: string
+          city: string
+          created_at: string
+          current_onboarding_step: string
+          domain: string | null
+          id: string
+          industry: string
+          onboarding_completed: boolean
+          seed_url: string | null
+          state: string
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          business_name: string
+          city: string
+          created_at?: string
+          current_onboarding_step?: string
+          domain?: string | null
+          id?: string
+          industry: string
+          onboarding_completed?: boolean
+          seed_url?: string | null
+          state: string
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          business_name?: string
+          city?: string
+          created_at?: string
+          current_onboarding_step?: string
+          domain?: string | null
+          id?: string
+          industry?: string
+          onboarding_completed?: boolean
+          seed_url?: string | null
+          state?: string
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       creative_assets: {
         Row: {
           asset_name: string

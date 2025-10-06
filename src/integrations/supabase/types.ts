@@ -356,6 +356,7 @@ export type Database = {
           package_order: number | null
           price: number
           sponsorship_offer_id: string
+          status: string
           updated_at: string
         }
         Insert: {
@@ -367,6 +368,7 @@ export type Database = {
           package_order?: number | null
           price: number
           sponsorship_offer_id: string
+          status?: string
           updated_at?: string
         }
         Update: {
@@ -378,6 +380,7 @@ export type Database = {
           package_order?: number | null
           price?: number
           sponsorship_offer_id?: string
+          status?: string
           updated_at?: string
         }
         Relationships: [
@@ -535,36 +538,36 @@ export type Database = {
       }
       team_sponsorship_combined: {
         Row: {
-          fundraising_goal: number | null
+          fundraising_goal: string | null
           level_of_play: string | null
           location: string | null
           location_lat: number | null
           location_lon: number | null
-          number_of_players: number | null
+          number_of_players: string | null
           sponsorship_offer_id: string
           sport: string | null
           team_name: string | null
           team_profile_id: string
         }
         Insert: {
-          fundraising_goal?: number | null
+          fundraising_goal?: string | null
           level_of_play?: string | null
           location?: string | null
           location_lat?: number | null
           location_lon?: number | null
-          number_of_players?: number | null
+          number_of_players?: string | null
           sponsorship_offer_id: string
           sport?: string | null
           team_name?: string | null
           team_profile_id: string
         }
         Update: {
-          fundraising_goal?: number | null
+          fundraising_goal?: string | null
           level_of_play?: string | null
           location?: string | null
           location_lat?: number | null
           location_lon?: number | null
-          number_of_players?: number | null
+          number_of_players?: string | null
           sponsorship_offer_id?: string
           sport?: string | null
           team_name?: string | null

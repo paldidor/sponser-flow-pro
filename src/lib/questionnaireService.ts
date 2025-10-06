@@ -189,7 +189,7 @@ export async function finalizeOffer(
   packages: EnhancedSponsorshipPackage[]
 ): Promise<{ success: boolean; error?: QuestionnaireServiceError }> {
   try {
-    // First, update the offer status
+    // First, update the offer status and transition all packages to 'live'
     const { error: updateError } = await supabase
       .from('sponsorship_offers')
       .update({
@@ -202,11 +202,23 @@ export async function finalizeOffer(
       throw updateError;
     }
 
+    // Transition all existing draft packages to 'live' status
+    const { error: packageStatusError } = await supabase
+      .from('sponsorship_packages')
+      .update({ status: 'live' })
+      .eq('sponsorship_offer_id', offerId)
+      .eq('status', 'draft');
+
+    if (packageStatusError) {
+      console.warn('Warning: Failed to update package statuses:', packageStatusError);
+      // Don't throw - this is not critical to the publishing flow
+    }
+
     // Then, create packages and their placements
     for (let i = 0; i < packages.length; i++) {
       const pkg = packages[i];
       
-      // Create package
+      // Create package with 'live' status
       const { data: packageData, error: packageError } = await supabase
         .from('sponsorship_packages')
         .insert({
@@ -214,6 +226,7 @@ export async function finalizeOffer(
           name: pkg.name,
           price: pkg.price,
           package_order: i + 1,
+          status: 'live', // Packages are 'live' when offer is published
           benefits: [], // Empty array as we don't collect benefits in questionnaire
         })
         .select()

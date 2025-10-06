@@ -59,19 +59,14 @@ export const useSponsorshipOffers = () => {
         }
       });
 
-      // Transform packages to include placements and determine status
+      // Transform packages to include placements
       const transformedPackages: SponsorshipPackage[] = (packages || []).map((pkg: any) => {
         // Check if this package has a sponsor (is sold)
         const hasSponsor = pkg.sponsors && pkg.sponsors.length > 0;
         const sponsor = hasSponsor ? pkg.sponsors[0] : null;
         
-        // Determine status based on sponsor existence and offer status
-        let status: SponsorshipPackage["status"] = "live";
-        if (hasSponsor) {
-          status = "sold-active";
-        } else if (offers[0]?.status === "draft") {
-          status = "draft";
-        }
+        // Status now comes directly from the database
+        const status: SponsorshipPackage["status"] = pkg.status || "live";
 
         return {
           id: pkg.id,

@@ -279,18 +279,21 @@ export const PackageEditor = ({
           description: `"${name}" has been updated successfully`,
         });
       } else {
-        // Create new package - verify offer exists first
-        const { data: offerExists, error: offerCheckError } = await supabase
+        // Create new package - verify offer exists first and get its status
+        const { data: offerData, error: offerCheckError } = await supabase
           .from("sponsorship_offers")
-          .select("id")
+          .select("id, status")
           .eq("id", sponsorshipOfferId)
           .maybeSingle();
 
         if (offerCheckError) throw offerCheckError;
 
-        if (!offerExists) {
+        if (!offerData) {
           throw new Error("Sponsorship offer not found. Please refresh and try again.");
         }
+
+        // Set package status based on parent offer status
+        const packageStatus = offerData.status === 'published' ? 'live' : 'draft';
 
         // Create new package
         const { data: newPackage, error: createError } = await supabase
@@ -299,6 +302,7 @@ export const PackageEditor = ({
             sponsorship_offer_id: sponsorshipOfferId,
             name: name.trim(),
             price,
+            status: packageStatus,
             package_order: 999, // Will be reordered on fetch
           })
           .select()

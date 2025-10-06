@@ -114,7 +114,7 @@ const HeroSection = () => {
                   className="w-full h-auto scale-125 origin-center"
                 />
                 <div className="absolute inset-0 flex flex-col items-center justify-start pt-[18%] pb-[22%] px-8">
-                  <h3 className="text-base lg:text-xl xl:text-2xl font-extrabold text-center mb-2" style={{ color: '#00AAFE' }}>
+                  <h3 className="text-sm lg:text-base xl:text-lg font-extrabold text-center mb-2" style={{ color: '#00AAFE' }}>
                     {card.title}
                   </h3>
                   <p className="text-sm lg:text-lg xl:text-xl text-center mb-4" style={{ color: 'rgba(84, 84, 84, 0.7)' }}>

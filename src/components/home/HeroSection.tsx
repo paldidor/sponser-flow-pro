@@ -78,7 +78,7 @@ const HeroSection = () => {
         </div>
 
         {/* Three Wooden Sign Cards */}
-        <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-6 max-w-4xl md:max-w-4xl lg:max-w-6xl mx-auto mb-[-40px] sm:mb-[-48px] lg:mb-[-64px]">
+        <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-6 max-w-4xl md:max-w-4xl lg:max-w-6xl mx-auto mb-[-80px] sm:mb-[-96px] lg:mb-[-120px]">
           {cardData.map((card, index) => (
             <div 
               key={index}

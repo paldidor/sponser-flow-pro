@@ -32,17 +32,26 @@ export const useMarketplaceData = () => {
             twitter_followers,
             reach
           ),
-          sponsorship_packages (
+          sponsorship_packages!inner (
             id,
-            price
+            price,
+            status
           )
         `)
         .eq("status", "published")
+        .in("sponsorship_packages.status", ["live", "sold-active"])
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      const opportunities: Opportunity[] = (offers || []).map(offer => 
+      // Filter out offers with no visible packages
+      const validOffers = (offers || []).filter(offer => 
+        offer.sponsorship_packages && offer.sponsorship_packages.length > 0
+      );
+
+      console.log(`[Marketplace] Filtered ${(offers || []).length} offers to ${validOffers.length} with visible packages`);
+
+      const opportunities: Opportunity[] = validOffers.map(offer => 
         transformToOpportunity({
           ...offer,
           team_profile: Array.isArray(offer.team_profiles) 

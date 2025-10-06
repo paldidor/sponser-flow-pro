@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SponsorshipPackage, PlacementOption } from "@/types/dashboard";
 import { PlacementSelector } from "@/components/questionnaire/PlacementSelector";
 import { DollarSign, Loader2 } from "lucide-react";
@@ -21,6 +22,7 @@ export const PackageEditModal = ({ package: pkg, open, onOpenChange }: PackageEd
   const [name, setName] = useState("");
   const [price, setPrice] = useState(0);
   const [description, setDescription] = useState("");
+  const [status, setStatus] = useState<"live" | "draft" | "inactive" | "sold-active">("live");
   const [selectedPlacementIds, setSelectedPlacementIds] = useState<string[]>([]);
   const [placements, setPlacements] = useState<PlacementOption[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,6 +37,7 @@ export const PackageEditModal = ({ package: pkg, open, onOpenChange }: PackageEd
       setName(pkg.name);
       setPrice(pkg.price);
       setDescription(pkg.description || "");
+      setStatus(pkg.status);
       setSelectedPlacementIds(pkg.placements.map(p => p.id));
       fetchPlacements();
     }
@@ -122,6 +125,13 @@ export const PackageEditModal = ({ package: pkg, open, onOpenChange }: PackageEd
 
     setSaving(true);
     try {
+      // Validation: Prevent invalid status transitions
+      if (status === "sold-active" && !pkg.sponsor_name) {
+        toast.error("Cannot set status to 'Sold' without an active sponsor");
+        setSaving(false);
+        return;
+      }
+
       // Update package basic info
       const { error: updateError } = await supabase
         .from("sponsorship_packages")
@@ -129,6 +139,7 @@ export const PackageEditModal = ({ package: pkg, open, onOpenChange }: PackageEd
           name,
           price,
           description: description || null,
+          status,
           updated_at: new Date().toISOString(),
         })
         .eq("id", pkg.id);
@@ -204,8 +215,8 @@ export const PackageEditModal = ({ package: pkg, open, onOpenChange }: PackageEd
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Package Name and Price */}
-          <div className="grid sm:grid-cols-2 gap-4">
+          {/* Package Name, Price, and Status */}
+          <div className="grid sm:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="edit-name">Package Name</Label>
               <Input
@@ -229,6 +240,23 @@ export const PackageEditModal = ({ package: pkg, open, onOpenChange }: PackageEd
                   className="pl-9"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-status">Status</Label>
+              <Select value={status} onValueChange={(value: any) => setStatus(value)}>
+                <SelectTrigger id="edit-status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="live">Live</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                  {pkg?.sponsor_name && (
+                    <SelectItem value="sold-active">Sold</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

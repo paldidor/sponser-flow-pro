@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Package, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { SponsorshipCard } from "./SponsorshipCard";
 import { PackageEditModal } from "./PackageEditModal";
@@ -12,6 +13,7 @@ export const SponsorshipOffersSection = () => {
   const { data: packages, isLoading, error } = useSponsorshipOffers();
   const navigate = useNavigate();
   const [editingPackage, setEditingPackage] = useState<SponsorshipPackage | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"all" | "live" | "sold-active" | "draft" | "inactive">("all");
 
   const handleAddPackage = () => {
     navigate("/team/create-offer");
@@ -51,7 +53,17 @@ export const SponsorshipOffersSection = () => {
     );
   }
 
+  // Filter packages based on selected status
+  const filteredPackages = packages?.filter(pkg => {
+    if (statusFilter === "all") return true;
+    return pkg.status === statusFilter;
+  }) || [];
+
   const activeCount = packages?.filter(p => p.status !== "inactive").length || 0;
+  const liveCount = packages?.filter(p => p.status === "live").length || 0;
+  const soldCount = packages?.filter(p => p.status === "sold-active").length || 0;
+  const draftCount = packages?.filter(p => p.status === "draft").length || 0;
+  const inactiveCount = packages?.filter(p => p.status === "inactive").length || 0;
 
   return (
     <>
@@ -74,16 +86,36 @@ export const SponsorshipOffersSection = () => {
         }
       >
         {packages && packages.length > 0 ? (
-          <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6 pb-2">
-            <div className="flex gap-3 sm:gap-4 min-w-min">
-              {packages.map((pkg) => (
-                <SponsorshipCard
-                  key={pkg.id}
-                  package={pkg}
-                  onEdit={handleEditPackage}
-                />
-              ))}
-            </div>
+          <div className="space-y-4">
+            {/* Status Filter Tabs */}
+            <Tabs value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)} className="w-full">
+              <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="all">All ({packages.length})</TabsTrigger>
+                <TabsTrigger value="live">Live ({liveCount})</TabsTrigger>
+                <TabsTrigger value="sold-active">Sold ({soldCount})</TabsTrigger>
+                <TabsTrigger value="draft">Draft ({draftCount})</TabsTrigger>
+                <TabsTrigger value="inactive">Inactive ({inactiveCount})</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            {/* Package Cards */}
+            {filteredPackages.length > 0 ? (
+              <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6 pb-2">
+                <div className="flex gap-3 sm:gap-4 min-w-min">
+                  {filteredPackages.map((pkg) => (
+                    <SponsorshipCard
+                      key={pkg.id}
+                      package={pkg}
+                      onEdit={handleEditPackage}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No packages with status: {statusFilter}
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center py-12">

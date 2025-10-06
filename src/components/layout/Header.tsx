@@ -131,7 +131,7 @@ const Header = () => {
                   Sign In
                 </Button>
               </Link>
-              <Link to="/auth">
+              <Link to="/select-user-type">
                 <Button 
                   size="sm"
                   className="bg-accent text-foreground hover:bg-accent/90 font-semibold"
@@ -222,7 +222,7 @@ const Header = () => {
                     Sign In
                   </Button>
                 </Link>
-                <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+                <Link to="/select-user-type" onClick={() => setMobileMenuOpen(false)}>
                   <Button size="sm" className="w-full bg-accent text-foreground hover:bg-accent/90">
                     Get Started
                   </Button>

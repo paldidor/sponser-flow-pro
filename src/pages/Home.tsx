@@ -22,7 +22,7 @@ const Home = () => {
         <Button
           size="lg"
           className="px-12 py-6 text-lg font-semibold"
-          onClick={() => navigate('/auth')}
+          onClick={() => navigate('/select-user-type')}
         >
           Get Started
         </Button>

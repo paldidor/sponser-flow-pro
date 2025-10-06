@@ -117,7 +117,7 @@ const HeroSection = () => {
                   <h3 className="text-sm lg:text-base xl:text-lg font-extrabold text-center mb-2" style={{ color: '#00AAFE' }}>
                     {card.title}
                   </h3>
-                  <p className="text-sm lg:text-lg xl:text-xl text-center mb-4" style={{ color: 'rgba(84, 84, 84, 0.7)' }}>
+                  <p className="text-xs lg:text-sm xl:text-base text-center mb-4" style={{ color: 'rgba(84, 84, 84, 0.7)' }}>
                     {card.description}
                   </p>
                   <div className="flex items-center gap-1 group-hover:gap-2 transition-all">

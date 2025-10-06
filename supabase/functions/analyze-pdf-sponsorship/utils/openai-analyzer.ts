@@ -10,7 +10,6 @@ export interface AnalyzedPackage {
 }
 
 export interface AnalysisResult {
-  funding_goal: number | null;
   sponsorship_term: string;
   sponsorship_impact: string;
   total_players_supported: number | null;
@@ -153,19 +152,6 @@ export async function analyzeWithOpenAI(
 function normalizeAnalysisData(parsedData: any): AnalysisResult {
   console.log('Raw parsed data:', JSON.stringify(parsedData, null, 2));
   
-  // Normalize funding_goal
-  let normalizedFundingGoal: number | null = null;
-  if (parsedData.funding_goal !== undefined && parsedData.funding_goal !== null && parsedData.funding_goal !== "") {
-    if (typeof parsedData.funding_goal === 'number') {
-      normalizedFundingGoal = parsedData.funding_goal >= 0 ? parsedData.funding_goal : null;
-    } else if (typeof parsedData.funding_goal === 'string') {
-      // Strip $, commas, and convert to number
-      const cleaned = String(parsedData.funding_goal).replace(/[$,\s]/g, '');
-      const parsed = parseFloat(cleaned);
-      normalizedFundingGoal = !isNaN(parsed) && parsed >= 0 ? parsed : null;
-    }
-  }
-  
   // Normalize sponsorship_term (preserve AI format, accept empty string)
   const normalizedTerm = typeof parsedData.sponsorship_term === 'string' 
     ? parsedData.sponsorship_term.trim() 
@@ -226,7 +212,6 @@ function normalizeAnalysisData(parsedData: any): AnalysisResult {
   }
   
   console.log('Normalized data:', {
-    funding_goal: normalizedFundingGoal,
     sponsorship_term: normalizedTerm,
     sponsorship_impact: normalizedImpact,
     total_players_supported: normalizedPlayersSupported,
@@ -240,7 +225,6 @@ function normalizeAnalysisData(parsedData: any): AnalysisResult {
   }
 
   return {
-    funding_goal: normalizedFundingGoal,
     sponsorship_term: normalizedTerm,
     sponsorship_impact: normalizedImpact,
     total_players_supported: normalizedPlayersSupported,

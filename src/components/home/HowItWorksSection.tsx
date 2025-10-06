@@ -72,11 +72,11 @@ const HowItWorksSection = () => {
       id="how-it-works"
       className="py-12 sm:py-16 lg:py-20 px-4 bg-white"
     >
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Main Header */}
-        <div className="text-center mb-12 lg:mb-16">
+        <div className="text-center mb-10 lg:mb-14">
           <h2 
-            className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-extrabold mb-4"
+            className="text-2xl sm:text-3xl lg:text-4xl font-extrabold mb-3"
             style={{ 
               fontFamily: 'Poppins, sans-serif', 
               letterSpacing: '-0.05em' 
@@ -87,33 +87,33 @@ const HowItWorksSection = () => {
             <span style={{ color: '#ffb82d' }}>.</span>
           </h2>
           <p 
-            className="max-w-3xl mx-auto"
+            className="max-w-2xl mx-auto"
             style={{
               fontFamily: 'Poppins, sans-serif',
-              fontSize: 'clamp(16px, 3vw, 18px)',
+              fontSize: 'clamp(14px, 2.5vw, 16px)',
               color: '#64748b',
               fontWeight: 400
             }}
           >
-            From setup to payouts, Sponsa handles the hard parts so you can focus on the game.
+            The all in one platform that simplifies youth sports sponsorships so teams can thrive and brands grow.
           </p>
         </div>
 
         {/* Three Subsections */}
-        <div className="space-y-16 lg:space-y-24">
+        <div className="space-y-12 lg:space-y-16">
           {sections.map((section, index) => (
             <div 
               key={index}
-              className={`grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center ${
+              className={`grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-center ${
                 section.imagePosition === 'left' ? 'lg:flex-row-reverse' : ''
               }`}
             >
               {/* Text Content */}
-              <div className={`${section.imagePosition === 'left' ? 'lg:order-2' : 'lg:order-1'}`}>
+              <div className={`${section.imagePosition === 'left' ? 'lg:order-2' : 'lg:order-1'} max-w-xl ${section.imagePosition === 'left' ? 'lg:ml-auto' : 'lg:mr-auto'}`}>
                 {/* Yellow Badge */}
-                <div className="mb-4">
+                <div className="mb-3">
                   <span 
-                    className="inline-block px-4 py-2 rounded-full text-sm font-semibold text-white"
+                    className="inline-block px-3 py-1.5 rounded-full text-xs font-semibold text-white"
                     style={{ 
                       backgroundColor: '#ffb82d',
                       fontFamily: 'Poppins, sans-serif'
@@ -125,7 +125,7 @@ const HowItWorksSection = () => {
 
                 {/* Title */}
                 <h3 
-                  className="text-xl sm:text-2xl lg:text-3xl font-bold mb-4"
+                  className="text-lg sm:text-xl lg:text-2xl font-bold mb-3"
                   style={{
                     fontFamily: 'Poppins, sans-serif',
                     color: '#545454',
@@ -137,10 +137,10 @@ const HowItWorksSection = () => {
 
                 {/* Description */}
                 <p 
-                  className="mb-6"
+                  className="mb-5"
                   style={{
                     fontFamily: 'Poppins, sans-serif',
-                    fontSize: 'clamp(15px, 2.5vw, 16px)',
+                    fontSize: 'clamp(13px, 2vw, 14px)',
                     color: '#64748b',
                     fontWeight: 400,
                     lineHeight: '1.6'
@@ -150,15 +150,15 @@ const HowItWorksSection = () => {
                 </p>
 
                 {/* Bullet List */}
-                <ul className="space-y-3 mb-8">
+                <ul className="space-y-2 mb-6">
                   {section.bullets.map((bullet, bulletIndex) => (
                     <li key={bulletIndex} className="flex items-start gap-3">
                       {/* Custom Checkmark */}
                       <div 
                         className="flex-shrink-0 mt-0.5"
                         style={{
-                          width: '24px',
-                          height: '24px',
+                          width: '20px',
+                          height: '20px',
                           backgroundColor: '#ffb82d',
                           borderRadius: '50%',
                           display: 'flex',
@@ -167,8 +167,8 @@ const HowItWorksSection = () => {
                         }}
                       >
                         <svg
-                          width="14"
-                          height="10"
+                          width="12"
+                          height="9"
                           viewBox="0 0 14 10"
                           fill="none"
                           xmlns="http://www.w3.org/2000/svg"
@@ -186,10 +186,10 @@ const HowItWorksSection = () => {
                       <span 
                         style={{
                           fontFamily: 'Poppins, sans-serif',
-                          fontSize: '15px',
+                          fontSize: '13px',
                           color: '#545454',
                           fontWeight: 400,
-                          lineHeight: '1.6'
+                          lineHeight: '1.5'
                         }}
                       >
                         {bullet}
@@ -202,7 +202,7 @@ const HowItWorksSection = () => {
                 <button
                   onMouseEnter={() => setHoveredButton(index)}
                   onMouseLeave={() => setHoveredButton(null)}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-300"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold transition-all duration-300 text-sm"
                   style={{
                     backgroundColor: '#00aafe',
                     color: 'white',
@@ -214,12 +214,12 @@ const HowItWorksSection = () => {
                   }}
                 >
                   {section.ctaText}
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
 
               {/* Image */}
-              <div className={`${section.imagePosition === 'left' ? 'lg:order-1' : 'lg:order-2'}`}>
+              <div className={`${section.imagePosition === 'left' ? 'lg:order-1' : 'lg:order-2'} max-w-lg ${section.imagePosition === 'left' ? 'lg:mr-auto' : 'lg:ml-auto'}`}>
                 <img
                   src={section.imageUrl}
                   alt={section.badge}

@@ -41,6 +41,36 @@ export const useSmartAuth = () => {
         return;
       }
 
+      // Check for pending user type (from Google OAuth) and assign role
+      const pendingUserType = localStorage.getItem('pending_user_type');
+      if (pendingUserType) {
+        try {
+          // Check if user already has a role
+          const { data: existingRole } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+
+          // Only assign role if user doesn't have one yet
+          if (!existingRole) {
+            await supabase
+              .from('user_roles')
+              .insert({
+                user_id: session.user.id,
+                role: pendingUserType as 'team' | 'business',
+              });
+            
+            console.log(`[useSmartAuth] Assigned pending role: ${pendingUserType}`);
+          }
+        } catch (error) {
+          console.error('[useSmartAuth] Failed to assign pending role:', error);
+        } finally {
+          // Clear pending user type
+          localStorage.removeItem('pending_user_type');
+        }
+      }
+
       // Fetch user role from user_roles table
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')

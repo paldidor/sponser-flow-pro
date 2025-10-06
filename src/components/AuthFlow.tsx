@@ -8,16 +8,39 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface AuthFlowProps {
+  userType?: 'team' | 'business' | null;
   onAuthComplete: () => void;
   onBack: () => void;
 }
 
-const AuthFlow = ({ onAuthComplete, onBack }: AuthFlowProps) => {
+const AuthFlow = ({ userType, onAuthComplete, onBack }: AuthFlowProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(true);
   const { toast } = useToast();
+
+  // Helper function to assign user role
+  const assignUserRole = async (userId: string, role: 'team' | 'business') => {
+    try {
+      const { error } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: role,
+        });
+
+      if (error) {
+        console.error('Role assignment error:', error);
+        throw error;
+      }
+
+      console.log(`Successfully assigned role: ${role} to user: ${userId}`);
+    } catch (error: any) {
+      console.error('Failed to assign role:', error);
+      throw error;
+    }
+  };
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -70,10 +93,29 @@ const AuthFlow = ({ onAuthComplete, onBack }: AuthFlowProps) => {
         }
 
         if (data.user) {
-          toast({
-            title: "Account created!",
-            description: "Welcome! Let's set up your team profile.",
-          });
+          // Assign role if userType is provided
+          if (userType) {
+            try {
+              await assignUserRole(data.user.id, userType);
+              toast({
+                title: "Account created!",
+                description: `Welcome! Let's set up your ${userType === 'team' ? 'team' : 'business'} profile.`,
+              });
+            } catch (roleError) {
+              toast({
+                title: "Account created",
+                description: "Account created but role assignment failed. Please contact support.",
+                variant: "destructive",
+              });
+              console.error('Role assignment failed:', roleError);
+            }
+          } else {
+            // Default message if no userType specified
+            toast({
+              title: "Account created!",
+              description: "Welcome! Let's get started.",
+            });
+          }
           onAuthComplete();
         }
       } else {
@@ -126,6 +168,11 @@ const AuthFlow = ({ onAuthComplete, onBack }: AuthFlowProps) => {
   const handleGoogleAuth = async () => {
     setIsLoading(true);
     try {
+      // Store userType in localStorage to retrieve after OAuth redirect
+      if (userType) {
+        localStorage.setItem('pending_user_type', userType);
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -173,9 +220,16 @@ const AuthFlow = ({ onAuthComplete, onBack }: AuthFlowProps) => {
           </h1>
           <p className="text-muted-foreground">
             {isSignUp
-              ? "Take sponsorships off your plate."
+              ? userType === 'business'
+                ? "Find sponsorship opportunities that matter."
+                : "Take sponsorships off your plate."
               : "Sign in to continue to your dashboard."}
           </p>
+          {userType && (
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
+              {userType === 'team' ? '👥 Team Account' : '💼 Business Account'}
+            </div>
+          )}
         </div>
 
         <ProgressIndicator currentStep={1} />

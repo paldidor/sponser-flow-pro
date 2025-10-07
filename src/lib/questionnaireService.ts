@@ -46,7 +46,7 @@ export async function getOrCreateDraftOffer(userId: string): Promise<{ offerId: 
     // Fetch user's team_profile_id before creating draft
     const { data: teamProfile, error: teamError } = await supabase
       .from('team_profiles')
-      .select('id')
+      .select('id, team_name')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -64,7 +64,7 @@ export async function getOrCreateDraftOffer(userId: string): Promise<{ offerId: 
       .insert({
         user_id: userId,
         team_profile_id: teamProfile.id,
-        title: 'Draft Sponsorship Offer',
+        title: teamProfile.team_name || 'Draft Sponsorship Offer',
         fundraising_goal: 0,
         impact: 'In progress...',
         duration: 'TBD',
@@ -120,8 +120,17 @@ export async function updateDraftStep(
       updateData.duration = stepData.duration;
     }
 
+    // Fetch team name from the offer's team_profile_id
+    const { data: offerWithProfile } = await supabase
+      .from('sponsorship_offers')
+      .select('team_profile_id, team_profiles(team_name)')
+      .eq('id', offerId)
+      .single();
+
+    const teamName = offerWithProfile?.team_profiles?.team_name;
+
     // Always update title based on available data
-    updateData.title = `Sponsorship Offer - Draft`;
+    updateData.title = teamName || 'Sponsorship Offer - Draft';
 
     const { error } = await supabase
       .from('sponsorship_offers')

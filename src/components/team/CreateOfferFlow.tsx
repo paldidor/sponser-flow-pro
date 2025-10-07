@@ -68,7 +68,7 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
     // Fetch user's team profile with deterministic query
     const { data: teamProfile, error: profileError } = await supabase
       .from('team_profiles')
-      .select('id')
+      .select('id, team_name')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -100,7 +100,7 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
     const payload = {
       user_id: user.id,
       team_profile_id: teamProfileId,
-      title: `Sponsorship from ${fileName}`,
+      title: teamProfile.team_name || `Sponsorship from ${fileName}`,
       fundraising_goal: 0,
       duration: 'TBD',
       impact: 'Analysis in progress...',
@@ -293,7 +293,7 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
     // Get team profile with deterministic query
     const { data: teamProfile, error: profileError } = await supabase
       .from('team_profiles')
-      .select('id')
+      .select('id, team_name')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(1)

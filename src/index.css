@@ -120,30 +120,34 @@ All colors MUST be HSL.
   }
 }
 
-/* Cloud animations for Hero Section - Left to Right drift */
-@keyframes drift-very-slow {
-  0% {
-    transform: translateX(-100px) translateY(0);
-  }
-  100% {
-    transform: translateX(100vw) translateY(0);
-  }
-}
+/* Cloud animations for Hero Section - Left to Right drift at different speeds */
 
+/* Slow Cloud Animation - 80s duration */
 @keyframes drift-slow {
   0% {
-    transform: translateX(-80px) translateY(0);
+    transform: translateX(-150px) translateY(0);
   }
   100% {
-    transform: translateX(100vw) translateY(0);
+    transform: translateX(calc(100vw + 150px)) translateY(0);
   }
 }
 
-@keyframes drift-moderate {
+/* Medium Cloud Animation - 60s duration */
+@keyframes drift-medium {
   0% {
-    transform: translateX(-120px) translateY(0);
+    transform: translateX(-150px) translateY(0);
   }
   100% {
-    transform: translateX(100vw) translateY(0);
+    transform: translateX(calc(100vw + 150px)) translateY(0);
+  }
+}
+
+/* Moderate Cloud Animation - 50s duration */
+@keyframes drift-moderate {
+  0% {
+    transform: translateX(-150px) translateY(0);
+  }
+  100% {
+    transform: translateX(calc(100vw + 150px)) translateY(0);
   }
 }

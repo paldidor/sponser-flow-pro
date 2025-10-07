@@ -78,7 +78,7 @@ const HeroSection = () => {
         </div>
 
         {/* Three Wooden Sign Cards */}
-        <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-6 max-w-4xl md:max-w-4xl lg:max-w-6xl mx-auto mb-[-80px] sm:mb-[-96px] lg:mb-[-120px]">
+        <div className="relative z-20 grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-6 max-w-4xl md:max-w-4xl lg:max-w-6xl mx-auto mb-[-110px] sm:mb-[-128px] lg:mb-[-150px]">
           {cardData.map((card, index) => (
             <div 
               key={index}
@@ -132,7 +132,7 @@ const HeroSection = () => {
       </div>
 
       {/* Grass ground strip */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 overflow-hidden h-12 sm:h-16 lg:h-24">
+      <div className="absolute bottom-0 left-0 right-0 z-30 pointer-events-none overflow-hidden h-12 sm:h-16 lg:h-24">
         <img
           src="/images/grass-background.png"
           alt="Grass ground"

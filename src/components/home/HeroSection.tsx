@@ -36,24 +36,24 @@ const HeroSection = () => {
         fontFamily: 'Poppins, sans-serif'
       }}
     >
-      {/* Animated clouds - keep existing animations */}
+      {/* Animated clouds - Left to Right at different speeds */}
       <img
-        src="/images/cloud-animation.png"
+        src="/images/clouds/slow-cloud.png"
         alt=""
         className="absolute top-[10%] left-[5%] w-32 sm:w-40 lg:w-48 h-auto opacity-70 xl:block hidden"
-        style={{ animation: 'drift-very-slow 60s ease-in-out infinite', willChange: 'transform' }}
+        style={{ animation: 'drift-slow 80s linear infinite', willChange: 'transform' }}
       />
       <img
-        src="/images/cloud-animation.png"
+        src="/images/clouds/medium-cloud.png"
         alt=""
         className="absolute top-[20%] right-[10%] w-28 sm:w-36 lg:w-44 h-auto opacity-60"
-        style={{ animation: 'drift-slow 45s ease-in-out infinite', willChange: 'transform' }}
+        style={{ animation: 'drift-medium 60s linear infinite', willChange: 'transform' }}
       />
       <img
-        src="/images/cloud-animation.png"
+        src="/images/clouds/moderate-cloud.png"
         alt=""
         className="absolute top-[35%] left-[15%] w-36 sm:w-44 lg:w-52 h-auto opacity-50 xl:hidden"
-        style={{ animation: 'drift-moderate 50s ease-in-out infinite', willChange: 'transform' }}
+        style={{ animation: 'drift-moderate 50s linear infinite', willChange: 'transform' }}
       />
 
       {/* Content Container */}

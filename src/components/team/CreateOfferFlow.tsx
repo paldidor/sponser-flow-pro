@@ -54,7 +54,8 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
     }
 
     setAnalysisFileName(fileName);
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
     if (!user) {
       toast({
         title: "Authentication Error",
@@ -278,7 +279,8 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
     }
 
     // Get user data
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
     if (!user) {
       toast({
         title: "Authentication Error",

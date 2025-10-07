@@ -30,17 +30,19 @@ const CommunitySection = () => {
       className="relative py-16 lg:py-24 overflow-hidden"
       style={{ background: "#CAE5F4" }}
     >
-      {/* Animated clouds */}
+      {/* Animated clouds - Left to Right at different speeds */}
       <div className="absolute inset-0 pointer-events-none">
         <img 
-          src="/images/cloud-animation.png" 
+          src="/images/clouds/slow-cloud.png" 
           alt="" 
-          className="absolute top-10 right-10 w-32 opacity-40 animate-[float_7s_ease-in-out_infinite]"
+          className="absolute top-10 right-10 w-32 opacity-40"
+          style={{ animation: 'drift-slow 80s linear infinite', willChange: 'transform' }}
         />
         <img 
-          src="/images/cloud-animation.png" 
+          src="/images/clouds/medium-cloud.png" 
           alt="" 
-          className="absolute top-40 left-20 w-24 opacity-30 animate-[float_9s_ease-in-out_infinite_2s]"
+          className="absolute top-40 left-20 w-24 opacity-30"
+          style={{ animation: 'drift-medium 60s linear infinite 2s', willChange: 'transform' }}
         />
       </div>
 
@@ -238,16 +240,6 @@ const CommunitySection = () => {
         />
       </div>
 
-      <style>{`
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-20px);
-          }
-        }
-      `}</style>
     </section>
   );
 };

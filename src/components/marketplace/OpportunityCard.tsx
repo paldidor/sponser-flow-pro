@@ -10,11 +10,10 @@ import calendarIcon from "@/assets/icons/calendar-stat.svg";
 import usersIcon from "@/assets/icons/users-stat.svg";
 import targetIcon from "@/assets/icons/target-stat.svg";
 import { cn } from "@/lib/utils";
-
 export const OpportunityCard = memo(({
   opportunity,
   onSave,
-  onClick,
+  onClick
 }: OpportunityCardProps) => {
   const imgRef = useRef<HTMLImageElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -23,60 +22,40 @@ export const OpportunityCard = memo(({
   useEffect(() => {
     const img = imgRef.current;
     if (!img) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setIsVisible(true);
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      {
-        rootMargin: "50px", // Start loading 50px before visible
-      }
-    );
-
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      rootMargin: "50px" // Start loading 50px before visible
+    });
     observer.observe(img);
-
     return () => {
       observer.disconnect();
     };
   }, []);
   const handleClick = (e: React.MouseEvent) => {
     // Prevent navigation when clicking bookmark or CTA
-    if (
-      (e.target as HTMLElement).closest("button") &&
-      !(e.target as HTMLElement).closest("[data-card-cta]")
-    ) {
+    if ((e.target as HTMLElement).closest("button") && !(e.target as HTMLElement).closest("[data-card-cta]")) {
       return;
     }
     onClick(opportunity.id);
   };
-
   const handleBookmark = (e: React.MouseEvent) => {
     e.stopPropagation();
     onSave(opportunity.id);
   };
-
-  return (
-    <article
-      className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-[14px] border border-[#E5E7EB] bg-white transition-shadow hover:shadow-lg animate-fade-in"
-      onClick={handleClick}
-      style={{ willChange: 'transform, opacity' }}
-    >
+  return <article className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-[14px] border border-[#E5E7EB] bg-white transition-shadow hover:shadow-lg animate-fade-in" onClick={handleClick} style={{
+    willChange: 'transform, opacity'
+  }}>
       {/* Hero Section */}
       <div className="relative h-[128px] w-full bg-gray-100">
-        <img
-          ref={imgRef}
-          src={isVisible ? opportunity.imageUrl : undefined}
-          alt={opportunity.title}
-          className="h-full w-full object-cover transition-opacity duration-300"
-          loading="lazy"
-          decoding="async"
-          style={{ opacity: isVisible ? 1 : 0 }}
-        />
+        <img ref={imgRef} src={isVisible ? opportunity.imageUrl : undefined} alt={opportunity.title} className="h-full w-full object-cover transition-opacity duration-300" loading="lazy" decoding="async" style={{
+        opacity: isVisible ? 1 : 0
+      }} />
         <div className="absolute inset-0 bg-black/40" />
 
         {/* Sport Pill */}
@@ -85,20 +64,8 @@ export const OpportunityCard = memo(({
         </span>
 
         {/* Bookmark Button - Enhanced for mobile touch */}
-        <button
-          onClick={handleBookmark}
-          className={cn(
-            "absolute right-3 top-3 grid min-h-[44px] min-w-[44px] place-items-center rounded-full bg-black/20 p-2 transition-colors hover:bg-black/40 active:scale-95",
-            opportunity.saved && "bg-[#00AAFE] hover:bg-[#00AAFE]/90"
-          )}
-          aria-label={opportunity.saved ? "Remove bookmark" : "Save opportunity"}
-        >
-          <Bookmark
-            className={cn(
-              "h-5 w-5 stroke-white",
-              opportunity.saved && "fill-white"
-            )}
-          />
+        <button onClick={handleBookmark} className={cn("absolute right-3 top-3 grid min-h-[44px] min-w-[44px] place-items-center rounded-full bg-black/20 p-2 transition-colors hover:bg-black/40 active:scale-95", opportunity.saved && "bg-[#00AAFE] hover:bg-[#00AAFE]/90")} aria-label={opportunity.saved ? "Remove bookmark" : "Save opportunity"}>
+          <Bookmark className={cn("h-5 w-5 stroke-white", opportunity.saved && "fill-white")} />
         </button>
 
         {/* Hero Text Stack */}
@@ -106,12 +73,8 @@ export const OpportunityCard = memo(({
           <h3 className="line-clamp-1 text-[18px] font-bold leading-[22.5px] text-white drop-shadow-md">
             {opportunity.title}
           </h3>
-          <p className="line-clamp-1 text-[12px] leading-[15px] text-[#E5E7EB]">
-            {opportunity.organization}
-          </p>
-          <p className="line-clamp-1 text-[12px] font-medium leading-[15px] text-white">
-            {opportunity.team}
-          </p>
+          
+          
         </div>
       </div>
 
@@ -132,21 +95,9 @@ export const OpportunityCard = memo(({
 
         {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-3">
-          <StatTile
-            icon={targetIcon}
-            value={opportunity.packagesCount}
-            label="Packages"
-          />
-          <StatTile
-            icon={usersIcon}
-            value={opportunity.estWeekly.toLocaleString()}
-            label="Est. Weekly"
-          />
-          <StatTile
-            icon={calendarIcon}
-            value={formatDuration(opportunity.durationMonths)}
-            label="Duration"
-          />
+          <StatTile icon={targetIcon} value={opportunity.packagesCount} label="Packages" />
+          <StatTile icon={usersIcon} value={opportunity.estWeekly.toLocaleString()} label="Est. Weekly" />
+          <StatTile icon={calendarIcon} value={formatDuration(opportunity.durationMonths)} label="Duration" />
         </div>
 
         {/* Progress Bar */}
@@ -160,23 +111,14 @@ export const OpportunityCard = memo(({
               {formatCurrency(opportunity.startingAt)}
             </span>
           </div>
-          <Button
-            data-card-cta
-            onClick={handleClick}
-            className="h-11 min-h-[44px] rounded-[10px] bg-[#00AAFE] px-4 text-[14px] font-medium text-white hover:bg-[#00AAFE]/90 active:scale-95"
-          >
+          <Button data-card-cta onClick={handleClick} className="h-11 min-h-[44px] rounded-[10px] bg-[#00AAFE] px-4 text-[14px] font-medium text-white hover:bg-[#00AAFE]/90 active:scale-95">
             View Details
           </Button>
         </div>
       </div>
-    </article>
-  );
+    </article>;
 }, (prevProps, nextProps) => {
   // Custom comparison for memo optimization
-  return (
-    prevProps.opportunity.id === nextProps.opportunity.id &&
-    prevProps.opportunity.saved === nextProps.opportunity.saved
-  );
+  return prevProps.opportunity.id === nextProps.opportunity.id && prevProps.opportunity.saved === nextProps.opportunity.saved;
 });
-
 OpportunityCard.displayName = 'OpportunityCard';

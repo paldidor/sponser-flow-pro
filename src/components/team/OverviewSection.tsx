@@ -9,10 +9,10 @@ interface OverviewSectionProps {
 }
 
 export const OverviewSection = ({
-  totalRevenue = 9000,
-  potentialRevenue = 19500,
-  activeSponsors = 3,
-  openTasks = 3,
+  totalRevenue = 0,
+  potentialRevenue = 0,
+  activeSponsors = 0,
+  openTasks = 0,
 }: OverviewSectionProps) => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {

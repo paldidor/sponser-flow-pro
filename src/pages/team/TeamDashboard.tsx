@@ -178,7 +178,10 @@ const TeamDashboard = () => {
     <ErrorBoundary>
       <div className="min-h-screen bg-background">
         <DashboardHeader 
-          teamName={metrics?.teamName || "Your Team"} 
+          teamName={metrics?.teamName || "Your Team"}
+          location={metrics?.location}
+          sport={metrics?.sport}
+          logoUrl={metrics?.logo}
           notificationCount={0}
           onEditProfile={handleOpenProfileEditor}
         />

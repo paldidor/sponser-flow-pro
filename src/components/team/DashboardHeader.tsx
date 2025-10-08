@@ -7,18 +7,27 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { formatLocation } from "@/lib/statAbbreviations";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DashboardHeaderProps {
   teamName?: string;
+  location?: string;
+  sport?: string;
+  logoUrl?: string;
   notificationCount?: number;
   onEditProfile?: () => void;
 }
 
 export const DashboardHeader = ({ 
   teamName = "Thunder Youth Soccer",
+  location,
+  sport,
+  logoUrl,
   notificationCount = 0,
   onEditProfile
 }: DashboardHeaderProps) => {
+  const isMobile = useIsMobile();
   return (
     <header className="sticky top-0 z-50 w-full bg-white border-b shadow-sm">
       <div className="container flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 mx-auto max-w-7xl">
@@ -30,8 +39,16 @@ export const DashboardHeader = ({
           </div>
           
           <div className="flex flex-col min-w-0">
-            <h1 className="text-base sm:text-xl font-semibold text-foreground truncate">Sponsa</h1>
-            <p className="hidden sm:block text-xs text-muted-foreground font-medium">Team Dashboard</p>
+            <h1 className="text-base sm:text-xl font-semibold text-foreground truncate">
+              {teamName}
+            </h1>
+            {(sport || location) && (
+              <p className="text-xs text-muted-foreground font-medium truncate">
+                {sport}
+                {sport && location && " • "}
+                {location && formatLocation(location, isMobile)}
+              </p>
+            )}
           </div>
         </div>
 
@@ -74,7 +91,7 @@ export const DashboardHeader = ({
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 sm:h-9 sm:w-9 touch-manipulation">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src="" alt={teamName} />
+                  <AvatarImage src={logoUrl || ""} alt={teamName} />
                   <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                     {teamName.charAt(0).toUpperCase()}
                   </AvatarFallback>

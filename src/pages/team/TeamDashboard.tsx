@@ -14,12 +14,16 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import CreateOfferFlow from "@/components/team/CreateOfferFlow";
+import { TeamProfileEditor } from "@/components/team/TeamProfileEditor";
+import { TeamProfile } from "@/types/flow";
 
 const TeamDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: metrics, isLoading, isError, error, refetch } = useTeamDashboardData();
   const [showCreateOfferModal, setShowCreateOfferModal] = useState(false);
+  const [showProfileEditor, setShowProfileEditor] = useState(false);
+  const [teamProfile, setTeamProfile] = useState<TeamProfile | null>(null);
 
   // DEFENSIVE CHECK: Verify onboarding is actually completed
   // Safety net in case route guards fail
@@ -101,6 +105,42 @@ const TeamDashboard = () => {
     checkFirstRun();
   }, []);
 
+  // Load team profile data
+  const loadTeamProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile, error } = await supabase
+        .from('team_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('[TeamDashboard] Error loading profile:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load team profile",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (profile) {
+        setTeamProfile(profile as TeamProfile);
+      }
+    } catch (error) {
+      console.error('[TeamDashboard] Unexpected error loading profile:', error);
+    }
+  };
+
+  // Handle opening profile editor
+  const handleOpenProfileEditor = async () => {
+    await loadTeamProfile();
+    setShowProfileEditor(true);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -139,7 +179,8 @@ const TeamDashboard = () => {
       <div className="min-h-screen bg-background">
         <DashboardHeader 
           teamName={metrics?.teamName || "Your Team"} 
-          notificationCount={0} 
+          notificationCount={0}
+          onEditProfile={handleOpenProfileEditor}
         />
         
         <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-7xl">
@@ -174,6 +215,21 @@ const TeamDashboard = () => {
             />
           </DialogContent>
         </Dialog>
+
+        {/* Profile Editor Modal */}
+        <TeamProfileEditor
+          open={showProfileEditor}
+          onOpenChange={setShowProfileEditor}
+          profileData={teamProfile}
+          onSave={() => {
+            setShowProfileEditor(false);
+            refetch(); // Refresh dashboard metrics
+            toast({
+              title: "Profile Updated",
+              description: "Your team profile has been updated successfully.",
+            });
+          }}
+        />
       </div>
     </ErrorBoundary>
   );

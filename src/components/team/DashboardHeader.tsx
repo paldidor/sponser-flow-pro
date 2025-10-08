@@ -11,11 +11,13 @@ import {
 interface DashboardHeaderProps {
   teamName?: string;
   notificationCount?: number;
+  onEditProfile?: () => void;
 }
 
 export const DashboardHeader = ({ 
   teamName = "Thunder Youth Soccer",
-  notificationCount = 0 
+  notificationCount = 0,
+  onEditProfile
 }: DashboardHeaderProps) => {
   return (
     <header className="sticky top-0 z-50 w-full bg-white border-b shadow-sm">
@@ -87,7 +89,12 @@ export const DashboardHeader = ({
                   <p className="text-xs text-muted-foreground">Team Account</p>
                 </div>
                 <div className="border-t pt-2">
-                  <Button variant="ghost" className="w-full justify-start text-sm h-10 touch-manipulation" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-sm h-10 touch-manipulation" 
+                    size="sm"
+                    onClick={onEditProfile}
+                  >
                     <User className="mr-2 h-4 w-4" />
                     Edit Profile
                   </Button>

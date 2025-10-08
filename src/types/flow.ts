@@ -40,6 +40,7 @@ export interface SocialLinks {
 }
 
 export interface TeamProfile {
+  id?: string;
   team_name: string;
   main_values: string[];
   location: string;

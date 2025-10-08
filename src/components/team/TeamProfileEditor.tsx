@@ -38,11 +38,13 @@ import {
   Users,
   Trophy,
   Calendar,
+  Image as ImageIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { TeamProfile } from "@/types/flow";
 import { validateSocialMediaURL } from "@/lib/validationUtils";
+import { TeamPhotoUploader } from "./TeamPhotoUploader";
 
 interface TeamProfileEditorProps {
   open: boolean;
@@ -85,6 +87,7 @@ export const TeamProfileEditor = ({
     twitter_followers: 0,
     youtube_followers: 0,
     email_list_size: 0,
+    images: [],
   });
 
   useEffect(() => {
@@ -127,6 +130,7 @@ export const TeamProfileEditor = ({
         twitter_followers: profileData.twitter_followers || 0,
         youtube_followers: profileData.youtube_followers || 0,
         email_list_size: profileData.email_list_size || 0,
+        images: profileData.images || [],
       });
     }
   }, [open, profileData]);
@@ -273,6 +277,7 @@ export const TeamProfileEditor = ({
             ...formData,
             // Ensure arrays are properly formatted
             main_values: formData.main_values || [],
+            images: formData.images || [],
           })
           .eq("user_id", user.id);
         error = updateError;
@@ -330,7 +335,7 @@ export const TeamProfileEditor = ({
         </DialogHeader>
 
         <Tabs defaultValue="basic" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="basic">
               <Users className="w-4 h-4 mr-2" />
               Basic Info
@@ -342,6 +347,10 @@ export const TeamProfileEditor = ({
             <TabsTrigger value="social">
               <Instagram className="w-4 h-4 mr-2" />
               Social Media
+            </TabsTrigger>
+            <TabsTrigger value="photos">
+              <ImageIcon className="w-4 h-4 mr-2" />
+              Photos
             </TabsTrigger>
           </TabsList>
 
@@ -700,6 +709,24 @@ export const TeamProfileEditor = ({
                   </div>
                 </div>
               </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="photos" className="space-y-4 mt-4">
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-medium mb-2">Team Photos</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Upload photos of your team, players, and events. These will be displayed on your marketplace listing.
+                </p>
+              </div>
+              
+              <TeamPhotoUploader
+                teamProfileId={profileData?.id || ""}
+                currentImages={formData.images || []}
+                onImagesUpdate={(updatedImages) => updateField("images", updatedImages)}
+                maxPhotos={6}
+              />
             </div>
           </TabsContent>
         </Tabs>

@@ -1,12 +1,17 @@
-import { Bell, User } from "lucide-react";
+import { Bell, User, Settings, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { formatLocation } from "@/lib/statAbbreviations";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { InlineLogoUploader } from "./InlineLogoUploader";
@@ -91,39 +96,31 @@ export const DashboardHeader = ({
             </PopoverContent>
           </Popover>
 
-          {/* Profile Button */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 sm:h-9 sm:w-9 touch-manipulation">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={logoUrl || ""} alt={teamName} />
-                  <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                    {teamName.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="sr-only">User menu</span>
+          {/* Settings Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-10 w-10 sm:h-9 sm:w-9 touch-manipulation">
+                <Settings className="h-5 w-5" />
+                <span className="sr-only">Settings</span>
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-64 sm:w-72" align="end">
-              <div className="space-y-2">
-                <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium truncate">{teamName}</p>
-                  <p className="text-xs text-muted-foreground">Team Account</p>
-                </div>
-                <div className="border-t pt-2">
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start text-sm h-10 touch-manipulation" 
-                    size="sm"
-                    onClick={onEditProfile}
-                  >
-                    <User className="mr-2 h-4 w-4" />
-                    Edit Profile
-                  </Button>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56 bg-background" align="end">
+              <DropdownMenuItem 
+                className="cursor-pointer h-10 touch-manipulation" 
+                onClick={onEditProfile}
+              >
+                <User className="mr-2 h-4 w-4" />
+                Edit Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="cursor-pointer h-10 touch-manipulation text-muted-foreground"
+                disabled
+              >
+                <CreditCard className="mr-2 h-4 w-4" />
+                Bank Account
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

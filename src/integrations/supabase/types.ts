@@ -492,6 +492,7 @@ export type Database = {
           location: string | null
           location_lat: number | null
           location_lon: number | null
+          logo: string | null
           main_values: Json
           number_of_players: string | null
           onboarding_completed: boolean
@@ -529,6 +530,7 @@ export type Database = {
           location?: string | null
           location_lat?: number | null
           location_lon?: number | null
+          logo?: string | null
           main_values?: Json
           number_of_players?: string | null
           onboarding_completed?: boolean
@@ -566,6 +568,7 @@ export type Database = {
           location?: string | null
           location_lat?: number | null
           location_lon?: number | null
+          logo?: string | null
           main_values?: Json
           number_of_players?: string | null
           onboarding_completed?: boolean

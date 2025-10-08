@@ -483,6 +483,7 @@ export type Database = {
           facebook_followers: number | null
           facebook_link: string | null
           id: string
+          images: string[] | null
           instagram_followers: number | null
           instagram_link: string | null
           level_of_play: string | null
@@ -519,6 +520,7 @@ export type Database = {
           facebook_followers?: number | null
           facebook_link?: string | null
           id?: string
+          images?: string[] | null
           instagram_followers?: number | null
           instagram_link?: string | null
           level_of_play?: string | null
@@ -555,6 +557,7 @@ export type Database = {
           facebook_followers?: number | null
           facebook_link?: string | null
           id?: string
+          images?: string[] | null
           instagram_followers?: number | null
           instagram_link?: string | null
           level_of_play?: string | null

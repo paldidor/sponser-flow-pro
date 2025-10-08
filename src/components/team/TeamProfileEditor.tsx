@@ -45,6 +45,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TeamProfile } from "@/types/flow";
 import { validateSocialMediaURL } from "@/lib/validationUtils";
 import { TeamPhotoUploader } from "./TeamPhotoUploader";
+import { TeamLogoUploader } from "./TeamLogoUploader";
 
 interface TeamProfileEditorProps {
   open: boolean;
@@ -88,6 +89,7 @@ export const TeamProfileEditor = ({
     youtube_followers: 0,
     email_list_size: 0,
     images: [],
+    logo: undefined,
   });
 
   useEffect(() => {
@@ -131,6 +133,7 @@ export const TeamProfileEditor = ({
         youtube_followers: profileData.youtube_followers || 0,
         email_list_size: profileData.email_list_size || 0,
         images: profileData.images || [],
+        logo: profileData.logo || undefined,
       });
     }
   }, [open, profileData]);
@@ -355,6 +358,12 @@ export const TeamProfileEditor = ({
           </TabsList>
 
           <TabsContent value="basic" className="space-y-4 mt-4">
+            {/* Logo Upload Section */}
+            <TeamLogoUploader
+              currentLogo={formData.logo}
+              onLogoUpdate={(newLogo) => updateField("logo", newLogo)}
+            />
+
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="team_name">

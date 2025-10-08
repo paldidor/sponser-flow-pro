@@ -65,6 +65,7 @@ export interface TeamProfile {
   email_list_size?: number;
   reach?: number;
   images?: string[];
+  logo?: string;
 }
 
 export interface SponsorshipPackage {

@@ -184,6 +184,7 @@ const TeamDashboard = () => {
           logoUrl={metrics?.logo}
           notificationCount={0}
           onEditProfile={handleOpenProfileEditor}
+          onLogoUpdated={() => refetch()}
         />
         
         <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-7xl">

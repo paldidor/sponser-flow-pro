@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/popover";
 import { formatLocation } from "@/lib/statAbbreviations";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { InlineLogoUploader } from "./InlineLogoUploader";
 
 interface DashboardHeaderProps {
   teamName?: string;
@@ -17,6 +18,7 @@ interface DashboardHeaderProps {
   logoUrl?: string;
   notificationCount?: number;
   onEditProfile?: () => void;
+  onLogoUpdated?: () => void;
 }
 
 export const DashboardHeader = ({ 
@@ -25,7 +27,8 @@ export const DashboardHeader = ({
   sport,
   logoUrl,
   notificationCount = 0,
-  onEditProfile
+  onEditProfile,
+  onLogoUpdated
 }: DashboardHeaderProps) => {
   const isMobile = useIsMobile();
   return (
@@ -33,10 +36,12 @@ export const DashboardHeader = ({
       <div className="container flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 mx-auto max-w-7xl">
         {/* Left: Logo + Branding */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Sponsa Logo - Blue gradient circle with S */}
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center shadow-md flex-shrink-0">
-            <span className="text-white font-bold text-base sm:text-lg">S</span>
-          </div>
+          {/* Team Logo - Inline Uploader */}
+          <InlineLogoUploader
+            teamName={teamName}
+            currentLogo={logoUrl}
+            onUploaded={onLogoUpdated}
+          />
           
           <div className="flex flex-col min-w-0">
             <h1 className="text-base sm:text-xl font-semibold text-foreground truncate">

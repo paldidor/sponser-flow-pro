@@ -1,46 +1,63 @@
 /**
- * Maps long stat values to abbreviated versions for display
- * while preserving full text for accessibility
+ * Abbreviation mappings for stat values (e.g., level of play)
  */
-export const STAT_ABBREVIATIONS: Record<string, string> = {
-  // Competition names
-  "Northern Counties Soccer Association (NCSA)": "NCSA",
-  "Northern Counties Soccer Association": "NCSA",
-  "United States Youth Soccer Association": "USYSA",
-  "National Premier Leagues": "NPL",
-  "Elite Clubs National League": "ECNL",
-  
-  // Competition scopes (if needed)
-  "International": "Intl",
-  "National": "National",
-  "Regional": "Regional",
-  "Local": "Local",
+const STAT_ABBREVIATIONS: Record<string, string> = {
+  "Professional": "Pro",
+  "Semi-Professional": "Semi-Pro",
+  "Competitive": "Comp",
+  "Recreational": "Rec",
+  "Youth": "Youth",
+  "High School": "HS",
+  "College": "College",
+  "University": "Uni",
+  "Amateur": "Amateur",
 };
 
 /**
- * Abbreviates a value if it matches known patterns
- * @param value - Original value to potentially abbreviate
- * @returns Abbreviated version or original if no match
+ * Abbreviates stat values for compact display
+ * @param value - Full stat value string
+ * @returns Abbreviated string or original if no mapping exists
  */
 export function abbreviateStat(value: string): string {
-  return STAT_ABBREVIATIONS[value] ?? value;
+  return STAT_ABBREVIATIONS[value] || value;
 }
 
 /**
- * Truncates numeric values that are too long
- * @param value - Numeric string to truncate
- * @param maxLength - Maximum character length before truncating
+ * Maps full US state names to their 2-letter abbreviations
  */
-export function truncateNumeric(value: string, maxLength: number = 10): string {
-  if (value.length <= maxLength) return value;
+export const US_STATE_ABBREVIATIONS: Record<string, string> = {
+  "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR",
+  "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE",
+  "Florida": "FL", "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID",
+  "Illinois": "IL", "Indiana": "IN", "Iowa": "IA", "Kansas": "KS",
+  "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
+  "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
+  "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV",
+  "New Hampshire": "NH", "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY",
+  "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",
+  "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
+  "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT",
+  "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV",
+  "Wisconsin": "WI", "Wyoming": "WY"
+};
+
+/**
+ * Formats location string for display
+ * @param location - Full location string (e.g., "Las Vegas, Nevada")
+ * @param mobile - Whether to use abbreviated format for mobile
+ * @returns Formatted location string
+ */
+export function formatLocation(location: string, mobile: boolean = false): string {
+  if (!location) return "";
   
-  // For very large numbers, use K/M/B notation
-  const num = parseFloat(value.replace(/,/g, ''));
-  if (isNaN(num)) return value;
+  if (!mobile) return location;
   
-  if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(1)}B`;
-  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
-  if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;
+  // Parse "City, State" format
+  const parts = location.split(",").map(s => s.trim());
+  if (parts.length !== 2) return location;
   
-  return value;
+  const [city, state] = parts;
+  const abbreviation = US_STATE_ABBREVIATIONS[state];
+  
+  return abbreviation ? `${city}, ${abbreviation}` : location;
 }

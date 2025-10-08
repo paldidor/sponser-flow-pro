@@ -131,6 +131,7 @@ export const transformToOpportunity = (
       facebook_followers: number | null;
       twitter_followers: number | null;
       reach: number | null;
+      images?: string[] | null;
     } | null;
     packages?: Array<{
       id: string;
@@ -147,6 +148,10 @@ export const transformToOpportunity = (
   
   const packages = offer.packages || [];
   const sponsors = offer.sponsors || [];
+  
+  // Use team photo if available, otherwise use sport placeholder
+  const teamImages = teamProfile?.images || [];
+  const imageUrl = teamImages.length > 0 ? teamImages[0] : getSportPlaceholder(sport);
   
   return {
     id: offer.id,
@@ -169,7 +174,7 @@ export const transformToOpportunity = (
     startingAt: packages.length > 0 
       ? Math.min(...packages.map(p => p.price))
       : 0,
-    imageUrl: getSportPlaceholder(sport),
+    imageUrl,
     saved: false,
   };
 };

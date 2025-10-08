@@ -83,6 +83,8 @@ export const useOfferDetail = (offerId: string | undefined) => {
         twitter_followers: teamProfile?.twitter_followers || undefined,
         youtube_followers: teamProfile?.youtube_followers || undefined,
         email_list_size: teamProfile?.email_list_size || undefined,
+        reach: teamProfile?.reach || undefined,
+        images: Array.isArray(teamProfile?.images) ? teamProfile.images : [],
       };
 
       // Transform packages data

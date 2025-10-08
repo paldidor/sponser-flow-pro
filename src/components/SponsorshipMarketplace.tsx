@@ -280,18 +280,29 @@ const SponsorshipMarketplace = ({ sponsorshipData, teamData }: SponsorshipMarket
                 </div>
               </div>
 
-              {/* Right: Images */}
+              {/* Right: Photo Gallery */}
               {team.images && team.images.length > 0 && (
-                <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:self-start lg:max-h-[500px]">
-                  {team.images.slice(0, 2).map((img, idx) => (
-                    <div key={idx} className="h-28 sm:h-32 lg:h-40 rounded-lg overflow-hidden border border-gray-200 bg-gray-100 shadow-sm">
-                      <img 
-                        src={img} 
-                        alt={`${team.team_name} - Team photo ${idx + 1}`} 
-                        className="w-full h-full object-cover" 
-                      />
-                    </div>
-                  ))}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-gray-700">Team Photos</h3>
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:self-start">
+                    {team.images.slice(0, 4).map((img, idx) => (
+                      <div 
+                        key={idx} 
+                        className="aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                      >
+                        <img 
+                          src={img} 
+                          alt={`${team.team_name} - Team photo ${idx + 1}`} 
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" 
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  {team.images.length > 4 && (
+                    <p className="text-xs text-gray-500 text-center">
+                      +{team.images.length - 4} more photo{team.images.length - 4 !== 1 ? 's' : ''}
+                    </p>
+                  )}
                 </div>
               )}
             </div>

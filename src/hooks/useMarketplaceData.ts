@@ -30,7 +30,8 @@ export const useMarketplaceData = () => {
             instagram_followers,
             facebook_followers,
             twitter_followers,
-            reach
+            reach,
+            images
           ),
           sponsorship_packages!inner (
             id,

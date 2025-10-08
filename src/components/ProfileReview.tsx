@@ -11,6 +11,7 @@ import { TeamProfile } from "@/types/flow";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { validateSocialMediaURL, validateEmail } from "@/lib/validationUtils";
+import { TeamPhotoUploader } from "./team/TeamPhotoUploader";
 
 interface ProfileReviewProps {
   teamData: TeamProfile | null;
@@ -148,7 +149,7 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
           youtube_followers: data.youtube_followers || 0,
           email_list_size: data.email_list_size || 0,
           reach: data.reach || 0,
-          images: [],
+          images: data.images || [],
         };
         
         setTeam(fetchedTeam);
@@ -546,43 +547,54 @@ const ProfileReview = ({ teamData, onApprove, isManualEntry = false, onProfileUp
         )}
 
         <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">Team Photos</h2>
-            <Button variant="ghost" size="sm">
-              <Pencil className="w-4 h-4 mr-2" />
-              Edit Photos
-            </Button>
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold mb-2">Team Photos</h2>
+            <p className="text-sm text-muted-foreground">
+              Showcase your team with high-quality photos to attract sponsors
+            </p>
           </div>
           
-          {isLoading && (
+          {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">
               Loading profile data...
             </div>
+          ) : (
+            <TeamPhotoUploader
+              teamProfileId={currentTeam.team_name || ""}
+              currentImages={currentTeam.images || []}
+              onImagesUpdate={async (newImages) => {
+                const updatedTeam = { ...currentTeam, images: newImages };
+                setTeam(updatedTeam);
+                
+                if (onProfileUpdate) {
+                  onProfileUpdate(updatedTeam);
+                }
+                
+                // Save to database
+                try {
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (user) {
+                    const { error } = await supabase
+                      .from('team_profiles')
+                      .update({ images: newImages })
+                      .eq('user_id', user.id);
+                    
+                    if (error) {
+                      console.error('Error saving images:', error);
+                      toast({
+                        title: "Error",
+                        description: "Failed to save photos to profile",
+                        variant: "destructive",
+                      });
+                    }
+                  }
+                } catch (err) {
+                  console.error('Error updating images:', err);
+                }
+              }}
+              maxPhotos={6}
+            />
           )}
-          
-          {!isLoading && currentTeam.images && currentTeam.images.length > 0 && (
-            <div className="mb-4 p-3 bg-accent/10 rounded-lg border border-accent/20">
-              <p className="text-sm text-accent-foreground">
-                💡 Add more photos to make your profile more appealing to sponsors
-              </p>
-            </div>
-          )}
-
-          <div className="grid grid-cols-3 gap-4">
-            {currentTeam.images?.map((img, idx) => (
-              <div key={idx} className="aspect-video rounded-lg overflow-hidden bg-muted">
-                <img src={img} alt={`Team ${idx + 1}`} className="w-full h-full object-cover" />
-              </div>
-            ))}
-            <div className="aspect-video rounded-lg border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-primary transition-colors">
-              <div className="text-center">
-                <div className="w-12 h-12 rounded-full bg-muted mx-auto mb-2 flex items-center justify-center">
-                  <span className="text-2xl">📷</span>
-                </div>
-                <p className="text-sm text-muted-foreground">Add Photo</p>
-              </div>
-            </div>
-          </div>
         </Card>
 
         <div className="grid md:grid-cols-2 gap-6">

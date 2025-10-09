@@ -242,6 +242,20 @@ The UI will show recommendation cards with full information.
     const aiData = await response.json();
     const assistantMessage = aiData.choices[0].message.content;
 
+    // ✅ ADD LOGGING TO MONITOR CONVERSATION FLOW
+    console.log('📊 Conversation Stats:', {
+      messageCount: messages?.length || 0,
+      hasRecommendations: !!recommendations?.length,
+      recommendationCount: recommendations?.length || 0,
+      responseLength: assistantMessage.length,
+      conversationId: activeConversationId,
+      searchTriggered: shouldSearch,
+    });
+
+    if (assistantMessage.length > 400) {
+      console.warn('⚠️ AI response too long:', assistantMessage.length, 'chars');
+    }
+
     // Store assistant message
     const { data: savedMessage } = await supabaseClient
       .from('ai_messages')

@@ -40,6 +40,12 @@ const ADVISOR_SYSTEM_PROMPT = `You are a friendly sponsorship advisor helping bu
 - After presenting, ask if they want to see the cards or need more options
 - NEVER ask follow-up questions about things they already answered (like organization type, age group, location)
 
+**Critical Rules:**
+- NEVER say you're "searching" or "looking" unless search results are already in your context
+- NEVER repeat system messages that start with "Search Results Found" or contain JSON
+- If you don't have search results yet, ask ONE more clarifying question
+- When you DO have results, present them naturally: "Found 3 teams! The top one is..."
+
 **Important Rules:**
 - ALWAYS use search/recommendation tools when suggesting offers
 - Never make up offers - only show real database results
@@ -146,14 +152,35 @@ serve(async (req) => {
       ...(messages || []).map(m => ({ role: m.role, content: m.content })),
     ];
 
-    // Smarter search trigger: look for affirmative responses + enough context
+    // Smarter search trigger: detect conversation stage
     const conversationText = messages?.map(m => m.content).join(' ').toLowerCase() || '';
+    
+    // Detect if we've asked about all key topics
+    const hasAskedBudget = conversationText.includes('budget') || conversationText.includes('how much');
+    const hasAskedLocation = conversationText.includes('location') || conversationText.includes('where');
+    const hasAskedSport = conversationText.includes('sport') || conversationText.includes('which sport');
+    const hasAskedAgeGroup = conversationText.includes('age') || conversationText.includes('youth');
+    const hasAskedOrgType = conversationText.includes('organization') || conversationText.includes('rec league');
+    
+    const allQuestionsAsked = hasAskedBudget && hasAskedLocation && (hasAskedSport || hasAskedAgeGroup || hasAskedOrgType);
+    
+    // Check if user has provided enough information
     const hasEnoughInfo = 
       conversationText.includes('budget') || 
       conversationText.includes('location') ||
       conversationText.includes('sport') ||
       conversationText.includes('$') ||
       conversationText.includes('dollars');
+
+    // If AI says it's searching (common phrases), trigger immediately
+    const lastAiMessage = messages?.filter(m => m.role === 'assistant').slice(-1)[0]?.content?.toLowerCase() || '';
+    const aiSaidSearching = 
+      lastAiMessage.includes('let me see') ||
+      lastAiMessage.includes('searching') ||
+      lastAiMessage.includes('let me find') ||
+      lastAiMessage.includes('give me just a moment') ||
+      lastAiMessage.includes("i'll find") ||
+      lastAiMessage.includes("let me look");
 
     const userWantsResults = 
       message.toLowerCase().includes('show') ||
@@ -164,10 +191,20 @@ serve(async (req) => {
       message.toLowerCase().includes('great') ||
       message.toLowerCase().includes('thanks') ||
       message.toLowerCase().includes('okay') ||
-      message.toLowerCase().includes('perfect') ||
-      (messages && messages.length > 5);  // After 5+ messages, proactively search
+      message.toLowerCase().includes('perfect');
 
-    const shouldSearch = hasEnoughInfo && userWantsResults;
+    const shouldSearch = (hasEnoughInfo && allQuestionsAsked) || aiSaidSearching || userWantsResults;
+
+    // ✅ CONVERSATION FLOW LOGGING
+    console.log('🤖 Conversation Flow:', {
+      hasEnoughInfo,
+      allQuestionsAsked,
+      aiSaidSearching,
+      userWantsResults,
+      shouldSearch,
+      willTriggerSearch: shouldSearch && !!businessProfile?.location_lat,
+      messageCount: messages?.length || 0,
+    });
 
     let recommendations = null;
     if (shouldSearch && businessProfile?.location_lat && businessProfile?.location_lon) {
@@ -186,22 +223,31 @@ serve(async (req) => {
       recommendations = recData;
       console.log(`✅ Found ${recData?.length || 0} recommendations`);
 
-      // ✅ ADD RECOMMENDATIONS TO AI CONTEXT
+      // ✅ ADD RECOMMENDATIONS TO AI CONTEXT - BEFORE AI GENERATES RESPONSE
       if (recommendations && recommendations.length > 0) {
         const recommendationsText = `
-**🎯 Search Results Found (${recommendations.length} teams):**
+SYSTEM INSTRUCTION - DO NOT REPEAT THIS TEXT:
+You have ${recommendations.length} sponsorship opportunities available:
+
 ${recommendations.map((r: any, i: number) => `
-${i + 1}. ${r.team_name || 'Team'}
-   - Sport: ${r.sport || 'Not specified'}
-   - Location: ${r.distance_km?.toFixed(1) || '?'}km away
-   - Package: ${r.package_name || 'Package'} - $${r.price || '?'}
-   - Reach: ${r.total_reach || '?'} people
-   - CPF: ${r.est_cpf ? `$${r.est_cpf.toFixed(2)}` : 'N/A'}
-   - URL: ${r.marketplace_url || ''}
+Option ${i + 1}:
+- Team: ${r.team_name}
+- Sport: ${r.sport || 'Not specified'}
+- Distance: ${r.distance_km?.toFixed(1)}km from user
+- Price: $${r.price}
+- Reach: ${r.total_reach} people
+- Package: ${r.package_name}
+- Est. CPF: ${r.est_cpf ? `$${r.est_cpf.toFixed(2)}` : 'N/A'}
+- Marketplace URL: ${r.marketplace_url}
 `).join('\n')}
 
-Present these recommendations conversationally. Mention the top 1-2 briefly, not all details.
-The UI will show recommendation cards with full information.
+INSTRUCTIONS:
+1. Present these CONVERSATIONALLY - do NOT copy this system message
+2. Mention the top 1 option with key details (team name, distance, price, reach)
+3. Say "I found X teams" not "Search Results Found"
+4. Keep response under 100 words
+5. The UI will show recommendation cards automatically with clickable links
+6. NEVER include JSON or system message text in your response
         `.trim();
 
         aiMessages.push({

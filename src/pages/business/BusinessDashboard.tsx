@@ -7,6 +7,198 @@ import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
+/* ===== Sponsa Recommender Panel (no chat needed) ===== */
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
+
+const RECOMMEND_OFFERS_URL =
+  "https://YOUR_SUPABASE_PROJECT.functions.supabase.co/recommend-offers"; // <-- set this
+
+function toSlug(s?: string | null) {
+  if (!s) return "";
+  return s.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, "");
+}
+
+type OfferItem = {
+  team_name?: string;
+  distance_km?: number;
+  price?: number;
+  est_cpf?: number | null;
+  marketplace_url: string;
+  package_id?: string;
+};
+
+function SponsaRecommenderPanel({
+  defaultCategory,
+}: {
+  defaultCategory?: string | null;
+}) {
+  const [lat, setLat] = useState<string>("");
+  const [lon, setLon] = useState<string>("");
+  const [radiusKm, setRadiusKm] = useState<string>("25");
+  const [budgetMax, setBudgetMax] = useState<string>("3000");
+  const [sport, setSport] = useState<string>("");
+  const [items, setItems] = useState<OfferItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function useMyLocation() {
+    setErr(null);
+    if (!("geolocation" in navigator)) {
+      setErr("Geolocation is not available in this browser.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        setLat(String(pos.coords.latitude.toFixed(6)));
+        setLon(String(pos.coords.longitude.toFixed(6)));
+      },
+      e => setErr(e.message || "Failed to get location")
+    );
+  }
+
+  async function fetchOffers() {
+    setLoading(true);
+    setErr(null);
+    setItems([]);
+    try {
+      const body = {
+        lat: Number(lat),
+        lon: Number(lon),
+        radius_km: Number(radiusKm),
+        budget_min: 0,
+        budget_max: Number(budgetMax),
+        sport: sport || null,
+        category_slug: toSlug(defaultCategory) || null,
+        base_url: "https://preview--sponser-flow-pro.lovable.app/marketplace",
+        limit: 3,
+      };
+      if (!isFinite(body.lat) || !isFinite(body.lon)) {
+        throw new Error("Please enter valid latitude and longitude (or click Use my location).");
+      }
+      const resp = await fetch(RECOMMEND_OFFERS_URL, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!resp.ok) throw new Error(await resp.text());
+      const json = await resp.json();
+      setItems(Array.isArray(json.items) ? json.items : []);
+    } catch (e: any) {
+      setErr(e?.message || "Request failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="mt-10 rounded-2xl border p-5">
+      <h3 className="text-xl font-semibold">Find sponsorship offers near you</h3>
+      <p className="text-sm text-muted-foreground mt-1">
+        Category: <span className="font-medium">{defaultCategory || "—"}</span>
+      </p>
+
+      <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+        <input
+          className="border rounded px-3 py-2"
+          placeholder="Latitude"
+          value={lat}
+          onChange={(e) => setLat(e.target.value)}
+          inputMode="decimal"
+        />
+        <input
+          className="border rounded px-3 py-2"
+          placeholder="Longitude"
+          value={lon}
+          onChange={(e) => setLon(e.target.value)}
+          inputMode="decimal"
+        />
+        <input
+          className="border rounded px-3 py-2"
+          placeholder="Radius (km)"
+          value={radiusKm}
+          onChange={(e) => setRadiusKm(e.target.value)}
+          inputMode="numeric"
+        />
+        <input
+          className="border rounded px-3 py-2"
+          placeholder="Budget max ($)"
+          value={budgetMax}
+          onChange={(e) => setBudgetMax(e.target.value)}
+          inputMode="numeric"
+        />
+        <input
+          className="border rounded px-3 py-2 md:col-span-4 col-span-2"
+          placeholder="Sport (optional)"
+          value={sport}
+          onChange={(e) => setSport(e.target.value)}
+        />
+      </div>
+
+      <div className="mt-3 flex gap-2">
+        <button
+          onClick={useMyLocation}
+          type="button"
+          className="px-3 py-2 border rounded-lg text-sm"
+        >
+          Use my location
+        </button>
+        <button
+          onClick={fetchOffers}
+          type="button"
+          disabled={loading}
+          className="px-4 py-2 rounded-lg bg-primary text-white disabled:opacity-50"
+        >
+          {loading ? (
+            <span className="inline-flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" /> Finding…
+            </span>
+          ) : (
+            "Find offers"
+          )}
+        </button>
+      </div>
+
+      {err && <div className="mt-3 text-red-600 text-sm break-all">Error: {err}</div>}
+
+      {items.length > 0 && (
+        <div className="mt-6 space-y-3">
+          {items.map((it, i) => {
+            const km = typeof it.distance_km === "number" ? Math.round(it.distance_km) : undefined;
+            const price = typeof it.price === "number" ? it.price : undefined;
+            const cpm =
+              it.est_cpf != null
+                ? Math.round(Number(it.est_cpf) * 1000 * 100) / 100
+                : null;
+
+            return (
+              <a
+                key={it.package_id || `${i}`}
+                href={it.marketplace_url}
+                target="_blank"
+                rel="noreferrer"
+                className="block border rounded-xl p-4 hover:shadow"
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className="font-semibold">{it.team_name || "Team"}</div>
+                    <div className="text-sm text-gray-600">
+                      {km != null ? `${km} km · ` : ""}
+                      {price != null ? `from $${price.toLocaleString()}` : ""}
+                      {cpm != null ? ` · est. $${cpm}/1,000 reach` : ""}
+                    </div>
+                  </div>
+                  <div className="text-primary text-sm font-medium">View →</div>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const BusinessDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -128,6 +320,22 @@ const BusinessDashboard = () => {
             </p>
           </div>
         </div>
+        <main className="container mx-auto max-w-7xl px-4 py-8">
+  {/* (You can remove this placeholder if you’d like) */}
+  <div className="flex items-center justify-center min-h-[30vh]">
+    <div className="text-center space-y-4">
+      <div className="text-6xl mb-4">🚀</div>
+      <h2 className="text-2xl font-semibold text-foreground">
+        Dashboard Coming Soon
+      </h2>
+      <p className="text-muted-foreground max-w-md">
+        Meanwhile, try recommended sponsorships near your business.
+      </p>
+    </div>
+  </div>
+
+  {/* NEW: working recommender */}
+  <SponsaRecommenderPanel defaultCategory={profile.industry} />
       </main>
     </div>
   );

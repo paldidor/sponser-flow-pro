@@ -2,6 +2,7 @@ import { useState, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useOfferCreation } from "@/hooks/useOfferCreation";
+import { usePDFAnalysisPolling } from "@/hooks/usePDFAnalysisPolling";
 import { validatePDFFile } from "@/lib/validationUtils";
 import LoadingState from "@/components/LoadingState";
 
@@ -25,6 +26,43 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
   const [failedOfferId, setFailedOfferId] = useState<string | null>(null);
   const { toast } = useToast();
   const { currentOfferId, offerData, isLoading: isLoadingOffer, loadingMessage, loadOfferData, loadLatestQuestionnaireOffer, publishOffer, resetOffer } = useOfferCreation();
+
+  // PDF Analysis Polling Hook
+  const { startPolling: startPDFPolling } = usePDFAnalysisPolling({
+    maxAttempts: 60,
+    onComplete: async (offerId) => {
+      await loadOfferData(offerId, 'pdf');
+      setCurrentStep('review');
+    },
+    onFailed: (offerId, errorMessage) => {
+      setFailedOfferId(offerId);
+      toast({
+        title: "PDF Analysis Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      
+      setTimeout(() => {
+        setCurrentStep('questionnaire');
+        setAnalysisFileName(null);
+        resetOffer();
+      }, 3000);
+    },
+    onTimeout: (offerId) => {
+      setFailedOfferId(offerId);
+      toast({
+        title: "Analysis Timeout",
+        description: "The analysis is taking longer than expected. Let's try the questionnaire instead - it only takes 2-3 minutes!",
+        variant: "destructive",
+      });
+      
+      setTimeout(() => {
+        setCurrentStep('questionnaire');
+        setAnalysisFileName(null);
+        resetOffer();
+      }, 3000);
+    },
+  });
 
   const handleSelectMethod = (method: "form" | "website" | "pdf", url?: string) => {
     if (method === "form") {
@@ -150,7 +188,7 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
       return;
     }
     
-    pollAnalysisStatus(offerData.id);
+    startPDFPolling(offerData.id);
   };
 
   const loadPDFOfferData = async (offerId: string) => {
@@ -158,89 +196,6 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
     if (data) {
       setCurrentStep('review');
     }
-  };
-
-  const pollAnalysisStatus = async (offerId: string) => {
-    const maxAttempts = 60; // Increased from 30 to 60 (120 seconds total)
-    let attempts = 0;
-
-    const checkStatus = async (): Promise<'completed' | 'failed' | 'pending'> => {
-      const { data, error } = await supabase
-        .from('sponsorship_offers')
-        .select('analysis_status, impact')
-        .eq('id', offerId)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error checking analysis status:', error);
-        return 'pending';
-      }
-
-      if (!data) {
-        console.error('Offer not found');
-        return 'failed';
-      }
-
-      if (data.analysis_status === 'completed') {
-        return 'completed';
-      } else if (data.analysis_status === 'failed' || data.analysis_status === 'error') {
-        return 'failed';
-      }
-
-      return 'pending';
-    };
-
-    while (attempts < maxAttempts) {
-      const status = await checkStatus();
-      
-      if (status === 'completed') {
-        await loadPDFOfferData(offerId);
-        return;
-      } else if (status === 'failed') {
-        // Fetch detailed error message
-        const { data: offerData } = await supabase
-          .from('sponsorship_offers')
-          .select('impact')
-          .eq('id', offerId)
-          .maybeSingle();
-        
-        const errorMessage = offerData?.impact || "We couldn't process your PDF. Let's try the questionnaire instead - it only takes 2-3 minutes!";
-        
-        setFailedOfferId(offerId);
-        toast({
-          title: "PDF Analysis Failed",
-          description: errorMessage,
-          variant: "destructive",
-        });
-        
-        // Auto-redirect to questionnaire after showing error
-        setTimeout(() => {
-          setCurrentStep('questionnaire');
-          setAnalysisFileName(null);
-          resetOffer();
-        }, 3000);
-        return;
-      }
-      
-      // Exponential backoff: 2s for first 30 attempts, then 3s
-      const waitTime = attempts < 30 ? 2000 : 3000;
-      await new Promise(resolve => setTimeout(resolve, waitTime));
-      attempts++;
-    }
-
-    // Timeout - auto-redirect to questionnaire instead of dashboard
-    setFailedOfferId(offerId);
-    toast({
-      title: "Analysis Timeout",
-      description: "The analysis is taking longer than expected. Let's try the questionnaire instead - it only takes 2-3 minutes!",
-      variant: "destructive",
-    });
-    
-    setTimeout(() => {
-      setCurrentStep('questionnaire');
-      setAnalysisFileName(null);
-      resetOffer();
-    }, 3000);
   };
 
   const handleRetryAnalysis = async (retryOfferId: string) => {
@@ -344,7 +299,7 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
 
     // Reset failed state and start polling
     setFailedOfferId(null);
-    pollAnalysisStatus(retryOfferId);
+    startPDFPolling(retryOfferId);
   };
 
   const handleWebsiteAnalyze = async (url: string) => {

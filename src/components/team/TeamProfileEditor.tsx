@@ -46,6 +46,7 @@ import { TeamProfile } from "@/types/flow";
 import { validateSocialMediaURL } from "@/lib/validationUtils";
 import { TeamPhotoUploader } from "./TeamPhotoUploader";
 import { TeamLogoUploader } from "./TeamLogoUploader";
+import { SocialMediaCard } from "./SocialMediaCard";
 
 interface TeamProfileEditorProps {
   open: boolean;
@@ -564,160 +565,64 @@ export const TeamProfileEditor = ({
 
           <TabsContent value="social" className="space-y-4 mt-4">
             <div className="space-y-4">
-              {/* Instagram */}
-              <Card className="p-4 bg-muted/30">
-                <div className="flex items-center gap-2 mb-3">
-                  <Instagram className="w-4 h-4 text-pink-600" />
-                  <Label className="text-sm font-medium">Instagram</Label>
-                </div>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="instagram_link">Profile URL</Label>
-                    <Input
-                      id="instagram_link"
-                      value={formData.instagram_link}
-                      onChange={(e) => updateField("instagram_link", e.target.value)}
-                      placeholder="https://instagram.com/yourteam"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="instagram_followers">Followers</Label>
-                    <Input
-                      id="instagram_followers"
-                      type="number"
-                      value={formData.instagram_followers || ""}
-                      onChange={(e) =>
-                        updateField("instagram_followers", Number(e.target.value))
-                      }
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-              </Card>
+              <SocialMediaCard
+                platform="Instagram"
+                icon={Instagram}
+                iconColor="text-pink-600"
+                linkValue={formData.instagram_link}
+                followersValue={formData.instagram_followers}
+                linkPlaceholder="https://instagram.com/yourteam"
+                onLinkChange={(value) => updateField("instagram_link", value)}
+                onFollowersChange={(value) => updateField("instagram_followers", value)}
+              />
 
-              {/* Facebook */}
-              <Card className="p-4 bg-muted/30">
-                <div className="flex items-center gap-2 mb-3">
-                  <Facebook className="w-4 h-4 text-blue-600" />
-                  <Label className="text-sm font-medium">Facebook</Label>
-                </div>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="facebook_link">Page URL</Label>
-                    <Input
-                      id="facebook_link"
-                      value={formData.facebook_link}
-                      onChange={(e) => updateField("facebook_link", e.target.value)}
-                      placeholder="https://facebook.com/yourteam"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="facebook_followers">Followers</Label>
-                    <Input
-                      id="facebook_followers"
-                      type="number"
-                      value={formData.facebook_followers || ""}
-                      onChange={(e) =>
-                        updateField("facebook_followers", Number(e.target.value))
-                      }
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-              </Card>
+              <SocialMediaCard
+                platform="Facebook"
+                icon={Facebook}
+                iconColor="text-blue-600"
+                linkValue={formData.facebook_link}
+                followersValue={formData.facebook_followers}
+                linkPlaceholder="https://facebook.com/yourteam"
+                linkLabel="Page URL"
+                onLinkChange={(value) => updateField("facebook_link", value)}
+                onFollowersChange={(value) => updateField("facebook_followers", value)}
+              />
 
-              {/* Twitter */}
-              <Card className="p-4 bg-muted/30">
-                <div className="flex items-center gap-2 mb-3">
-                  <Twitter className="w-4 h-4 text-blue-400" />
-                  <Label className="text-sm font-medium">Twitter / X</Label>
-                </div>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="twitter_link">Profile URL</Label>
-                    <Input
-                      id="twitter_link"
-                      value={formData.twitter_link}
-                      onChange={(e) => updateField("twitter_link", e.target.value)}
-                      placeholder="https://twitter.com/yourteam"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="twitter_followers">Followers</Label>
-                    <Input
-                      id="twitter_followers"
-                      type="number"
-                      value={formData.twitter_followers || ""}
-                      onChange={(e) =>
-                        updateField("twitter_followers", Number(e.target.value))
-                      }
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-              </Card>
+              <SocialMediaCard
+                platform="Twitter / X"
+                icon={Twitter}
+                iconColor="text-blue-400"
+                linkValue={formData.twitter_link}
+                followersValue={formData.twitter_followers}
+                linkPlaceholder="https://twitter.com/yourteam"
+                onLinkChange={(value) => updateField("twitter_link", value)}
+                onFollowersChange={(value) => updateField("twitter_followers", value)}
+              />
 
-              {/* LinkedIn */}
-              <Card className="p-4 bg-muted/30">
-                <div className="flex items-center gap-2 mb-3">
-                  <Linkedin className="w-4 h-4 text-blue-700" />
-                  <Label className="text-sm font-medium">LinkedIn</Label>
-                </div>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="linkedin_link">Company URL</Label>
-                    <Input
-                      id="linkedin_link"
-                      value={formData.linkedin_link}
-                      onChange={(e) => updateField("linkedin_link", e.target.value)}
-                      placeholder="https://linkedin.com/company/yourteam"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="linkedin_followers">Followers</Label>
-                    <Input
-                      id="linkedin_followers"
-                      type="number"
-                      value={formData.linkedin_followers || ""}
-                      onChange={(e) =>
-                        updateField("linkedin_followers", Number(e.target.value))
-                      }
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-              </Card>
+              <SocialMediaCard
+                platform="LinkedIn"
+                icon={Linkedin}
+                iconColor="text-blue-700"
+                linkValue={formData.linkedin_link}
+                followersValue={formData.linkedin_followers}
+                linkPlaceholder="https://linkedin.com/company/yourteam"
+                linkLabel="Company URL"
+                onLinkChange={(value) => updateField("linkedin_link", value)}
+                onFollowersChange={(value) => updateField("linkedin_followers", value)}
+              />
 
-              {/* YouTube */}
-              <Card className="p-4 bg-muted/30">
-                <div className="flex items-center gap-2 mb-3">
-                  <Youtube className="w-4 h-4 text-red-600" />
-                  <Label className="text-sm font-medium">YouTube</Label>
-                </div>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="youtube_link">Channel URL</Label>
-                    <Input
-                      id="youtube_link"
-                      value={formData.youtube_link}
-                      onChange={(e) => updateField("youtube_link", e.target.value)}
-                      placeholder="https://youtube.com/@yourteam"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="youtube_followers">Subscribers</Label>
-                    <Input
-                      id="youtube_followers"
-                      type="number"
-                      value={formData.youtube_followers || ""}
-                      onChange={(e) =>
-                        updateField("youtube_followers", Number(e.target.value))
-                      }
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-              </Card>
+              <SocialMediaCard
+                platform="YouTube"
+                icon={Youtube}
+                iconColor="text-red-600"
+                linkValue={formData.youtube_link}
+                followersValue={formData.youtube_followers}
+                linkPlaceholder="https://youtube.com/@yourteam"
+                linkLabel="Channel URL"
+                followersLabel="Subscribers"
+                onLinkChange={(value) => updateField("youtube_link", value)}
+                onFollowersChange={(value) => updateField("youtube_followers", value)}
+              />
             </div>
           </TabsContent>
 

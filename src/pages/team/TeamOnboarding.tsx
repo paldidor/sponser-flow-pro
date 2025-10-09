@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useOfferCreation } from "@/hooks/useOfferCreation";
+import { usePDFAnalysisPolling } from "@/hooks/usePDFAnalysisPolling";
 import { validateTeamProfile, validatePDFFile } from "@/lib/validationUtils";
 import LoadingState from "@/components/LoadingState";
 import CreateTeamProfile from "@/components/CreateTeamProfile";
@@ -55,6 +56,25 @@ const TeamOnboarding = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { currentOfferId, offerData, isLoading, loadingMessage, loadOfferData, loadLatestQuestionnaireOffer, publishOffer, resetOffer } = useOfferCreation();
+
+  // PDF Analysis Polling Hook
+  const { startPolling: startPDFPolling } = usePDFAnalysisPolling({
+    onComplete: async (offerId) => {
+      await loadOfferData(offerId, 'pdf');
+      setCurrentStep('review');
+    },
+    onFailed: () => {
+      setCurrentStep('pdf-upload');
+      setAnalysisFileName(null);
+    },
+    onTimeout: () => {
+      toast({
+        title: "Analysis Timeout",
+        description: "The analysis is taking longer than expected. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Update DB step when currentStep changes (source of truth for tab switches)
   useEffect(() => {
@@ -346,56 +366,6 @@ const TeamOnboarding = () => {
     if (data) {
       setCurrentStep('review');
     }
-  };
-
-  const pollAnalysisStatus = async (offerId: string) => {
-    const maxAttempts = 30;
-    let attempts = 0;
-
-    const checkStatus = async (): Promise<boolean> => {
-      const { data, error } = await supabase
-        .from('sponsorship_offers')
-        .select('analysis_status')
-        .eq('id', offerId)
-        .single();
-
-      if (error) {
-        console.error('Error checking analysis status:', error);
-        return false;
-      }
-
-      if (data.analysis_status === 'completed') {
-        return true;
-      } else if (data.analysis_status === 'failed' || data.analysis_status === 'error') {
-        toast({
-          title: "Analysis Failed",
-          description: "Please try again or choose a different method.",
-          variant: "destructive",
-        });
-        setCurrentStep('pdf-upload');
-        setAnalysisFileName(null);
-        return false;
-      }
-
-      return false;
-    };
-
-    while (attempts < maxAttempts) {
-      const isComplete = await checkStatus();
-      if (isComplete) {
-        await loadPDFOfferData(offerId);
-        setCurrentStep('review');
-        return;
-      }
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      attempts++;
-    }
-
-    toast({
-      title: "Analysis Timeout",
-      description: "The analysis is taking longer than expected. Please try again.",
-      variant: "destructive",
-    });
   };
 
 
@@ -735,7 +705,7 @@ const TeamOnboarding = () => {
                     return;
                   }
 
-                  pollAnalysisStatus(offerData.id);
+                  startPDFPolling(offerData.id);
                 }
               } catch (error) {
                 console.error('Unexpected error during PDF upload:', error);

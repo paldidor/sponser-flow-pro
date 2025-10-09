@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +25,7 @@ interface PackageCardProps {
   onTogglePlacement: (packageId: string, placementId: string) => void;
 }
 
-export function PackageCard({
+export const PackageCard = memo(function PackageCard({
   pkg,
   index,
   canRemove,
@@ -109,4 +110,4 @@ export function PackageCard({
       />
     </Card>
   );
-}
+});

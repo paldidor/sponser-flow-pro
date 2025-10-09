@@ -137,14 +137,33 @@ serve(async (req) => {
       ...(messages || []).map(m => ({ role: m.role, content: m.content })),
     ];
 
-    // Check if we should search for recommendations
-    let recommendations = null;
-    const shouldSearch = message.toLowerCase().includes('show') || 
-                        message.toLowerCase().includes('find') ||
-                        message.toLowerCase().includes('recommend') ||
-                        message.toLowerCase().includes('suggest');
+    // Smarter search trigger: look for affirmative responses + enough context
+    const conversationText = messages?.map(m => m.content).join(' ').toLowerCase() || '';
+    const hasEnoughInfo = 
+      conversationText.includes('budget') || 
+      conversationText.includes('location') ||
+      conversationText.includes('sport') ||
+      conversationText.includes('$') ||
+      conversationText.includes('dollars');
 
+    const userWantsResults = 
+      message.toLowerCase().includes('show') ||
+      message.toLowerCase().includes('find') ||
+      message.toLowerCase().includes('yes') ||
+      message.toLowerCase().includes('yeah') ||
+      message.toLowerCase().includes('sure') ||
+      message.toLowerCase().includes('great') ||
+      message.toLowerCase().includes('thanks') ||
+      message.toLowerCase().includes('okay') ||
+      message.toLowerCase().includes('perfect') ||
+      (messages && messages.length > 5);  // After 5+ messages, proactively search
+
+    const shouldSearch = hasEnoughInfo && userWantsResults;
+
+    let recommendations = null;
     if (shouldSearch && businessProfile?.location_lat && businessProfile?.location_lon) {
+      console.log('🔍 Searching for recommendations...');
+      
       const { data: recData } = await supabaseClient.rpc('rpc_recommend_offers', {
         p_lat: businessProfile.location_lat,
         p_lon: businessProfile.location_lon,
@@ -156,6 +175,36 @@ serve(async (req) => {
       });
 
       recommendations = recData;
+      console.log(`✅ Found ${recData?.length || 0} recommendations`);
+
+      // ✅ ADD RECOMMENDATIONS TO AI CONTEXT
+      if (recommendations && recommendations.length > 0) {
+        const recommendationsText = `
+**🎯 Search Results Found (${recommendations.length} teams):**
+${recommendations.map((r: any, i: number) => `
+${i + 1}. ${r.team_name || 'Team'}
+   - Sport: ${r.sport || 'Not specified'}
+   - Location: ${r.distance_km?.toFixed(1) || '?'}km away
+   - Package: ${r.package_name || 'Package'} - $${r.price || '?'}
+   - Reach: ${r.total_reach || '?'} people
+   - CPF: ${r.est_cpf ? `$${r.est_cpf.toFixed(2)}` : 'N/A'}
+   - URL: ${r.marketplace_url || ''}
+`).join('\n')}
+
+Present these recommendations conversationally. Mention the top 1-2 briefly, not all details.
+The UI will show recommendation cards with full information.
+        `.trim();
+
+        aiMessages.push({
+          role: 'system',
+          content: recommendationsText
+        });
+      } else if (shouldSearch) {
+        aiMessages.push({
+          role: 'system',
+          content: 'No recommendations found matching the criteria. Ask if they want to adjust their preferences (location, budget, sport).'
+        });
+      }
     }
 
     // Call Lovable AI

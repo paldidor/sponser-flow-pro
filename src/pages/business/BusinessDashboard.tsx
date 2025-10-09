@@ -8,15 +8,16 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
 /* ===== Sponsa Recommender Panel (no chat needed) ===== */
-import { useState } from "react";
-import { Loader2 } from "lucide-react";
 
-const RECOMMEND_OFFERS_URL =
-  "https://YOUR_SUPABASE_PROJECT.functions.supabase.co/recommend-offers"; // <-- set this
+const RECOMMEND_OFFERS_URL = "https://gtlxdbokhtdtfmziacai.supabase.co/functions/v1/recommend-offers"; // <-- TODO: put your real Edge Function URL
 
 function toSlug(s?: string | null) {
   if (!s) return "";
-  return s.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, "");
+  return s
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9\-]/g, "");
 }
 
 type OfferItem = {
@@ -28,11 +29,7 @@ type OfferItem = {
   package_id?: string;
 };
 
-function SponsaRecommenderPanel({
-  defaultCategory,
-}: {
-  defaultCategory?: string | null;
-}) {
+function SponsaRecommenderPanel({ defaultCategory }: { defaultCategory?: string | null }) {
   const [lat, setLat] = useState<string>("");
   const [lon, setLon] = useState<string>("");
   const [radiusKm, setRadiusKm] = useState<string>("25");
@@ -49,11 +46,11 @@ function SponsaRecommenderPanel({
       return;
     }
     navigator.geolocation.getCurrentPosition(
-      pos => {
+      (pos) => {
         setLat(String(pos.coords.latitude.toFixed(6)));
         setLon(String(pos.coords.longitude.toFixed(6)));
       },
-      e => setErr(e.message || "Failed to get location")
+      (e) => setErr(e.message || "Failed to get location"),
     );
   }
 
@@ -136,11 +133,7 @@ function SponsaRecommenderPanel({
       </div>
 
       <div className="mt-3 flex gap-2">
-        <button
-          onClick={useMyLocation}
-          type="button"
-          className="px-3 py-2 border rounded-lg text-sm"
-        >
+        <button onClick={useMyLocation} type="button" className="px-3 py-2 border rounded-lg text-sm">
           Use my location
         </button>
         <button
@@ -166,10 +159,7 @@ function SponsaRecommenderPanel({
           {items.map((it, i) => {
             const km = typeof it.distance_km === "number" ? Math.round(it.distance_km) : undefined;
             const price = typeof it.price === "number" ? it.price : undefined;
-            const cpm =
-              it.est_cpf != null
-                ? Math.round(Number(it.est_cpf) * 1000 * 100) / 100
-                : null;
+            const cpm = it.est_cpf != null ? Math.round(Number(it.est_cpf) * 1000 * 100) / 100 : null;
 
             return (
               <a
@@ -199,6 +189,8 @@ function SponsaRecommenderPanel({
   );
 }
 
+/* ===== End panel ===== */
+
 const BusinessDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -208,10 +200,8 @@ const BusinessDashboard = () => {
   // Onboarding verification - redirect if not completed
   useEffect(() => {
     if (!loading && profile) {
-      const isComplete = 
-        profile.onboarding_completed === true && 
-        profile.current_onboarding_step === 'completed';
-      
+      const isComplete = profile.onboarding_completed === true && profile.current_onboarding_step === "completed";
+
       if (!isComplete) {
         toast({
           title: "Complete Your Profile",
@@ -231,7 +221,7 @@ const BusinessDashboard = () => {
         title: "Refreshed",
         description: "Dashboard data updated successfully.",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to refresh dashboard data.",
@@ -242,13 +232,8 @@ const BusinessDashboard = () => {
     }
   };
 
-  const handleEditProfile = () => {
-    navigate("/business/onboarding");
-  };
-
-  const handleLogoUpdated = () => {
-    refetch();
-  };
+  const handleEditProfile = () => navigate("/business/onboarding");
+  const handleLogoUpdated = () => refetch();
 
   // Loading state
   if (loading) {
@@ -270,11 +255,7 @@ const BusinessDashboard = () => {
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="mt-2 space-y-4">
             <p>Unable to load your business profile. Please try again.</p>
-            <Button 
-              onClick={handleRefresh} 
-              disabled={isRefreshing}
-              className="w-full"
-            >
+            <Button onClick={handleRefresh} disabled={isRefreshing} className="w-full">
               {isRefreshing ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -290,10 +271,7 @@ const BusinessDashboard = () => {
     );
   }
 
-  // Format location for display
-  const location = profile.city && profile.state 
-    ? `${profile.city}, ${profile.state}` 
-    : undefined;
+  const location = profile.city && profile.state ? `${profile.city}, ${profile.state}` : undefined;
 
   return (
     <div className="min-h-screen bg-background">
@@ -308,34 +286,19 @@ const BusinessDashboard = () => {
       />
 
       <main className="container mx-auto max-w-7xl px-4 py-8">
-        <div className="flex items-center justify-center min-h-[60vh]">
+        {/* You can keep or remove this teaser */}
+        <div className="flex items-center justify-center min-h-[30vh]">
           <div className="text-center space-y-4">
             <div className="text-6xl mb-4">🚀</div>
-            <h2 className="text-2xl font-semibold text-foreground">
-              Dashboard Coming Soon
-            </h2>
+            <h2 className="text-2xl font-semibold text-foreground">Dashboard Coming Soon</h2>
             <p className="text-muted-foreground max-w-md">
-              We're building an amazing dashboard experience for your business. 
-              Check back soon!
+              Meanwhile, try recommended sponsorships near your business.
             </p>
           </div>
         </div>
-        <main className="container mx-auto max-w-7xl px-4 py-8">
-  {/* (You can remove this placeholder if you’d like) */}
-  <div className="flex items-center justify-center min-h-[30vh]">
-    <div className="text-center space-y-4">
-      <div className="text-6xl mb-4">🚀</div>
-      <h2 className="text-2xl font-semibold text-foreground">
-        Dashboard Coming Soon
-      </h2>
-      <p className="text-muted-foreground max-w-md">
-        Meanwhile, try recommended sponsorships near your business.
-      </p>
-    </div>
-  </div>
 
-  {/* NEW: working recommender */}
-  <SponsaRecommenderPanel defaultCategory={profile.industry} />
+        {/* NEW: working recommender */}
+        <SponsaRecommenderPanel defaultCategory={profile.industry} />
       </main>
     </div>
   );

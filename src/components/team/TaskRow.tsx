@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { memo, useCallback, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ActivationTask } from "@/types/dashboard";
@@ -9,14 +10,23 @@ interface TaskRowProps {
   onStatusChange: (taskId: string, status: string) => void;
 }
 
-export const TaskRow = ({ task, onStatusChange }: TaskRowProps) => {
-  const statusConfig = {
+const TaskRowComponent = ({ task, onStatusChange }: TaskRowProps) => {
+  const statusConfig = useMemo(() => ({
     "in-progress": { label: "In Progress", color: "bg-dashboard-orange text-white" },
     stuck: { label: "Stuck", color: "bg-destructive text-white" },
     complete: { label: "Complete", color: "bg-dashboard-green text-white" },
-  };
+  }), []);
 
   const status = statusConfig[task.status];
+
+  const formattedDate = useMemo(() => 
+    format(new Date(task.due_date), "MMM dd, yyyy"),
+    [task.due_date]
+  );
+
+  const handleStatusChange = useCallback((value: string) => {
+    onStatusChange(task.id, value);
+  }, [onStatusChange, task.id]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-6 gap-3 sm:gap-4 p-3 sm:p-4 border-b last:border-b-0 hover:bg-muted/50 transition-colors">
@@ -30,7 +40,7 @@ export const TaskRow = ({ task, onStatusChange }: TaskRowProps) => {
       <div className="md:col-span-1">
         <div className="text-xs text-muted-foreground md:hidden mb-1">Due Date</div>
         <div className="text-sm text-foreground">
-          {format(new Date(task.due_date), "MMM dd, yyyy")}
+          {formattedDate}
         </div>
       </div>
 
@@ -55,7 +65,7 @@ export const TaskRow = ({ task, onStatusChange }: TaskRowProps) => {
       {/* Status */}
       <div className="md:col-span-1">
         <div className="text-xs text-muted-foreground md:hidden mb-1">Status</div>
-        <Select value={task.status} onValueChange={(value) => onStatusChange(task.id, value)}>
+        <Select value={task.status} onValueChange={handleStatusChange}>
           <SelectTrigger className="w-full h-10 touch-manipulation">
             <SelectValue>
               <Badge className={cn("font-medium", status.color)}>
@@ -79,3 +89,13 @@ export const TaskRow = ({ task, onStatusChange }: TaskRowProps) => {
     </div>
   );
 };
+
+// Memoize component to prevent unnecessary re-renders
+export const TaskRow = memo(TaskRowComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.task.id === nextProps.task.id &&
+    prevProps.task.status === nextProps.task.status &&
+    prevProps.task.task_name === nextProps.task.task_name &&
+    prevProps.task.due_date === nextProps.task.due_date
+  );
+});

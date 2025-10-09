@@ -1,4 +1,5 @@
-import { ExternalLink, Facebook, Twitter, Instagram, Linkedin, Building2 } from "lucide-react";
+import { memo, useCallback } from "react";
+import { ExternalLink, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,10 +10,14 @@ interface SponsorCardProps {
   sponsor: ActiveSponsor;
 }
 
-export const SponsorCard = ({ sponsor }: SponsorCardProps) => {
-  const handleAssetClick = (assetUrl: string) => {
+const SponsorCardComponent = ({ sponsor }: SponsorCardProps) => {
+  const handleAssetClick = useCallback((assetUrl: string) => {
     window.open(assetUrl, "_blank");
-  };
+  }, []);
+
+  const handleSocialClick = useCallback((url: string) => {
+    window.open(url, "_blank");
+  }, []);
 
   return (
     <Card className="p-4 sm:p-6 hover:shadow-lg transition-all">
@@ -60,7 +65,7 @@ export const SponsorCard = ({ sponsor }: SponsorCardProps) => {
             variant="ghost"
             size="sm"
             className="h-9 w-9 p-0 touch-manipulation"
-            onClick={() => window.open(sponsor.social_links.facebook, "_blank")}
+            onClick={() => handleSocialClick(sponsor.social_links.facebook!)}
           >
             <Facebook className="h-4 w-4" />
             <span className="sr-only">Facebook</span>
@@ -71,7 +76,7 @@ export const SponsorCard = ({ sponsor }: SponsorCardProps) => {
             variant="ghost"
             size="sm"
             className="h-9 w-9 p-0 touch-manipulation"
-            onClick={() => window.open(sponsor.social_links.twitter, "_blank")}
+            onClick={() => handleSocialClick(sponsor.social_links.twitter!)}
           >
             <Twitter className="h-4 w-4" />
             <span className="sr-only">Twitter</span>
@@ -82,7 +87,7 @@ export const SponsorCard = ({ sponsor }: SponsorCardProps) => {
             variant="ghost"
             size="sm"
             className="h-9 w-9 p-0 touch-manipulation"
-            onClick={() => window.open(sponsor.social_links.instagram, "_blank")}
+            onClick={() => handleSocialClick(sponsor.social_links.instagram!)}
           >
             <Instagram className="h-4 w-4" />
             <span className="sr-only">Instagram</span>
@@ -93,7 +98,7 @@ export const SponsorCard = ({ sponsor }: SponsorCardProps) => {
             variant="ghost"
             size="sm"
             className="h-9 w-9 p-0 touch-manipulation"
-            onClick={() => window.open(sponsor.social_links.linkedin, "_blank")}
+            onClick={() => handleSocialClick(sponsor.social_links.linkedin!)}
           >
             <Linkedin className="h-4 w-4" />
             <span className="sr-only">LinkedIn</span>
@@ -132,3 +137,6 @@ export const SponsorCard = ({ sponsor }: SponsorCardProps) => {
     </Card>
   );
 };
+
+// Memoize to prevent unnecessary re-renders in lists
+export const SponsorCard = memo(SponsorCardComponent);

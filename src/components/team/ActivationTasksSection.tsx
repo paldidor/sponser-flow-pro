@@ -1,4 +1,5 @@
 import { ClipboardList, Plus } from "lucide-react";
+import { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { TaskRow } from "./TaskRow";
@@ -8,13 +9,13 @@ import { toast } from "sonner";
 export const ActivationTasksSection = () => {
   const { data: tasks, isLoading, error, updateTaskStatus } = useActivationTasks();
 
-  const handleAddTask = () => {
+  const handleAddTask = useCallback(() => {
     toast.info("Add task dialog coming soon");
-  };
+  }, []);
 
-  const handleStatusChange = (taskId: string, status: string) => {
+  const handleStatusChange = useCallback((taskId: string, status: string) => {
     updateTaskStatus({ id: taskId, status });
-  };
+  }, [updateTaskStatus]);
 
   if (isLoading) {
     return (

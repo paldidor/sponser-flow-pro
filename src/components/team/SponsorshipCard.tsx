@@ -1,3 +1,4 @@
+import { memo, useMemo, useCallback } from "react";
 import { Edit, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,27 +11,33 @@ interface SponsorshipCardProps {
   onEdit?: (pkg: SponsorshipPackage) => void;
 }
 
-export const SponsorshipCard = ({ package: pkg, onEdit }: SponsorshipCardProps) => {
-  const statusConfig = {
+const SponsorshipCardComponent = ({ package: pkg, onEdit }: SponsorshipCardProps) => {
+  const statusConfig = useMemo(() => ({
     "sold-active": { label: "Sold - Active", color: "bg-dashboard-green text-white" },
     live: { label: "Live", color: "bg-primary text-white" },
     draft: { label: "Draft", color: "bg-muted text-muted-foreground" },
     inactive: { label: "Inactive", color: "bg-destructive text-white" },
-  };
+  }), []);
 
   const status = statusConfig[pkg.status];
 
-  const formatPrice = (price: number) => {
+  const formattedPrice = useMemo(() => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(price);
-  };
+    }).format(pkg.price);
+  }, [pkg.price]);
 
-  // Display all placements (up to 5)
-  const displayPlacements = pkg.placements.slice(0, 5);
+  const displayPlacements = useMemo(() => 
+    pkg.placements.slice(0, 5),
+    [pkg.placements]
+  );
+
+  const handleEdit = useCallback(() => {
+    onEdit?.(pkg);
+  }, [onEdit, pkg]);
 
   return (
     <Card className="w-[264px] flex-shrink-0 overflow-hidden border-2 border-primary/20 hover:border-primary/40 transition-all hover:shadow-lg bg-gradient-to-br from-white to-primary/5">
@@ -43,7 +50,7 @@ export const SponsorshipCard = ({ package: pkg, onEdit }: SponsorshipCardProps) 
           variant="ghost"
           size="sm"
           className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
-          onClick={() => onEdit?.(pkg)}
+          onClick={handleEdit}
         >
           <Edit className="h-4 w-4" />
           <span className="sr-only">Edit package</span>
@@ -57,7 +64,7 @@ export const SponsorshipCard = ({ package: pkg, onEdit }: SponsorshipCardProps) 
 
         {/* Price Box */}
         <div className="bg-primary text-white rounded-lg p-4 text-center">
-          <div className="text-3xl font-bold">{formatPrice(pkg.price)}</div>
+          <div className="text-3xl font-bold">{formattedPrice}</div>
           <div className="text-xs text-white/80 mt-1">Package Value</div>
         </div>
 
@@ -106,3 +113,6 @@ export const SponsorshipCard = ({ package: pkg, onEdit }: SponsorshipCardProps) 
     </Card>
   );
 };
+
+// Memoize to prevent unnecessary re-renders in horizontal scroll lists
+export const SponsorshipCard = memo(SponsorshipCardComponent);

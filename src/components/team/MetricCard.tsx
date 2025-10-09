@@ -1,3 +1,4 @@
+import { memo, useMemo } from "react";
 import { LucideIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -9,8 +10,8 @@ interface MetricCardProps {
   variant: "blue" | "green" | "orange";
 }
 
-export const MetricCard = ({ title, value, icon: Icon, variant }: MetricCardProps) => {
-  const variantStyles = {
+const MetricCardComponent = ({ title, value, icon: Icon, variant }: MetricCardProps) => {
+  const variantStyles = useMemo(() => ({
     blue: {
       bg: "bg-primary/5",
       iconBg: "bg-primary/10",
@@ -29,7 +30,7 @@ export const MetricCard = ({ title, value, icon: Icon, variant }: MetricCardProp
       iconColor: "text-dashboard-orange",
       textColor: "text-foreground",
     },
-  };
+  }), []);
 
   const styles = variantStyles[variant];
 
@@ -47,3 +48,6 @@ export const MetricCard = ({ title, value, icon: Icon, variant }: MetricCardProp
     </Card>
   );
 };
+
+// Memoize to prevent unnecessary re-renders when metrics don't change
+export const MetricCard = memo(MetricCardComponent);

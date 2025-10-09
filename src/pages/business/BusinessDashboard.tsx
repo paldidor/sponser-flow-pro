@@ -1,271 +1,136 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBusinessProfile } from "@/hooks/useBusinessProfile";
-import CreateBusinessProfile from "@/components/CreateBusinessProfile";
-import BusinessProfileForm from "@/components/BusinessProfileForm";
-import BusinessProfileReview from "@/components/BusinessProfileReview";
-import AnalysisSpinner from "@/components/AnalysisSpinner";
-import { supabase } from "@/integrations/supabase/client";
+import { BusinessDashboardHeader } from "@/components/business/BusinessDashboardHeader";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
-type OnboardingStep = "create-profile" | "manual-form" | "profile-review" | "website-analysis";
-
-/* =========================
-   NEW: SponsaChat component
-   ========================= */
-function normalizeCategorySlug(input?: string | null) {
-  if (!input) return "";
-  return String(input)
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9\-]/g, "");
-}
-
-type RecommendArgs = {
-  lat: number;
-  lon: number;
-  radius_km: number;
-  budget_min?: number;
-  budget_max: number;
-  sport?: string;
-  category_slug?: string;
-  base_url?: string;
-  limit?: number;
-};
-
-const RECOMMEND_OFFERS_URL = "https://gtlxdbokhtdtfmziacai.supabase.co/functions/v1/recommend-offers"; // <-- PUT YOUR REAL EDGE FUNCTION URL
-const AGENT_ID = "wf_68e7806431d48190a7323285e43ecaca0ac1a3d730967f0e"; // <-- PUT YOUR REAL Agent Builder ID
-
-function SponsaChat({ businessIndustry }: { businessIndustry?: string | null }) {
-  useEffect(() => {
-    // Guard: wait for embed script to exist
-    const mountChat = () => {
-      // @ts-ignore
-      const mount = window?.myChat?.mount || window?.ChatKit?.mount || window?.openaiChat?.mount;
-      if (!mount) {
-        console.warn("[SponsaChat] Chat widget not found on window. Ensure the chat embed script is loaded.");
-        return;
-      }
-
-      // Client tool executor for recommendOffers
-      async function handleRecommendOffers(args: RecommendArgs) {
-        // Fill safe defaults expected by your strict tool schema
-        const {
-          lat,
-          lon,
-          radius_km,
-          budget_min = 0,
-          budget_max,
-          sport = "",
-          category_slug = "",
-          base_url = "https://preview--sponser-flow-pro.lovable.app/marketplace",
-          limit = 3,
-        } = args;
-
-        // If the agent didn’t provide a category, try to infer from business profile industry
-        const inferredCategory =
-          category_slug && category_slug.trim().length > 0
-            ? category_slug
-            : normalizeCategorySlug(businessIndustry || "");
-
-        const resp = await fetch(RECOMMEND_OFFERS_URL, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            lat,
-            lon,
-            radius_km,
-            budget_min,
-            budget_max,
-            sport: sport || null,
-            category_slug: inferredCategory || null,
-            base_url,
-            limit,
-          }),
-        });
-
-        if (!resp.ok) {
-          const msg = await resp.text().catch(() => "");
-          throw new Error(`recommendOffers HTTP ${resp.status}: ${msg}`);
-        }
-
-        const { items } = await resp.json();
-        return { items: Array.isArray(items) ? items : [] };
-      }
-
-      // Mount the chat widget and wire the client tool
-      mount({
-        element: document.getElementById("sponsa-chat"),
-        agentId: AGENT_ID,
-        // Some embeds use onToolCall; others accept a tools map — we support both
-        onToolCall: async ({ name, arguments: toolArgs }: { name: string; arguments: RecommendArgs }) => {
-          if (name === "recommendOffers") return await handleRecommendOffers(toolArgs);
-        },
-        tools: {
-          recommendOffers: async (toolArgs: RecommendArgs) => await handleRecommendOffers(toolArgs),
-        },
-      });
-    };
-
-    // Try immediately, then once after a short delay (in case script loads late)
-    mountChat();
-    const t = setTimeout(mountChat, 1000);
-    return () => clearTimeout(t);
-  }, [businessIndustry]);
-
-  // Provide a mount point + a simple launcher (optional)
-  return (
-    <>
-      <div id="sponsa-chat" />
-      {/* Optional floating button to open your chat if your embed supports it
-      <button
-        className="fixed bottom-6 right-6 rounded-full shadow-lg bg-primary text-white px-4 py-2"
-        onClick={() => (window as any)?.myChat?.open?.()}
-      >
-        Chat with Sponsa
-      </button> */}
-    </>
-  );
-}
-/* =========================
-   END: SponsaChat component
-   ========================= */
-
-const BusinessOnboarding = () => {
+const BusinessDashboard = () => {
   const navigate = useNavigate();
-  const { profile, loading: profileLoading, refetch } = useBusinessProfile();
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>("create-profile");
-  const [isInitializing, setIsInitializing] = useState(true);
+  const { toast } = useToast();
+  const { profile, loading, refetch } = useBusinessProfile();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Onboarding verification - redirect if not completed
   useEffect(() => {
-    const initializeOnboarding = async () => {
-      if (profileLoading) return;
-
-      // If onboarding is already completed, redirect to dashboard
-      if (profile?.onboarding_completed && profile?.current_onboarding_step === "completed") {
-        console.log("[BusinessOnboarding] Onboarding already completed, redirecting to dashboard");
-        navigate("/business/dashboard", { replace: true });
-        return;
+    if (!loading && profile) {
+      const isComplete = 
+        profile.onboarding_completed === true && 
+        profile.current_onboarding_step === 'completed';
+      
+      if (!isComplete) {
+        toast({
+          title: "Complete Your Profile",
+          description: "Please finish setting up your business profile to access the dashboard.",
+          variant: "default",
+        });
+        navigate("/business/onboarding", { replace: true });
       }
+    }
+  }, [profile, loading, navigate, toast]);
 
-      // Resume from where user left off
-      if (profile) {
-        console.log("[BusinessOnboarding] Resuming onboarding:", profile.current_onboarding_step);
-
-        // Check if profile has data (either from website analysis or manual entry)
-        const hasProfileData = profile.business_name && profile.industry && profile.city && profile.state;
-
-        if (hasProfileData) {
-          setCurrentStep("profile-review");
-        } else if (profile.seed_url) {
-          // Website was submitted, show analysis
-          setCurrentStep("website-analysis");
-        } else {
-          // Start from beginning
-          setCurrentStep("create-profile");
-        }
-      }
-
-      setIsInitializing(false);
-    };
-
-    initializeOnboarding();
-  }, [profile, profileLoading, navigate]);
-
-  // Subscribe to realtime updates for website analysis
-  useEffect(() => {
-    if (currentStep !== "website-analysis" || !profile?.id) return;
-
-    const channel = supabase
-      .channel("business-profile-changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "business_profiles",
-          filter: `id=eq.${profile.id}`,
-        },
-        (payload) => {
-          console.log("[BusinessOnboarding] Profile updated:", payload);
-          const updatedProfile = payload.new as any;
-
-          // Check if analysis populated the data
-          if (updatedProfile.business_name && updatedProfile.industry) {
-            refetch();
-            setCurrentStep("profile-review");
-          }
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [currentStep, profile?.id, refetch]);
-
-  const handleWebsiteComplete = () => {
-    setCurrentStep("website-analysis");
-  };
-
-  const handleManualEntry = () => {
-    setCurrentStep("manual-form");
-  };
-
-  const handleFormComplete = () => {
-    refetch();
-    setCurrentStep("profile-review");
-  };
-
-  const handleEdit = () => {
-    if (profile?.seed_url) {
-      setCurrentStep("website-analysis");
-    } else {
-      setCurrentStep("manual-form");
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+      toast({
+        title: "Refreshed",
+        description: "Dashboard data updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to refresh dashboard data.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
-  const handleReviewComplete = async () => {
-    // Refresh auth session to pick up updated profile
-    await supabase.auth.refreshSession();
-
-    // Small delay to ensure state propagates
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    navigate("/business/dashboard", { replace: true });
+  const handleEditProfile = () => {
+    navigate("/business/onboarding");
   };
 
-  if (isInitializing || profileLoading) {
+  const handleLogoUpdated = () => {
+    refetch();
+  };
+
+  // Loading state
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="text-sm text-muted-foreground">Loading your dashboard...</p>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen py-12 px-4">
-      <div className="container mx-auto">
-        {currentStep === "create-profile" && (
-          <CreateBusinessProfile onComplete={handleWebsiteComplete} onManualEntry={handleManualEntry} />
-        )}
-
-        {currentStep === "website-analysis" && <AnalysisSpinner type="website" />}
-
-        {currentStep === "manual-form" && <BusinessProfileForm onComplete={handleFormComplete} />}
-
-        {currentStep === "profile-review" && (
-          <BusinessProfileReview onEdit={handleEdit} onComplete={handleReviewComplete} />
-        )}
+  // Error state - profile not found
+  if (!profile) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background p-4">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="mt-2 space-y-4">
+            <p>Unable to load your business profile. Please try again.</p>
+            <Button 
+              onClick={handleRefresh} 
+              disabled={isRefreshing}
+              className="w-full"
+            >
+              {isRefreshing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Refreshing...
+                </>
+              ) : (
+                "Try Again"
+              )}
+            </Button>
+          </AlertDescription>
+        </Alert>
       </div>
+    );
+  }
 
-      {/* =========================
-          NEW: Render the chat mount
-          Pass profile.industry to help the tool infer category_slug if missing
-         ========================= */}
-      <SponsaChat businessIndustry={profile?.industry} />
+  // Format location for display
+  const location = profile.city && profile.state 
+    ? `${profile.city}, ${profile.state}` 
+    : undefined;
+
+  return (
+    <div className="min-h-screen bg-background">
+      <BusinessDashboardHeader
+        businessName={profile.business_name}
+        location={location}
+        industry={profile.industry}
+        logoUrl={profile.sources?.logo_url as string | undefined}
+        notificationCount={0}
+        onEditProfile={handleEditProfile}
+        onLogoUpdated={handleLogoUpdated}
+      />
+
+      <main className="container mx-auto max-w-7xl px-4 py-8">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center space-y-4">
+            <div className="text-6xl mb-4">🚀</div>
+            <h2 className="text-2xl font-semibold text-foreground">
+              Dashboard Coming Soon
+            </h2>
+            <p className="text-muted-foreground max-w-md">
+              We're building an amazing dashboard experience for your business. 
+              Check back soon!
+            </p>
+          </div>
+        </div>
+      </main>
     </div>
   );
 };
 
-export default BusinessOnboarding;
+export default BusinessDashboard;

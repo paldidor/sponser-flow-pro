@@ -113,31 +113,28 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .single();
 
+    // Fetch full conversation history (increase limit for better context)
     const { data: messages } = await supabaseClient
       .from('ai_messages')
       .select('role, content')
       .eq('conversation_id', activeConversationId)
       .order('created_at', { ascending: true })
-      .limit(10);
+      .limit(20);
 
-    const conversationHistory = messages?.length 
-      ? `\n\nRecent conversation:\n${messages.map(m => `[${m.role}]: ${m.content}`).join('\n')}`
-      : '';
-
-    const context = `
+    // Build business profile context (without conversation history)
+    const businessContext = `
 **Business Profile:**
 - Name: ${businessProfile?.business_name || 'Not set'}
 - Industry: ${businessProfile?.industry || 'Not set'}
 - Location: ${businessProfile?.city}, ${businessProfile?.state}
 - Values: ${businessProfile?.main_values ? JSON.stringify(businessProfile.main_values) : 'Not specified'}
-${conversationHistory}
     `.trim();
 
-    // Prepare messages for AI
+    // Prepare messages for AI with FULL conversation history
     const aiMessages = [
       { role: 'system', content: ADVISOR_SYSTEM_PROMPT },
-      { role: 'system', content: `Context:\n${context}` },
-      { role: 'user', content: message },
+      { role: 'system', content: businessContext },
+      ...(messages || []).map(m => ({ role: m.role, content: m.content })),
     ];
 
     // Check if we should search for recommendations

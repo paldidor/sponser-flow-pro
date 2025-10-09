@@ -7,7 +7,17 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requiresProfile = false }: ProtectedRouteProps) => {
-  const { loading, user, userRole, hasTeamProfile, onboardingCompleted, currentOnboardingStep } = useSmartAuth();
+  const { 
+    loading, 
+    user, 
+    userRole, 
+    hasTeamProfile, 
+    onboardingCompleted, 
+    currentOnboardingStep,
+    hasBusinessProfile,
+    businessOnboardingCompleted,
+    businessOnboardingStep
+  } = useSmartAuth();
   const location = useLocation();
 
   if (loading) {
@@ -26,6 +36,12 @@ const ProtectedRoute = ({ children, requiresProfile = false }: ProtectedRoutePro
   // Role-based access control for team routes
   const isTeamRoute = location.pathname.startsWith('/team');
   if (isTeamRoute && userRole !== 'team') {
+    return <Navigate to="/marketplace" replace />;
+  }
+
+  // Role-based access control for business routes
+  const isBusinessRoute = location.pathname.startsWith('/business');
+  if (isBusinessRoute && userRole !== 'business') {
     return <Navigate to="/marketplace" replace />;
   }
 
@@ -52,6 +68,30 @@ const ProtectedRoute = ({ children, requiresProfile = false }: ProtectedRoutePro
     if (isFullyComplete) {
       console.log('[ProtectedRoute] Onboarding fully complete, allowing dashboard access');
       return <Navigate to="/team/dashboard" replace />;
+    }
+  }
+
+  // BUSINESS: Dashboard requires profile + onboarding_completed + step === 'completed'
+  if (requiresProfile && userRole === 'business' && location.pathname === '/business/dashboard') {
+    const canAccessDashboard = hasBusinessProfile && businessOnboardingCompleted && businessOnboardingStep === 'completed';
+    
+    if (!canAccessDashboard) {
+      console.log('[ProtectedRoute] Blocking business dashboard, redirecting to onboarding', {
+        hasBusinessProfile,
+        businessOnboardingCompleted,
+        businessOnboardingStep,
+      });
+      return <Navigate to="/business/onboarding" replace />;
+    }
+  }
+
+  // BUSINESS: For onboarding route, redirect to dashboard ONLY if step === 'completed'
+  if (userRole === 'business' && location.pathname === '/business/onboarding') {
+    const isFullyComplete = hasBusinessProfile && businessOnboardingCompleted && businessOnboardingStep === 'completed';
+    
+    if (isFullyComplete) {
+      console.log('[ProtectedRoute] Business onboarding fully complete, allowing dashboard access');
+      return <Navigate to="/business/dashboard" replace />;
     }
   }
 

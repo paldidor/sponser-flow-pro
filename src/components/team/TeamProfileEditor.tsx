@@ -1,15 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -18,8 +8,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import {
   Tabs,
   TabsContent,
@@ -27,26 +15,21 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import {
-  Instagram,
-  Facebook,
-  Twitter,
-  Linkedin,
-  Youtube,
-  Mail,
-  X,
-  Plus,
   Users,
   Trophy,
-  Calendar,
+  Instagram,
   Image as ImageIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { TeamProfile } from "@/types/flow";
 import { validateSocialMediaURL } from "@/lib/validationUtils";
-import { TeamPhotoUploader } from "./TeamPhotoUploader";
-import { TeamLogoUploader } from "./TeamLogoUploader";
-import { SocialMediaCard } from "./SocialMediaCard";
+
+// Lazy load tab components for better performance
+const BasicInfoTab = lazy(() => import("./profile-editor/BasicInfoTab").then(m => ({ default: m.BasicInfoTab })));
+const CompetitionTab = lazy(() => import("./profile-editor/CompetitionTab").then(m => ({ default: m.CompetitionTab })));
+const SocialMediaTab = lazy(() => import("./profile-editor/SocialMediaTab").then(m => ({ default: m.SocialMediaTab })));
+const PhotosTab = lazy(() => import("./profile-editor/PhotosTab").then(m => ({ default: m.PhotosTab })));
 
 interface TeamProfileEditorProps {
   open: boolean;
@@ -63,7 +46,6 @@ export const TeamProfileEditor = ({
 }: TeamProfileEditorProps) => {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
-  const [newTagValue, setNewTagValue] = useState("");
 
   // Form state
   const [formData, setFormData] = useState<TeamProfile>({
@@ -141,37 +123,6 @@ export const TeamProfileEditor = ({
 
   const updateField = (field: keyof TeamProfile, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleAddTag = () => {
-    const trimmed = newTagValue.trim();
-    if (!trimmed) {
-      toast({
-        title: "Empty Value",
-        description: "Please enter a value to add",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (formData.main_values.includes(trimmed)) {
-      toast({
-        title: "Duplicate Value",
-        description: "This value already exists",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    updateField("main_values", [...formData.main_values, trimmed]);
-    setNewTagValue("");
-  };
-
-  const handleRemoveTag = (tag: string) => {
-    updateField(
-      "main_values",
-      formData.main_values.filter((v) => v !== tag)
-    );
   };
 
   const validateForm = (): boolean => {
@@ -358,291 +309,27 @@ export const TeamProfileEditor = ({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="basic" className="space-y-4 mt-4">
-            {/* Logo Upload Section */}
-            <TeamLogoUploader
-              currentLogo={formData.logo}
-              onLogoUpdate={(newLogo) => updateField("logo", newLogo)}
-            />
+          <Suspense fallback={<div className="p-4 text-center text-muted-foreground">Loading...</div>}>
+            <TabsContent value="basic">
+              <BasicInfoTab formData={formData} updateField={updateField} />
+            </TabsContent>
 
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="team_name">
-                  Team Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="team_name"
-                  value={formData.team_name}
-                  onChange={(e) => updateField("team_name", e.target.value)}
-                  placeholder="Enter team name"
-                />
-              </div>
+            <TabsContent value="competition">
+              <CompetitionTab formData={formData} updateField={updateField} />
+            </TabsContent>
 
-              <div className="space-y-2">
-                <Label htmlFor="sport">
-                  Sport <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="sport"
-                  value={formData.sport}
-                  onChange={(e) => updateField("sport", e.target.value)}
-                  placeholder="e.g., Soccer, Basketball"
-                />
-              </div>
+            <TabsContent value="social">
+              <SocialMediaTab formData={formData} updateField={updateField} />
+            </TabsContent>
 
-              <div className="space-y-2">
-                <Label htmlFor="location">
-                  Location <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="location"
-                  value={formData.location}
-                  onChange={(e) => updateField("location", e.target.value)}
-                  placeholder="City, State/Country"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="number_of_players">Number of Players</Label>
-                <Input
-                  id="number_of_players"
-                  value={formData.number_of_players}
-                  onChange={(e) => updateField("number_of_players", e.target.value)}
-                  placeholder="e.g., 15-20"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="team_bio">Team Bio</Label>
-              <Textarea
-                id="team_bio"
-                value={formData.team_bio}
-                onChange={(e) => updateField("team_bio", e.target.value)}
-                placeholder="Tell us about your team..."
-                rows={4}
+            <TabsContent value="photos">
+              <PhotosTab 
+                profileData={profileData}
+                formData={formData} 
+                updateField={updateField} 
               />
-            </div>
-
-            <div className="space-y-3">
-              <Label>Team Values</Label>
-              <div className="flex flex-wrap gap-2 min-h-[40px] p-3 border rounded-md bg-muted/30">
-                {formData.main_values.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="px-3 py-1">
-                    {tag}
-                    <button
-                      onClick={() => handleRemoveTag(tag)}
-                      className="ml-2 hover:text-destructive"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  value={newTagValue}
-                  onChange={(e) => setNewTagValue(e.target.value)}
-                  placeholder="Add a team value (e.g., Teamwork, Excellence)"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddTag();
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  onClick={handleAddTag}
-                  variant="outline"
-                  size="sm"
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="competition" className="space-y-4 mt-4">
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="level_of_play">Level of Play</Label>
-                <Select
-                  value={formData.level_of_play}
-                  onValueChange={(value) => updateField("level_of_play", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Youth">Youth</SelectItem>
-                    <SelectItem value="High School">High School</SelectItem>
-                    <SelectItem value="College">College</SelectItem>
-                    <SelectItem value="Semi-Professional">Semi-Professional</SelectItem>
-                    <SelectItem value="Professional">Professional</SelectItem>
-                    <SelectItem value="Amateur">Amateur</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="competition_scope">Competition Scope</Label>
-                <Select
-                  value={formData.competition_scope}
-                  onValueChange={(value) => updateField("competition_scope", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select scope" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Local">Local</SelectItem>
-                    <SelectItem value="Regional">Regional</SelectItem>
-                    <SelectItem value="National">National</SelectItem>
-                    <SelectItem value="International">International</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="organization_status">Organization Status</Label>
-                <Select
-                  value={formData.organization_status}
-                  onValueChange={(value) => updateField("organization_status", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Non-Profit">Non-Profit</SelectItem>
-                    <SelectItem value="For-Profit">For-Profit</SelectItem>
-                    <SelectItem value="School-Based">School-Based</SelectItem>
-                    <SelectItem value="Community">Community</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email_list_size">Email List Size</Label>
-                <Input
-                  id="email_list_size"
-                  type="number"
-                  value={formData.email_list_size || ""}
-                  onChange={(e) =>
-                    updateField("email_list_size", Number(e.target.value))
-                  }
-                  placeholder="0"
-                />
-              </div>
-            </div>
-
-            <Card className="p-4 bg-muted/30">
-              <div className="flex items-center gap-2 mb-3">
-                <Calendar className="w-4 h-4 text-primary" />
-                <Label className="text-sm font-medium">Season Dates</Label>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="season_start_date">Start Date</Label>
-                  <Input
-                    id="season_start_date"
-                    type="date"
-                    value={formData.season_start_date}
-                    onChange={(e) => updateField("season_start_date", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="season_end_date">End Date</Label>
-                  <Input
-                    id="season_end_date"
-                    type="date"
-                    value={formData.season_end_date}
-                    onChange={(e) => updateField("season_end_date", e.target.value)}
-                  />
-                </div>
-              </div>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="social" className="space-y-4 mt-4">
-            <div className="space-y-4">
-              <SocialMediaCard
-                platform="Instagram"
-                icon={Instagram}
-                iconColor="text-pink-600"
-                linkValue={formData.instagram_link}
-                followersValue={formData.instagram_followers}
-                linkPlaceholder="https://instagram.com/yourteam"
-                onLinkChange={(value) => updateField("instagram_link", value)}
-                onFollowersChange={(value) => updateField("instagram_followers", value)}
-              />
-
-              <SocialMediaCard
-                platform="Facebook"
-                icon={Facebook}
-                iconColor="text-blue-600"
-                linkValue={formData.facebook_link}
-                followersValue={formData.facebook_followers}
-                linkPlaceholder="https://facebook.com/yourteam"
-                linkLabel="Page URL"
-                onLinkChange={(value) => updateField("facebook_link", value)}
-                onFollowersChange={(value) => updateField("facebook_followers", value)}
-              />
-
-              <SocialMediaCard
-                platform="Twitter / X"
-                icon={Twitter}
-                iconColor="text-blue-400"
-                linkValue={formData.twitter_link}
-                followersValue={formData.twitter_followers}
-                linkPlaceholder="https://twitter.com/yourteam"
-                onLinkChange={(value) => updateField("twitter_link", value)}
-                onFollowersChange={(value) => updateField("twitter_followers", value)}
-              />
-
-              <SocialMediaCard
-                platform="LinkedIn"
-                icon={Linkedin}
-                iconColor="text-blue-700"
-                linkValue={formData.linkedin_link}
-                followersValue={formData.linkedin_followers}
-                linkPlaceholder="https://linkedin.com/company/yourteam"
-                linkLabel="Company URL"
-                onLinkChange={(value) => updateField("linkedin_link", value)}
-                onFollowersChange={(value) => updateField("linkedin_followers", value)}
-              />
-
-              <SocialMediaCard
-                platform="YouTube"
-                icon={Youtube}
-                iconColor="text-red-600"
-                linkValue={formData.youtube_link}
-                followersValue={formData.youtube_followers}
-                linkPlaceholder="https://youtube.com/@yourteam"
-                linkLabel="Channel URL"
-                followersLabel="Subscribers"
-                onLinkChange={(value) => updateField("youtube_link", value)}
-                onFollowersChange={(value) => updateField("youtube_followers", value)}
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="photos" className="space-y-4 mt-4">
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-medium mb-2">Team Photos</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Upload photos of your team, players, and events. These will be displayed on your marketplace listing.
-                </p>
-              </div>
-              
-              <TeamPhotoUploader
-                teamProfileId={profileData?.id || ""}
-                currentImages={formData.images || []}
-                onImagesUpdate={(updatedImages) => updateField("images", updatedImages)}
-                maxPhotos={6}
-              />
-            </div>
-          </TabsContent>
+            </TabsContent>
+          </Suspense>
         </Tabs>
 
         <DialogFooter>

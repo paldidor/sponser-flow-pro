@@ -18,6 +18,7 @@ import TeamOnboarding from "@/pages/team/TeamOnboarding";
 import TeamDashboard from "@/pages/team/TeamDashboard";
 import CreateOffer from "@/pages/team/CreateOffer";
 import BusinessOnboarding from "@/pages/business/BusinessOnboarding";
+import BusinessDashboard from "@/pages/business/BusinessDashboard";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -78,6 +79,14 @@ const App = () => {
                   element={
                     <ProtectedRoute>
                       <BusinessOnboarding />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/business/dashboard"
+                  element={
+                    <ProtectedRoute requiresProfile={true}>
+                      <BusinessDashboard />
                     </ProtectedRoute>
                   }
                 />

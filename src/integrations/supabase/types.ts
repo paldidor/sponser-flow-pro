@@ -61,6 +61,183 @@ export type Database = {
           },
         ]
       }
+      ai_conversations: {
+        Row: {
+          business_profile_id: string | null
+          channel: string
+          created_at: string | null
+          id: string
+          last_activity_at: string | null
+          metadata: Json | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          business_profile_id?: string | null
+          channel?: string
+          created_at?: string | null
+          id?: string
+          last_activity_at?: string | null
+          metadata?: Json | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          business_profile_id?: string | null
+          channel?: string
+          created_at?: string | null
+          id?: string
+          last_activity_at?: string | null
+          metadata?: Json | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_conversations_business_profile_id_fkey"
+            columns: ["business_profile_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_recommendations: {
+        Row: {
+          conversation_id: string
+          created_at: string | null
+          id: string
+          message_id: string | null
+          package_id: string | null
+          recommendation_reason: string | null
+          sponsorship_offer_id: string | null
+          user_action: string | null
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          message_id?: string | null
+          package_id?: string | null
+          recommendation_reason?: string | null
+          sponsorship_offer_id?: string | null
+          user_action?: string | null
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          message_id?: string | null
+          package_id?: string | null
+          recommendation_reason?: string | null
+          sponsorship_offer_id?: string | null
+          user_action?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_recommendations_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_recommendations_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "ai_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_recommendations_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "sponsorship_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_recommendations_sponsorship_offer_id_fkey"
+            columns: ["sponsorship_offer_id"]
+            isOneToOne: false
+            referencedRelation: "sponsorship_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_user_preferences: {
+        Row: {
+          avoided_offers: string[] | null
+          budget_range: unknown | null
+          created_at: string | null
+          id: string
+          interaction_patterns: Json | null
+          preferred_locations: string[] | null
+          preferred_sports: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          avoided_offers?: string[] | null
+          budget_range?: unknown | null
+          created_at?: string | null
+          id?: string
+          interaction_patterns?: Json | null
+          preferred_locations?: string[] | null
+          preferred_sports?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          avoided_offers?: string[] | null
+          budget_range?: unknown | null
+          created_at?: string | null
+          id?: string
+          interaction_patterns?: Json | null
+          preferred_locations?: string[] | null
+          preferred_sports?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author_id: string | null
@@ -119,6 +296,8 @@ export type Database = {
           industry: string
           instagram_link: string | null
           linkedin_link: string | null
+          location_lat: number | null
+          location_lon: number | null
           main_values: Json | null
           markets_served: string | null
           number_of_employees: string | null
@@ -144,6 +323,8 @@ export type Database = {
           industry: string
           instagram_link?: string | null
           linkedin_link?: string | null
+          location_lat?: number | null
+          location_lon?: number | null
           main_values?: Json | null
           markets_served?: string | null
           number_of_employees?: string | null
@@ -169,6 +350,8 @@ export type Database = {
           industry?: string
           instagram_link?: string | null
           linkedin_link?: string | null
+          location_lat?: number | null
+          location_lon?: number | null
           main_values?: Json | null
           markets_served?: string | null
           number_of_employees?: string | null
@@ -725,6 +908,80 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      km_between: {
+        Args: { lat1: number; lat2: number; lon1: number; lon2: number }
+        Returns: number
+      }
+      rpc_estimate_roi: {
+        Args: {
+          p_category_slug?: string
+          p_package_id: string
+          p_team_profile_id: string
+        }
+        Returns: {
+          est_cpf: number
+          est_reach: number
+          notes: string
+        }[]
+      }
+      rpc_get_team_packages: {
+        Args: {
+          p_budget_max?: number
+          p_budget_min?: number
+          p_team_profile_id: string
+        }
+        Returns: {
+          benefits: string[]
+          description: string
+          name: string
+          package_id: string
+          price: number
+          status: string
+        }[]
+      }
+      rpc_recommend_offers: {
+        Args: {
+          p_base_url?: string
+          p_budget_max?: number
+          p_budget_min?: number
+          p_category_slug?: string
+          p_lat: number
+          p_limit?: number
+          p_lon: number
+          p_radius_km: number
+          p_sport?: string
+        }
+        Returns: {
+          distance_km: number
+          est_cpf: number
+          marketplace_url: string
+          package_id: string
+          package_name: string
+          price: number
+          sponsorship_offer_id: string
+          team_name: string
+          team_profile_id: string
+          total_reach: number
+        }[]
+      }
+      rpc_search_teams_by_target: {
+        Args: {
+          p_budget_max?: number
+          p_budget_min?: number
+          p_lat: number
+          p_lon: number
+          p_radius_km: number
+          p_sport?: string
+        }
+        Returns: {
+          best_price: number
+          distance_km: number
+          score: number
+          team_name: string
+          team_profile_id: string
+          total_reach: number
+        }[]
       }
       set_limit: {
         Args: { "": number }

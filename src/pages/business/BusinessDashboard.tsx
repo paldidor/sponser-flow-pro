@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { AIAdvisorChat } from "@/components/business/AIAdvisorChat";
 
 const BusinessDashboard = () => {
   const navigate = useNavigate();
@@ -129,6 +130,9 @@ const BusinessDashboard = () => {
           </div>
         </div>
       </main>
+
+      {/* AI Advisor Chat Widget */}
+      <AIAdvisorChat />
     </div>
   );
 };

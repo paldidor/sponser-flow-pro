@@ -12,6 +12,16 @@ interface BusinessProfile {
   website?: string;
   seed_url?: string;
   domain?: string;
+  company_bio?: string;
+  main_values?: string[] | any;
+  number_of_employees?: string;
+  markets_served?: string;
+  instagram_link?: string;
+  facebook_link?: string;
+  linkedin_link?: string;
+  youtube_link?: string;
+  twitter_link?: string;
+  sources?: any;
   onboarding_completed: boolean;
   current_onboarding_step: string;
   created_at: string;

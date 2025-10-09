@@ -110,47 +110,77 @@ export type Database = {
         Row: {
           business_name: string
           city: string
+          company_bio: string | null
           created_at: string
           current_onboarding_step: string
           domain: string | null
+          facebook_link: string | null
           id: string
           industry: string
+          instagram_link: string | null
+          linkedin_link: string | null
+          main_values: Json | null
+          markets_served: string | null
+          number_of_employees: string | null
           onboarding_completed: boolean
           seed_url: string | null
+          sources: Json | null
           state: string
+          twitter_link: string | null
           updated_at: string
           user_id: string
           website: string | null
+          youtube_link: string | null
         }
         Insert: {
           business_name: string
           city: string
+          company_bio?: string | null
           created_at?: string
           current_onboarding_step?: string
           domain?: string | null
+          facebook_link?: string | null
           id?: string
           industry: string
+          instagram_link?: string | null
+          linkedin_link?: string | null
+          main_values?: Json | null
+          markets_served?: string | null
+          number_of_employees?: string | null
           onboarding_completed?: boolean
           seed_url?: string | null
+          sources?: Json | null
           state: string
+          twitter_link?: string | null
           updated_at?: string
           user_id: string
           website?: string | null
+          youtube_link?: string | null
         }
         Update: {
           business_name?: string
           city?: string
+          company_bio?: string | null
           created_at?: string
           current_onboarding_step?: string
           domain?: string | null
+          facebook_link?: string | null
           id?: string
           industry?: string
+          instagram_link?: string | null
+          linkedin_link?: string | null
+          main_values?: Json | null
+          markets_served?: string | null
+          number_of_employees?: string | null
           onboarding_completed?: boolean
           seed_url?: string | null
+          sources?: Json | null
           state?: string
+          twitter_link?: string | null
           updated_at?: string
           user_id?: string
           website?: string | null
+          youtube_link?: string | null
         }
         Relationships: []
       }

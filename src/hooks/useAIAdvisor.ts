@@ -33,11 +33,19 @@ export interface AIFilters {
   radiusKm?: number;
 }
 
+export interface SavedPreferences {
+  sports?: string[];
+  budgetMin?: number;
+  budgetMax?: number;
+  radiusKm?: number;
+}
+
 export const useAIAdvisor = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [savedPreferences, setSavedPreferences] = useState<SavedPreferences | null>(null);
 
   const sendMessage = async (text: string, filters?: AIFilters) => {
     if (!text.trim()) return;
@@ -66,6 +74,11 @@ export const useAIAdvisor = () => {
       if (error) throw error;
 
       setConversationId(data.conversationId);
+      
+      // Load preferences if this is a new conversation
+      if (!conversationId && data.conversationId) {
+        loadPreferences(data.conversationId);
+      }
 
       // Add assistant message
       const assistantMessage: AIMessage = {
@@ -101,9 +114,29 @@ export const useAIAdvisor = () => {
     }
   };
 
+  const loadPreferences = async (convId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('ai_conversations')
+        .select('metadata')
+        .eq('id', convId)
+        .single();
+
+      if (!error && data?.metadata) {
+        const metadata = data.metadata as Record<string, any>;
+        if (metadata.preferences) {
+          setSavedPreferences(metadata.preferences);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading preferences:', error);
+    }
+  };
+
   const clearConversation = () => {
     setMessages([]);
     setConversationId(null);
+    setSavedPreferences(null);
   };
 
   return { 
@@ -113,5 +146,7 @@ export const useAIAdvisor = () => {
     isTyping,
     clearConversation,
     conversationId,
+    savedPreferences,
+    loadPreferences,
   };
 };

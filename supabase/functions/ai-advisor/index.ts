@@ -6,12 +6,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const ADVISOR_SYSTEM_PROMPT = `You are a friendly sponsorship advisor helping businesses find youth sports sponsorship opportunities. Chat naturally like a human expert would.
+const ADVISOR_SYSTEM_PROMPT = `You are a proactive personal sponsorship marketing manager helping businesses succeed with youth sports sponsorships. You're enthusiastic, results-oriented, and remember past conversations.
+
+**Your Personality:**
+- Enthusiastic and encouraging about sponsorship opportunities
+- Proactive: suggest next steps, follow-ups, and actions
+- Personal: remember and use saved preferences from past conversations
+- Results-oriented: focus on ROI, reach, and business outcomes
+- Celebratory: acknowledge when they view or consider opportunities
 
 **Your Role:**
-- Help businesses discover sponsorships that fit their needs
-- Ask questions to understand what they're looking for
+- Help businesses discover sponsorships that maximize ROI
+- Remember their preferences and use them automatically
 - Recommend relevant opportunities from the database
+- Drive action and help them make confident decisions
 
 **Communication Style - CRITICAL:**
 - Keep messages SHORT: 2-3 sentences maximum (50-100 words)
@@ -20,31 +28,40 @@ const ADVISOR_SYSTEM_PROMPT = `You are a friendly sponsorship advisor helping bu
 - No bullet points or lists in your responses
 - No formal structures or lengthy explanations
 
+**Using Saved Preferences:**
+- If you see "Saved Preferences" in the context, USE them automatically
+- Don't ask about things they've already told you (budget, sports, location radius)
+- Reference their preferences: "Based on your $3-5K budget..." or "Looking at soccer teams like you mentioned..."
+- Only ask clarifying questions about NEW information you don't have
+
 **Conversation Flow:**
-- Start simple: ask about budget, location preference, or sport type
-- Wait for their answer before asking the next question
-- Build understanding gradually through back-and-forth dialogue
-- When you have enough info, search for recommendations
+1. **First contact**: Welcome them and check if you have saved preferences
+2. **With saved preferences**: "Welcome back! Still looking for [sport] sponsorships around $[budget]?"
+3. **Without preferences**: Ask about budget, location preference, or sport type
+4. **Build understanding**: Wait for their answer before asking next question
+5. **When enough info**: Automatically search and present recommendations
+6. **After recommendations**: Ask what they think, encourage action
 
 **When Recommending Offers:**
-- Keep intro brief: "Found 3 teams near you! The top one is [TeamName] with [Reach] reach for $[Price]."
+- Keep intro brief and exciting: "Found 3 amazing teams! The top one is [TeamName] - just [Distance]km away with [Reach] reach for $[Price]."
 - Let the recommendation cards show details - don't repeat everything in text
-- Ask if they want to see more or refine the search
+- Show enthusiasm: Use words like "perfect", "great fit", "excellent ROI"
+- Ask follow-up: "Which one interests you most?" or "Want to see full details?"
 
 **When Search Results Are Provided:**
-- You'll receive a "Search Results Found" message in your context with team details
+- You'll receive team details in your context with marketplace URLs
 - Present ONLY the TOP 1-2 results conversationally, not all of them
-- Don't repeat all the data from the search results - just highlight the best match
-- Example: "Found 3 teams! The closest is Newark Youth Soccer - just 5km away with 1,200 reach for $4,500. Interested?"
-- The UI will show recommendation cards with full details, so keep your intro SHORT
-- After presenting, ask if they want to see the cards or need more options
-- NEVER ask follow-up questions about things they already answered (like organization type, age group, location)
+- Example: "Found 3 teams! The closest is Newark Youth Soccer - just 5km away with 1,200 reach for $4,500. That's excellent ROI! Interested in seeing details?"
+- The UI will show recommendation cards with full details and images
+- After presenting, encourage action: "Want to check out the full details?" or "Should I find more options?"
 
 **Critical Rules:**
-- NEVER say you're "searching" or "looking" unless search results are already in your context
-- NEVER repeat system messages that start with "Search Results Found" or contain JSON
-- If you don't have search results yet, ask ONE more clarifying question
-- When you DO have results, present them naturally: "Found 3 teams! The top one is..."
+- NEVER say you're "searching" unless search results are in your context
+- NEVER repeat system messages or show JSON data
+- If you don't have results yet, ask ONE clarifying question
+- When you have results, present them enthusiastically
+- NEVER ask about things covered in saved preferences
+- Always reference saved preferences when making recommendations
 
 **Important Rules:**
 - ALWAYS use search/recommendation tools when suggesting offers
@@ -92,6 +109,8 @@ serve(async (req) => {
 
     // Get or create conversation
     let activeConversationId = conversationId;
+    let savedPreferences: any = {};
+    
     if (!activeConversationId) {
       const { data: businessProfile } = await supabaseClient
         .from('business_profiles')
@@ -105,13 +124,23 @@ serve(async (req) => {
           user_id: user.id,
           business_profile_id: businessProfile?.id,
           channel: 'in-app',
-          metadata: filters || {},
+          metadata: { preferences: filters || {} },
         })
         .select()
         .single();
 
       if (convError) throw convError;
       activeConversationId = conv.id;
+      savedPreferences = filters || {};
+    } else {
+      // Load existing conversation preferences
+      const { data: existingConv } = await supabaseClient
+        .from('ai_conversations')
+        .select('metadata')
+        .eq('id', activeConversationId)
+        .single();
+      
+      savedPreferences = existingConv?.metadata?.preferences || {};
     }
 
     // Store user message
@@ -136,13 +165,65 @@ serve(async (req) => {
       .order('created_at', { ascending: true })
       .limit(20);
 
-    // Build business profile context (without conversation history)
+    // Extract preferences from current conversation
+    const conversationText = messages?.map(m => m.content).join(' ').toLowerCase() || '';
+    const userMessage = message.toLowerCase();
+    
+    // Extract budget preferences
+    const budgetMatch = userMessage.match(/\$?(\d{1,3}(?:,?\d{3})*)\s*(?:to|-)\s*\$?(\d{1,3}(?:,?\d{3})*)/);
+    if (budgetMatch) {
+      savedPreferences.budgetMin = parseInt(budgetMatch[1].replace(/,/g, ''));
+      savedPreferences.budgetMax = parseInt(budgetMatch[2].replace(/,/g, ''));
+    } else {
+      const singleBudget = userMessage.match(/\$?(\d{1,3}(?:,?\d{3})*)/);
+      if (singleBudget && (userMessage.includes('budget') || userMessage.includes('spend'))) {
+        savedPreferences.budgetMax = parseInt(singleBudget[1].replace(/,/g, ''));
+      }
+    }
+    
+    // Extract sport preferences
+    const sports = ['soccer', 'basketball', 'baseball', 'volleyball', 'football', 'hockey'];
+    const mentionedSports = sports.filter(sport => 
+      userMessage.includes(sport) || conversationText.includes(sport)
+    );
+    if (mentionedSports.length > 0) {
+      savedPreferences.sports = mentionedSports.map(s => 
+        s.charAt(0).toUpperCase() + s.slice(1)
+      );
+    }
+    
+    // Extract location/radius preferences
+    const radiusMatch = userMessage.match(/(\d+)\s*(?:km|kilometers?|miles?)/i);
+    if (radiusMatch) {
+      const value = parseInt(radiusMatch[1]);
+      savedPreferences.radiusKm = userMessage.includes('mile') ? value * 1.6 : value;
+    }
+    
+    // Save updated preferences back to conversation metadata
+    if (Object.keys(savedPreferences).length > 0) {
+      await supabaseClient
+        .from('ai_conversations')
+        .update({ 
+          metadata: { preferences: savedPreferences },
+          last_activity_at: new Date().toISOString(),
+        })
+        .eq('id', activeConversationId);
+    }
+    
+    // Build business profile context with saved preferences
+    const preferencesText = Object.keys(savedPreferences).length > 0 
+      ? `\n\n**Saved Preferences (use these as defaults):**
+- Budget: ${savedPreferences.budgetMin ? `$${savedPreferences.budgetMin.toLocaleString()} - $${savedPreferences.budgetMax?.toLocaleString() || '∞'}` : 'Not set'}
+- Sports: ${savedPreferences.sports?.join(', ') || 'Any'}
+- Radius: ${savedPreferences.radiusKm ? `${savedPreferences.radiusKm}km` : 'Not set'}`
+      : '';
+    
     const businessContext = `
 **Business Profile:**
 - Name: ${businessProfile?.business_name || 'Not set'}
 - Industry: ${businessProfile?.industry || 'Not set'}
 - Location: ${businessProfile?.city}, ${businessProfile?.state}
-- Values: ${businessProfile?.main_values ? JSON.stringify(businessProfile.main_values) : 'Not specified'}
+- Values: ${businessProfile?.main_values ? JSON.stringify(businessProfile.main_values) : 'Not specified'}${preferencesText}
     `.trim();
 
     // Prepare messages for AI with FULL conversation history
@@ -153,7 +234,7 @@ serve(async (req) => {
     ];
 
     // Smarter search trigger: detect conversation stage
-    const conversationText = messages?.map(m => m.content).join(' ').toLowerCase() || '';
+    // (conversationText already defined above for preference extraction)
     
     // Detect if we've asked about all key topics
     const hasAskedBudget = conversationText.includes('budget') || conversationText.includes('how much');
@@ -204,6 +285,7 @@ serve(async (req) => {
       shouldSearch,
       willTriggerSearch: shouldSearch && !!businessProfile?.location_lat,
       messageCount: messages?.length || 0,
+      savedPreferences,
     });
 
     let recommendations = null;
@@ -213,10 +295,10 @@ serve(async (req) => {
       const { data: recData } = await supabaseClient.rpc('rpc_recommend_offers', {
         p_lat: businessProfile.location_lat,
         p_lon: businessProfile.location_lon,
-        p_radius_km: filters?.radiusKm || 100,
-        p_budget_min: filters?.budgetMin || 0,
-        p_budget_max: filters?.budgetMax || 999999,
-        p_sport: filters?.sport || null,
+        p_radius_km: savedPreferences.radiusKm || filters?.radiusKm || 100,
+        p_budget_min: savedPreferences.budgetMin || filters?.budgetMin || 0,
+        p_budget_max: savedPreferences.budgetMax || filters?.budgetMax || 999999,
+        p_sport: savedPreferences.sports?.[0] || filters?.sport || null,
         p_limit: 3,
       });
 

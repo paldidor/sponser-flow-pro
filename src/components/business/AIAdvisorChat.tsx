@@ -13,7 +13,7 @@ export const AIAdvisorChat = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const { messages, sendMessage, isLoading, isTyping } = useAIAdvisor();
+  const { messages, sendMessage, isLoading, isTyping, savedPreferences } = useAIAdvisor();
 
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -94,6 +94,30 @@ export const AIAdvisorChat = () => {
                   <X className="h-5 w-5" />
                 </Button>
               </div>
+
+              {/* Saved Preferences Badge */}
+              {savedPreferences && Object.keys(savedPreferences).length > 0 && (
+                <div className="bg-accent/50 px-4 py-2 border-b border-border">
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Remembering your preferences:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {savedPreferences.sports && savedPreferences.sports.length > 0 && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                        {savedPreferences.sports.join(', ')}
+                      </span>
+                    )}
+                    {savedPreferences.budgetMin && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success">
+                        ${savedPreferences.budgetMin.toLocaleString()}{savedPreferences.budgetMax ? ` - $${savedPreferences.budgetMax.toLocaleString()}` : '+'}
+                      </span>
+                    )}
+                    {savedPreferences.radiusKm && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-info/10 text-foreground">
+                        {savedPreferences.radiusKm}km radius
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Messages */}
               <ScrollArea className="h-[500px] p-4" ref={scrollAreaRef}>

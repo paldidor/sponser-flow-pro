@@ -310,6 +310,7 @@ export type Database = {
           user_id: string
           website: string | null
           youtube_link: string | null
+          zip_code: string | null
         }
         Insert: {
           business_name: string
@@ -337,6 +338,7 @@ export type Database = {
           user_id: string
           website?: string | null
           youtube_link?: string | null
+          zip_code?: string | null
         }
         Update: {
           business_name?: string
@@ -364,6 +366,7 @@ export type Database = {
           user_id?: string
           website?: string | null
           youtube_link?: string | null
+          zip_code?: string | null
         }
         Relationships: []
       }

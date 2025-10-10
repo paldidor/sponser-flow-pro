@@ -87,7 +87,7 @@ export const useBusinessProfile = () => {
       setProfile(data);
 
       // ✅ Geocode location if zip_code provided but coordinates missing
-      if (data && !data.location_lat && (profileData.zip_code || profileData.city)) {
+      if (data && !(data as any).location_lat && (profileData.zip_code || profileData.city)) {
         console.log('🗺️ Geocoding business location...');
         const coords = await geocodeLocation(
           profileData.city || '',
@@ -141,12 +141,12 @@ export const useBusinessProfile = () => {
       setProfile(data);
 
       // ✅ Geocode if location fields updated but coordinates still missing
-      if (data && !data.location_lat && (updates.zip_code || updates.city || updates.state)) {
+      if (data && !(data as any).location_lat && (updates.zip_code || updates.city || updates.state)) {
         console.log('🗺️ Geocoding updated location...');
         const coords = await geocodeLocation(
           data.city || '',
           data.state || '',
-          data.zip_code
+          (data as any).zip_code
         );
 
         if (coords) {

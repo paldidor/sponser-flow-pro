@@ -441,18 +441,33 @@ INSTRUCTIONS:
       .select()
       .single();
 
-    // Log recommendations
-    if (recommendations?.length > 0) {
-      const recommendationLogs = recommendations.map((rec: any) => ({
-        conversation_id: activeConversationId,
-        message_id: savedMessage.id,
-        sponsorship_offer_id: rec.sponsorship_offer_id,
-        package_id: rec.package_id,
-        recommendation_reason: 'AI recommendation based on user query',
-      }));
+    // Store recommendations for tracking
+    if (recommendations?.length > 0 && savedMessage?.id) {
+      try {
+        const recommendationLogs = recommendations.map((rec: any) => ({
+          conversation_id: activeConversationId,
+          message_id: savedMessage.id,
+          sponsorship_offer_id: rec.sponsorship_offer_id,
+          package_id: rec.package_id,
+          recommendation_reason: 'AI recommendation based on user query',
+        }));
 
-      await supabaseClient.from('ai_recommendations').insert(recommendationLogs);
-      console.log(`💾 Stored ${recommendationLogs.length} recommendations for tracking`);
+        const { data: insertedRecs, error: recError } = await supabaseClient
+          .from('ai_recommendations')
+          .insert(recommendationLogs)
+          .select();
+
+        if (recError) {
+          console.error('❌ Failed to store recommendations:', recError);
+          console.error('Recommendation data:', JSON.stringify(recommendationLogs, null, 2));
+        } else {
+          console.log(`💾 Successfully stored ${insertedRecs.length} recommendations for tracking`);
+        }
+      } catch (error) {
+        console.error('❌ Exception storing recommendations:', error);
+      }
+    } else if (recommendations?.length > 0 && !savedMessage?.id) {
+      console.error('⚠️ Cannot store recommendations: savedMessage.id is missing');
     }
 
     // Update conversation activity

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -132,6 +132,55 @@ export const useAIAdvisor = () => {
       console.error('Error loading preferences:', error);
     }
   };
+
+  // ✅ Load conversation with recommendations on mount
+  useEffect(() => {
+    const loadConversation = async () => {
+      if (!conversationId) return;
+
+      try {
+        // Load messages with recommendations
+        const { data: messagesData, error } = await supabase
+          .from('ai_messages')
+          .select(`
+            *,
+            ai_recommendations (
+              sponsorship_offer_id,
+              package_id,
+              recommendation_reason,
+              user_action
+            )
+          `)
+          .eq('conversation_id', conversationId)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        if (messagesData) {
+          // Transform messages to include recommendations from join
+          const transformedMessages: AIMessage[] = messagesData.map((msg: any) => ({
+            id: msg.id,
+            role: msg.role,
+            content: msg.content,
+            timestamp: new Date(msg.created_at),
+            // Attach recommendations if available
+            recommendations: msg.ai_recommendations?.length > 0 
+              ? msg.metadata?.recommendations || [] 
+              : undefined,
+          }));
+
+          setMessages(transformedMessages);
+        }
+
+        // Load preferences
+        await loadPreferences(conversationId);
+      } catch (error) {
+        console.error('Error loading conversation:', error);
+      }
+    };
+
+    loadConversation();
+  }, [conversationId]);
 
   const clearConversation = () => {
     setMessages([]);

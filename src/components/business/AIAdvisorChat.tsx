@@ -174,28 +174,35 @@ export const AIAdvisorChat = () => {
                       >
                         <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                         
-                        {/* Recommendations - Enhanced Cards */}
+                        {/* Recommendations - Horizontal Scroll */}
                         {msg.recommendations && msg.recommendations.length > 0 && (
                           <motion.div 
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.3 }}
-                            className="mt-4 space-y-3"
+                            className="mt-4"
                           >
-                            {msg.recommendations.map((rec, idx) => (
-                              <motion.div
-                                key={rec.package_id}
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: 0.4 + (idx * 0.1) }}
-                              >
-                                <RecommendationCard
-                                  recommendation={rec}
-                                  conversationId={conversationId || undefined}
-                                  messageId={msg.id}
-                                />
-                              </motion.div>
-                            ))}
+                            <div className="flex items-center gap-2 mb-3">
+                              <span className="text-xs font-semibold text-muted-foreground">Recommended for you</span>
+                              <div className="h-px flex-1 bg-border" />
+                            </div>
+                            <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-thin">
+                              {msg.recommendations.map((rec, idx) => (
+                                <motion.div
+                                  key={rec.package_id}
+                                  initial={{ opacity: 0, x: -20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.4 + (idx * 0.1) }}
+                                  className="snap-start flex-shrink-0 w-[320px]"
+                                >
+                                  <RecommendationCard
+                                    recommendation={rec}
+                                    conversationId={conversationId || undefined}
+                                    messageId={msg.id}
+                                  />
+                                </motion.div>
+                              ))}
+                            </div>
                           </motion.div>
                         )}
                       </div>

@@ -298,7 +298,17 @@ serve(async (req) => {
         }
 
         if (savedPreferences.budgetMin !== undefined && savedPreferences.budgetMax !== undefined) {
-          upsertData.budget_range = `[${savedPreferences.budgetMin},${savedPreferences.budgetMax}]`;
+          // ✅ FIX: Ensure min <= max (swap if needed)
+          let min = savedPreferences.budgetMin;
+          let max = savedPreferences.budgetMax;
+          
+          if (min > max) {
+            console.warn(`⚠️ Budget range swap detected: ${min} > ${max}, swapping...`);
+            [min, max] = [max, min]; // Swap values
+          }
+          
+          upsertData.budget_range = `[${min},${max}]`;
+          console.log(`💰 Saving budget range: [${min}, ${max}]`);
         }
 
         // Always update interaction patterns to track last visit

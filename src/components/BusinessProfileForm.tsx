@@ -62,6 +62,7 @@ const BusinessProfileForm = ({ onComplete }: BusinessProfileFormProps) => {
     industry: "",
     city: "",
     state: "",
+    zip_code: "",
     website: "",
     company_bio: "",
     main_values: [] as string[],
@@ -168,6 +169,7 @@ const BusinessProfileForm = ({ onComplete }: BusinessProfileFormProps) => {
         industry: formData.industry,
         city: formData.city.trim(),
         state: formData.state,
+        zip_code: formData.zip_code.trim() || undefined,
         website: formData.website.trim() || undefined,
         company_bio: formData.company_bio.trim() || undefined,
         main_values: formData.main_values.length > 0 ? formData.main_values : undefined,
@@ -255,7 +257,7 @@ const BusinessProfileForm = ({ onComplete }: BusinessProfileFormProps) => {
         </div>
 
         {/* Location */}
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="city">
               City <span className="text-destructive">*</span>
@@ -289,6 +291,20 @@ const BusinessProfileForm = ({ onComplete }: BusinessProfileFormProps) => {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="zip_code">
+              Zip Code
+            </Label>
+            <Input
+              id="zip_code"
+              placeholder="94102"
+              value={formData.zip_code}
+              onChange={(e) => handleChange('zip_code', e.target.value)}
+              maxLength={10}
+            />
+            <p className="text-xs text-muted-foreground">Optional, helps with AI recommendations</p>
           </div>
         </div>
 

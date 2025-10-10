@@ -117,6 +117,7 @@ serve(async (req) => {
     // Get or create conversation
     let activeConversationId = conversationId;
     let savedPreferences: any = {};
+    let newOffersContext = '';
     
     if (!activeConversationId) {
       // NEW CONVERSATION: Load persistent user preferences first
@@ -138,6 +139,47 @@ serve(async (req) => {
           radiusKm: userPrefs.interaction_patterns?.last_radius_km || undefined,
         };
         console.log('📚 Loaded persistent user preferences:', savedPreferences);
+
+        // PHASE 3: Check for new offers since last visit
+        const lastChecked = userPrefs.interaction_patterns?.last_checked_at;
+        if (lastChecked) {
+          console.log('🔍 Checking for new offers since:', lastChecked);
+          try {
+            const { data: newOffers, error: offersError } = await supabaseClient
+              .from('sponsorship_offers')
+              .select(`
+                id,
+                title,
+                created_at,
+                team_profiles!inner(team_name, sport)
+              `)
+              .eq('status', 'published')
+              .gte('created_at', lastChecked)
+              .limit(5);
+
+            if (offersError) {
+              console.error('❌ Error checking new offers:', offersError);
+            } else if (newOffers && newOffers.length > 0) {
+              console.log(`🎉 Found ${newOffers.length} new offers since last visit`);
+              
+              // Filter by user's preferred sports if available
+              const relevantOffers = savedPreferences.sports?.length > 0
+                ? newOffers.filter((offer: any) => savedPreferences.sports.includes(offer.team_profiles.sport))
+                : newOffers;
+
+              if (relevantOffers.length > 0) {
+                newOffersContext = `\n\n📢 **NEW OPPORTUNITIES ALERT**: Since this user's last visit, ${relevantOffers.length} new sponsorship ${relevantOffers.length === 1 ? 'opportunity has' : 'opportunities have'} been added that may interest them:\n` +
+                  relevantOffers.map((offer: any) => `- "${offer.title}" from ${offer.team_profiles.team_name} (${offer.team_profiles.sport})`).join('\n') +
+                  '\n\n**IMPORTANT**: Proactively mention these new opportunities in your greeting to welcome them back! Keep it natural and exciting.';
+                console.log('💬 New offers context prepared for AI');
+              }
+            } else {
+              console.log('ℹ️ No new offers since last visit');
+            }
+          } catch (error) {
+            console.error('❌ Exception checking new offers:', error);
+          }
+        }
       } else {
         savedPreferences = filters || {};
         console.log('🆕 New user - no saved preferences');
@@ -255,12 +297,14 @@ serve(async (req) => {
           upsertData.budget_range = `[${savedPreferences.budgetMin},${savedPreferences.budgetMax}]`;
         }
 
-        if (savedPreferences.radiusKm !== undefined) {
-          upsertData.interaction_patterns = {
-            last_radius_km: savedPreferences.radiusKm,
-            last_updated: new Date().toISOString(),
-          };
-        }
+        // Always update interaction patterns to track last visit
+        const currentPatterns = {
+          last_radius_km: savedPreferences.radiusKm,
+          last_updated: new Date().toISOString(),
+          last_checked_at: new Date().toISOString(), // Track when we last checked for new offers
+        };
+        
+        upsertData.interaction_patterns = currentPatterns;
 
         const { error: prefError } = await supabaseClient
           .from('ai_user_preferences')
@@ -320,7 +364,7 @@ ${pastActions.map((action: any) => {
 - Name: ${businessProfile?.business_name || 'Not set'}
 - Industry: ${businessProfile?.industry || 'Not set'}
 - Location: ${businessProfile?.city}, ${businessProfile?.state}
-- Values: ${businessProfile?.main_values ? JSON.stringify(businessProfile.main_values) : 'Not specified'}${preferencesText}${actionsText}
+- Values: ${businessProfile?.main_values ? JSON.stringify(businessProfile.main_values) : 'Not specified'}${preferencesText}${actionsText}${newOffersContext}
     `.trim();
 
     // Prepare messages for AI with FULL conversation history

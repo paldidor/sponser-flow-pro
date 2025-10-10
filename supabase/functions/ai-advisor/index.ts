@@ -6,14 +6,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const ADVISOR_SYSTEM_PROMPT = `You are a proactive personal sponsorship marketing manager helping businesses succeed with youth sports sponsorships. You're enthusiastic, results-oriented, and remember past conversations.
+const ADVISOR_SYSTEM_PROMPT = `You are a proactive personal sponsorship marketing manager helping businesses succeed with youth sports sponsorships. You're enthusiastic, results-oriented, and remember past conversations and interactions.
 
 **Your Personality:**
 - Enthusiastic and encouraging about sponsorship opportunities
 - Proactive: suggest next steps, follow-ups, and actions
-- Personal: remember and use saved preferences from past conversations
+- Personal: remember and use saved preferences AND past interactions from previous conversations
 - Results-oriented: focus on ROI, reach, and business outcomes
 - Celebratory: acknowledge when they view or consider opportunities
+- Smart: learn from their feedback (interested/not interested) to refine suggestions
 
 **Your Role:**
 - Help businesses discover sponsorships that maximize ROI
@@ -34,11 +35,14 @@ const ADVISOR_SYSTEM_PROMPT = `You are a proactive personal sponsorship marketin
 - Reference their preferences: "Based on your $3-5K budget..." or "Looking at soccer teams like you mentioned..."
 - Only ask clarifying questions about NEW information you don't have
 
-**Using Past Actions:**
-- If you see "Past Actions" showing they clicked on teams, reference it
-- Follow up proactively: "I see you checked out [Team Name]. Want more options like that?"
-- If they viewed multiple teams: "You've looked at 3 teams - ready to reach out or want more options?"
-- Celebrate engagement: "Great! You clicked on [Team]. What did you think?"
+**Using Past Interactions (CRITICAL):**
+- Review "Past Interactions" to see what they liked/disliked
+- 👁️ Viewed = they explored it, follow up: "Still considering [Team]?"
+- 👍 Interested = strong signal, prioritize: "You marked [Team] as interested! Want to reach out?"
+- 🔖 Saved = warm lead, remind: "You saved [Team] earlier. Ready to explore?"
+- 👎 Not interested = avoid similar teams, learn: "I'll avoid teams like that"
+- Reference their taste: "Based on your interest in soccer teams..."
+- Never suggest teams they marked "not interested"
 
 **Conversation Flow:**
 1. **First contact**: Welcome them and check if you have saved preferences
@@ -330,33 +334,69 @@ serve(async (req) => {
 - Radius: ${savedPreferences.radiusKm ? `${savedPreferences.radiusKm}km` : 'Not set'}`
       : '';
 
-    // Load past recommendation actions for proactive follow-ups
+    // Load past recommendation actions for proactive follow-ups and filtering
     const { data: pastActions } = await supabaseClient
       .from('ai_recommendations')
       .select(`
         user_action,
         created_at,
+        package_id,
+        sponsorship_offer_id,
         sponsorship_offers:sponsorship_offer_id (
+          id,
           team_profiles:team_profile_id (
-            team_name
+            team_name,
+            sport
           )
         )
       `)
       .eq('conversation_id', activeConversationId)
       .not('user_action', 'is', null)
       .order('created_at', { ascending: false })
-      .limit(5);
+      .limit(10);
 
     if (pastActions && pastActions.length > 0) {
       console.log(`📊 Found ${pastActions.length} past actions for context`);
     }
 
+    // Collect offers the user is NOT interested in (to exclude from future searches)
+    const notInterestedOfferIds = pastActions
+      ?.filter((action: any) => action.user_action === 'not_interested')
+      ?.map((action: any) => action.sponsorship_offer_id)
+      || [];
+
+    // Collect sports they showed interest in
+    const interestedSports = pastActions
+      ?.filter((action: any) => ['interested', 'clicked', 'saved'].includes(action.user_action))
+      ?.map((action: any) => action.sponsorship_offers?.team_profiles?.sport)
+      ?.filter((sport: any) => sport)
+      || [];
+
+    console.log('🎯 User preferences from interactions:', {
+      notInterestedCount: notInterestedOfferIds.length,
+      interestedSportsCount: interestedSports.length,
+    });
+
     const actionsText = pastActions && pastActions.length > 0
-      ? `\n\n**Past Actions:**
+      ? `\n\n**Past Interactions (use these to refine recommendations):**
 ${pastActions.map((action: any) => {
   const teamName = action.sponsorship_offers?.team_profiles?.team_name || 'Unknown team';
-  return `- ${action.user_action === 'clicked' ? 'Clicked to view' : action.user_action}: ${teamName}`;
-}).join('\n')}`
+  const sport = action.sponsorship_offers?.team_profiles?.sport;
+  const actionLabels: Record<string, string> = {
+    'clicked': '👁️ Viewed details',
+    'interested': '👍 Marked interested',
+    'saved': '🔖 Saved for later',
+    'not_interested': '👎 Not interested',
+  };
+  const actionLabel = actionLabels[action.user_action] || action.user_action;
+  return `- ${actionLabel}: ${teamName}${sport ? ` (${sport})` : ''}`;
+}).join('\n')}
+
+**Instructions for using interaction history:**
+- DO NOT recommend teams they marked as "not interested"
+- Prioritize sports they showed interest in
+- Reference past interests: "Like [Team] you viewed earlier..."
+- If they saved/interested but didn't convert, follow up: "Still considering [Team]?"`
       : '';
     
     const businessContext = `
@@ -431,20 +471,29 @@ ${pastActions.map((action: any) => {
 
     let recommendations = null;
     if (shouldSearch && businessProfile?.location_lat && businessProfile?.location_lon) {
-      console.log('🔍 Searching for recommendations...');
+      console.log('🔍 Searching for recommendations with interaction filtering...');
       
+      // Prefer sports they showed interest in, or use saved preferences
+      const preferredSport = interestedSports.length > 0 
+        ? interestedSports[0] 
+        : (savedPreferences.sports?.[0] || filters?.sport || null);
+
       const { data: recData } = await supabaseClient.rpc('rpc_recommend_offers', {
         p_lat: businessProfile.location_lat,
         p_lon: businessProfile.location_lon,
         p_radius_km: savedPreferences.radiusKm || filters?.radiusKm || 100,
         p_budget_min: savedPreferences.budgetMin || filters?.budgetMin || 0,
         p_budget_max: savedPreferences.budgetMax || filters?.budgetMax || 999999,
-        p_sport: savedPreferences.sports?.[0] || filters?.sport || null,
-        p_limit: 3,
+        p_sport: preferredSport,
+        p_limit: 10, // Get more to filter out not interested ones
       });
 
-      recommendations = recData;
-      console.log(`✅ Found ${recData?.length || 0} recommendations`);
+      // Filter out offers the user marked as "not interested"
+      recommendations = recData?.filter((rec: any) => 
+        !notInterestedOfferIds.includes(rec.sponsorship_offer_id)
+      ).slice(0, 3); // Take top 3 after filtering
+
+      console.log(`✅ Found ${recData?.length || 0} recommendations, showing ${recommendations?.length || 0} after filtering`);
 
       // ✅ ADD RECOMMENDATIONS TO AI CONTEXT - BEFORE AI GENERATES RESPONSE
       if (recommendations && recommendations.length > 0) {

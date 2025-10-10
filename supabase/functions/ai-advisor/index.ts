@@ -34,6 +34,12 @@ const ADVISOR_SYSTEM_PROMPT = `You are a proactive personal sponsorship marketin
 - Reference their preferences: "Based on your $3-5K budget..." or "Looking at soccer teams like you mentioned..."
 - Only ask clarifying questions about NEW information you don't have
 
+**Using Past Actions:**
+- If you see "Past Actions" showing they clicked on teams, reference it
+- Follow up proactively: "I see you checked out [Team Name]. Want more options like that?"
+- If they viewed multiple teams: "You've looked at 3 teams - ready to reach out or want more options?"
+- Celebrate engagement: "Great! You clicked on [Team]. What did you think?"
+
 **Conversation Flow:**
 1. **First contact**: Welcome them and check if you have saved preferences
 2. **With saved preferences**: "Welcome back! Still looking for [sport] sponsorships around $[budget]?"
@@ -47,6 +53,7 @@ const ADVISOR_SYSTEM_PROMPT = `You are a proactive personal sponsorship marketin
 - Let the recommendation cards show details - don't repeat everything in text
 - Show enthusiasm: Use words like "perfect", "great fit", "excellent ROI"
 - Ask follow-up: "Which one interests you most?" or "Want to see full details?"
+- If user previously clicked on teams, reference that: "These are similar to [TeamName] you checked out!"
 
 **When Search Results Are Provided:**
 - You'll receive team details in your context with marketplace URLs
@@ -217,13 +224,42 @@ serve(async (req) => {
 - Sports: ${savedPreferences.sports?.join(', ') || 'Any'}
 - Radius: ${savedPreferences.radiusKm ? `${savedPreferences.radiusKm}km` : 'Not set'}`
       : '';
+
+    // Load past recommendation actions for proactive follow-ups
+    const { data: pastActions } = await supabaseClient
+      .from('ai_recommendations')
+      .select(`
+        user_action,
+        created_at,
+        sponsorship_offers:sponsorship_offer_id (
+          team_profiles:team_profile_id (
+            team_name
+          )
+        )
+      `)
+      .eq('conversation_id', activeConversationId)
+      .not('user_action', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (pastActions && pastActions.length > 0) {
+      console.log(`📊 Found ${pastActions.length} past actions for context`);
+    }
+
+    const actionsText = pastActions && pastActions.length > 0
+      ? `\n\n**Past Actions:**
+${pastActions.map((action: any) => {
+  const teamName = action.sponsorship_offers?.team_profiles?.team_name || 'Unknown team';
+  return `- ${action.user_action === 'clicked' ? 'Clicked to view' : action.user_action}: ${teamName}`;
+}).join('\n')}`
+      : '';
     
     const businessContext = `
 **Business Profile:**
 - Name: ${businessProfile?.business_name || 'Not set'}
 - Industry: ${businessProfile?.industry || 'Not set'}
 - Location: ${businessProfile?.city}, ${businessProfile?.state}
-- Values: ${businessProfile?.main_values ? JSON.stringify(businessProfile.main_values) : 'Not specified'}${preferencesText}
+- Values: ${businessProfile?.main_values ? JSON.stringify(businessProfile.main_values) : 'Not specified'}${preferencesText}${actionsText}
     `.trim();
 
     // Prepare messages for AI with FULL conversation history
@@ -416,6 +452,7 @@ INSTRUCTIONS:
       }));
 
       await supabaseClient.from('ai_recommendations').insert(recommendationLogs);
+      console.log(`💾 Stored ${recommendationLogs.length} recommendations for tracking`);
     }
 
     // Update conversation activity

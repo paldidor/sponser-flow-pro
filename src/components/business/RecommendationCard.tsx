@@ -3,16 +3,36 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Users, DollarSign, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import type { RecommendationData } from '@/hooks/useAIAdvisor';
 
 interface RecommendationCardProps {
   recommendation: RecommendationData;
+  conversationId?: string;
+  messageId?: string;
 }
 
-export const RecommendationCard = ({ recommendation }: RecommendationCardProps) => {
+export const RecommendationCard = ({ recommendation, conversationId, messageId }: RecommendationCardProps) => {
   const navigate = useNavigate();
 
-  const handleViewDetails = () => {
+  const handleViewDetails = async () => {
+    // Track the action in database
+    if (conversationId) {
+      try {
+        const { error } = await supabase
+          .from('ai_recommendations')
+          .update({ user_action: 'clicked' })
+          .eq('conversation_id', conversationId)
+          .eq('package_id', recommendation.package_id);
+        
+        if (!error) {
+          console.log('✅ Tracked recommendation click:', recommendation.team_name);
+        }
+      } catch (error) {
+        console.error('Failed to track recommendation click:', error);
+      }
+    }
+    
     navigate(`/marketplace/${recommendation.sponsorship_offer_id}`);
   };
 

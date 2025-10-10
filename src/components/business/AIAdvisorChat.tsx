@@ -13,7 +13,7 @@ export const AIAdvisorChat = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const { messages, sendMessage, isLoading, isTyping, savedPreferences } = useAIAdvisor();
+  const { messages, sendMessage, isLoading, isTyping, savedPreferences, conversationId } = useAIAdvisor();
 
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -147,6 +147,8 @@ export const AIAdvisorChat = () => {
                               <RecommendationCard
                                 key={rec.package_id}
                                 recommendation={rec}
+                                conversationId={conversationId || undefined}
+                                messageId={msg.id}
                               />
                             ))}
                           </div>

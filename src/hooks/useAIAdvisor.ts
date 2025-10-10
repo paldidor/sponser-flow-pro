@@ -21,6 +21,9 @@ export interface RecommendationData {
   price: number;
   est_cpf: number | null;
   marketplace_url: string;
+  sport: string | null;
+  logo: string | null;
+  images: string[] | null;
 }
 
 export interface AIFilters {

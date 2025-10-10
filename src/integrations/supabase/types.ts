@@ -955,11 +955,14 @@ export type Database = {
         Returns: {
           distance_km: number
           est_cpf: number
+          images: string[]
+          logo: string
           marketplace_url: string
           package_id: string
           package_name: string
           price: number
           sponsorship_offer_id: string
+          sport: string
           team_name: string
           team_profile_id: string
           total_reach: number

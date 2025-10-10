@@ -119,6 +119,30 @@ serve(async (req) => {
     let savedPreferences: any = {};
     
     if (!activeConversationId) {
+      // NEW CONVERSATION: Load persistent user preferences first
+      const { data: userPrefs } = await supabaseClient
+        .from('ai_user_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (userPrefs) {
+        savedPreferences = {
+          sports: userPrefs.preferred_sports || undefined,
+          budgetMin: userPrefs.budget_range 
+            ? parseFloat(userPrefs.budget_range.replace(/[\[\]]/g, '').split(',')[0]) 
+            : undefined,
+          budgetMax: userPrefs.budget_range 
+            ? parseFloat(userPrefs.budget_range.replace(/[\[\]]/g, '').split(',')[1]) 
+            : undefined,
+          radiusKm: userPrefs.interaction_patterns?.last_radius_km || undefined,
+        };
+        console.log('📚 Loaded persistent user preferences:', savedPreferences);
+      } else {
+        savedPreferences = filters || {};
+        console.log('🆕 New user - no saved preferences');
+      }
+
       const { data: businessProfile } = await supabaseClient
         .from('business_profiles')
         .select('id')
@@ -131,16 +155,15 @@ serve(async (req) => {
           user_id: user.id,
           business_profile_id: businessProfile?.id,
           channel: 'in-app',
-          metadata: { preferences: filters || {} },
+          metadata: { preferences: savedPreferences },
         })
         .select()
         .single();
 
       if (convError) throw convError;
       activeConversationId = conv.id;
-      savedPreferences = filters || {};
     } else {
-      // Load existing conversation preferences
+      // EXISTING CONVERSATION: Load from conversation metadata
       const { data: existingConv } = await supabaseClient
         .from('ai_conversations')
         .select('metadata')
@@ -206,8 +229,9 @@ serve(async (req) => {
       savedPreferences.radiusKm = userMessage.includes('mile') ? value * 1.6 : value;
     }
     
-    // Save updated preferences back to conversation metadata
+    // Save updated preferences to BOTH conversation metadata AND persistent user preferences
     if (Object.keys(savedPreferences).length > 0) {
+      // Update conversation metadata (temporary)
       await supabaseClient
         .from('ai_conversations')
         .update({ 
@@ -215,6 +239,43 @@ serve(async (req) => {
           last_activity_at: new Date().toISOString(),
         })
         .eq('id', activeConversationId);
+
+      // ALSO save to user preferences (persistent across conversations)
+      try {
+        const upsertData: any = {
+          user_id: user.id,
+        };
+
+        // Only add fields that exist in savedPreferences
+        if (savedPreferences.sports && savedPreferences.sports.length > 0) {
+          upsertData.preferred_sports = savedPreferences.sports;
+        }
+
+        if (savedPreferences.budgetMin !== undefined && savedPreferences.budgetMax !== undefined) {
+          upsertData.budget_range = `[${savedPreferences.budgetMin},${savedPreferences.budgetMax}]`;
+        }
+
+        if (savedPreferences.radiusKm !== undefined) {
+          upsertData.interaction_patterns = {
+            last_radius_km: savedPreferences.radiusKm,
+            last_updated: new Date().toISOString(),
+          };
+        }
+
+        const { error: prefError } = await supabaseClient
+          .from('ai_user_preferences')
+          .upsert(upsertData, {
+            onConflict: 'user_id'
+          });
+
+        if (prefError) {
+          console.error('❌ Failed to update user preferences:', prefError);
+        } else {
+          console.log('✅ Updated persistent user preferences');
+        }
+      } catch (error) {
+        console.error('❌ Exception updating preferences:', error);
+      }
     }
     
     // Build business profile context with saved preferences

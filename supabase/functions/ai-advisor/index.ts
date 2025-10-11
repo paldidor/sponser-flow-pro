@@ -605,7 +605,7 @@ INSTRUCTIONS:
       .select()
       .single();
 
-    // Store recommendations for tracking
+    // Store recommendations for tracking with full data
     if (recommendations?.length > 0 && savedMessage?.id) {
       try {
         const recommendationLogs = recommendations.map((rec: any) => ({
@@ -614,6 +614,7 @@ INSTRUCTIONS:
           sponsorship_offer_id: rec.sponsorship_offer_id,
           package_id: rec.package_id,
           recommendation_reason: 'AI recommendation based on user query',
+          recommendation_data: rec, // ✅ Store full recommendation object for display
         }));
 
         const { data: insertedRecs, error: recError } = await supabaseClient
@@ -625,7 +626,7 @@ INSTRUCTIONS:
           console.error('❌ Failed to store recommendations:', recError);
           console.error('Recommendation data:', JSON.stringify(recommendationLogs, null, 2));
         } else {
-          console.log(`💾 Successfully stored ${insertedRecs.length} recommendations for tracking`);
+          console.log(`💾 Successfully stored ${insertedRecs.length} recommendations with full data`);
         }
       } catch (error) {
         console.error('❌ Exception storing recommendations:', error);

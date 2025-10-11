@@ -147,6 +147,7 @@ export type Database = {
           id: string
           message_id: string | null
           package_id: string | null
+          recommendation_data: Json | null
           recommendation_reason: string | null
           sponsorship_offer_id: string | null
           user_action: string | null
@@ -157,6 +158,7 @@ export type Database = {
           id?: string
           message_id?: string | null
           package_id?: string | null
+          recommendation_data?: Json | null
           recommendation_reason?: string | null
           sponsorship_offer_id?: string | null
           user_action?: string | null
@@ -167,6 +169,7 @@ export type Database = {
           id?: string
           message_id?: string | null
           package_id?: string | null
+          recommendation_data?: Json | null
           recommendation_reason?: string | null
           sponsorship_offer_id?: string | null
           user_action?: string | null

@@ -148,7 +148,8 @@ export const useAIAdvisor = () => {
               sponsorship_offer_id,
               package_id,
               recommendation_reason,
-              user_action
+              user_action,
+              recommendation_data
             )
           `)
           .eq('conversation_id', conversationId)
@@ -157,16 +158,16 @@ export const useAIAdvisor = () => {
         if (error) throw error;
 
         if (messagesData) {
-          // Transform messages to include recommendations from join
+          // Transform messages to include recommendations from database
           const transformedMessages: AIMessage[] = messagesData.map((msg: any) => ({
             id: msg.id,
             role: msg.role,
             content: msg.content,
             timestamp: new Date(msg.created_at),
-            // Attach recommendations if available
-            recommendations: msg.ai_recommendations?.length > 0 
-              ? msg.metadata?.recommendations || [] 
-              : undefined,
+            // ✅ Load recommendations from recommendation_data (full objects stored in DB)
+            recommendations: msg.ai_recommendations
+              ?.map((rec: any) => rec.recommendation_data)
+              .filter((data: any) => data != null) || undefined,
           }));
 
           setMessages(transformedMessages);

@@ -6,6 +6,70 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// ✅ Helper function to extract zip code from user message
+function extractZipCode(text: string): string | null {
+  // Match 5-digit zip codes or 9-digit (12345-6789)
+  const zipMatch = text.match(/\b\d{5}(?:-\d{4})?\b/);
+  return zipMatch ? zipMatch[0] : null;
+}
+
+// ✅ Helper function to geocode and update profile
+async function geocodeAndUpdateProfile(
+  supabaseClient: any,
+  businessProfileId: string,
+  zipCode: string,
+  city?: string,
+  state?: string
+) {
+  try {
+    console.log('🗺️ Geocoding zip code:', zipCode);
+    
+    // Call geocode-location function
+    const { data: geoData, error: geoError } = await supabaseClient.functions.invoke(
+      'geocode-location',
+      {
+        body: { 
+          city: city || '', 
+          state: state || '', 
+          zipCode 
+        }
+      }
+    );
+
+    if (geoError || !geoData?.latitude) {
+      console.error('Geocoding failed:', geoError);
+      return null;
+    }
+
+    console.log('✅ Geocoded successfully:', geoData);
+
+    // Update business profile with coordinates
+    const { error: updateError } = await supabaseClient
+      .from('business_profiles')
+      .update({
+        location_lat: geoData.latitude,
+        location_lon: geoData.longitude,
+        zip_code: zipCode,
+      })
+      .eq('id', businessProfileId);
+
+    if (updateError) {
+      console.error('Failed to update profile:', updateError);
+      return null;
+    }
+
+    console.log('✅ Updated business profile with coordinates');
+
+    return {
+      latitude: geoData.latitude,
+      longitude: geoData.longitude,
+    };
+  } catch (error) {
+    console.error('Error in geocodeAndUpdateProfile:', error);
+    return null;
+  }
+}
+
 const ADVISOR_SYSTEM_PROMPT = `You are a proactive personal sponsorship marketing manager helping businesses succeed with youth sports sponsorships. You're enthusiastic, results-oriented, and remember past conversations and interactions.
 
 **Your Personality:**
@@ -70,6 +134,8 @@ const ADVISOR_SYSTEM_PROMPT = `You are a proactive personal sponsorship marketin
 - NEVER EVER invent, fabricate, or make up team names, prices, or sponsorship details
 - If no recommendations are in your system context, they DO NOT EXIST
 - When you receive "0 results found", you MUST say: "I couldn't find any teams matching those criteria right now. Want to try a different location, budget, or sport?"
+- If location is missing, ask IMMEDIATELY: "To find teams near you, what's your zip code?"
+- After receiving zip code, briefly acknowledge and proceed with recommendations
 - NEVER suggest teams that aren't explicitly provided in your system context
 - If uncertain whether recommendations exist, ask a clarifying question instead
 - Example WRONG response: "Try Newark Soccer Club for $3,000" (when not in database)
@@ -241,6 +307,16 @@ serve(async (req) => {
       .select('*')
       .eq('user_id', user.id)
       .single();
+
+    // ✅ STEP 1: Check if location data is missing
+    const needsZipCode = !businessProfile?.location_lat || !businessProfile?.location_lon;
+    const hasZipCode = businessProfile?.zip_code;
+    
+    console.log('📍 Location check:', {
+      needsZipCode,
+      hasZipCode,
+      hasLatLon: !!businessProfile?.location_lat
+    });
 
     // Fetch full conversation history (increase limit for better context)
     const { data: messages } = await supabaseClient
@@ -424,6 +500,11 @@ ${pastActions.map((action: any) => {
 - Industry: ${businessProfile?.industry || 'Not set'}
 - Location: ${businessProfile?.city}, ${businessProfile?.state}
 - Values: ${businessProfile?.main_values ? JSON.stringify(businessProfile.main_values) : 'Not specified'}${preferencesText}${actionsText}${newOffersContext}
+
+${needsZipCode && !hasZipCode ? `
+⚠️ **LOCATION MISSING**: User's location coordinates are not set. You MUST ask for their ZIP CODE in your FIRST response. 
+Say something natural like: "To find teams near you, what's your zip code?"
+DO NOT proceed with recommendations until you have their zip code.` : ''}
     `.trim();
 
     // Prepare messages for AI with FULL conversation history
@@ -488,8 +569,36 @@ ${pastActions.map((action: any) => {
       savedPreferences,
     });
 
+    // ✅ STEP 3: CHECK FOR ZIP CODE IN MESSAGE AND GEOCODE
+    const extractedZipCode = extractZipCode(message);
+    let effectiveLatitude = businessProfile?.location_lat;
+    let effectiveLongitude = businessProfile?.location_lon;
+    let zipCodeProcessed = false;
+
+    if (extractedZipCode && !effectiveLatitude && businessProfile?.id) {
+      console.log('🎯 Detected zip code in message:', extractedZipCode);
+      
+      const geocoded = await geocodeAndUpdateProfile(
+        supabaseClient,
+        businessProfile.id,
+        extractedZipCode,
+        businessProfile.city,
+        businessProfile.state
+      );
+
+      if (geocoded) {
+        effectiveLatitude = geocoded.latitude;
+        effectiveLongitude = geocoded.longitude;
+        zipCodeProcessed = true;
+        
+        console.log('✅ Zip code processed successfully, coordinates obtained');
+      } else {
+        console.warn('❌ Geocoding failed for zip code:', extractedZipCode);
+      }
+    }
+
     let recommendations = null;
-    if (shouldSearch && businessProfile?.location_lat && businessProfile?.location_lon) {
+    if (shouldSearch && effectiveLatitude && effectiveLongitude) {
       console.log('🔍 Searching for recommendations with interaction filtering...');
       
       // Prefer sports they showed interest in, or use saved preferences
@@ -516,8 +625,13 @@ ${pastActions.map((action: any) => {
 
       // ✅ ADD RECOMMENDATIONS TO AI CONTEXT - BEFORE AI GENERATES RESPONSE
       if (recommendations && recommendations.length > 0) {
+        // ✅ STEP 3: Add success message if zip code was just processed
+        const zipSuccessMessage = zipCodeProcessed 
+          ? `\n\n✅ SUCCESS: User provided zip code ${extractedZipCode}. Location is now set (${effectiveLatitude?.toFixed(4)}, ${effectiveLongitude?.toFixed(4)}). Proceed with showing recommendations!\n\n` 
+          : '';
+        
         const recommendationsText = `
-SYSTEM INSTRUCTION - DO NOT REPEAT THIS TEXT:
+SYSTEM INSTRUCTION - DO NOT REPEAT THIS TEXT:${zipSuccessMessage}
 You have ${recommendations.length} sponsorship opportunities available:
 
 ${recommendations.map((r: any, i: number) => `
@@ -546,8 +660,25 @@ INSTRUCTIONS:
           content: recommendationsText
         });
       } else if (shouldSearch) {
-        // ✅ PHASE 2: Explicit 0-results message to prevent hallucination
-        const noResultsMessage = `
+        // ✅ STEP 5: Check if geocoding failed
+        if (extractedZipCode && !zipCodeProcessed) {
+          const geocodingFailedMessage = `
+CRITICAL: GEOCODING FAILED
+The user provided zip code "${extractedZipCode}" but it couldn't be geocoded.
+
+REQUIRED RESPONSE:
+"I'm having trouble finding that zip code. Could you double-check it? Or you can provide your city and state instead."
+
+DO NOT proceed with showing recommendations until location is set.
+          `.trim();
+
+          aiMessages.push({
+            role: 'system',
+            content: geocodingFailedMessage
+          });
+        } else {
+          // ✅ PHASE 2: Explicit 0-results message to prevent hallucination
+          const noResultsMessage = `
 CRITICAL SYSTEM ALERT - 0 RESULTS FOUND:
 The database search returned ZERO (0) sponsorship opportunities matching the criteria.
 
@@ -561,12 +692,13 @@ DO NOT:
 - Say you found results when you didn't
 
 ONLY teams explicitly listed in your context exist. If not listed = does not exist.
-        `.trim();
+          `.trim();
 
-        aiMessages.push({
-          role: 'system',
-          content: noResultsMessage
-        });
+          aiMessages.push({
+            role: 'system',
+            content: noResultsMessage
+          });
+        }
       }
     }
 

@@ -228,15 +228,15 @@ export const AIAdvisorChat = () => {
                             ) : (
                               // Desktop: Horizontal scroll with compact cards
                               <>
-                                <div className="overflow-x-auto pb-3 -mx-1 ai-advisor-scroll">
-                                  <div className="flex gap-2.5 px-1">
+                                <div className="overflow-x-auto pb-3 -mx-4 snap-x snap-proximity ai-advisor-scroll">
+                                  <div className="flex gap-2 px-4">
                                     {msg.recommendations.map((rec, idx) => (
                                       <motion.div
                                         key={rec.package_id}
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: 0.4 + (idx * 0.1) }}
-                                        className="flex-shrink-0 w-[280px]"
+                                        className="flex-shrink-0 w-[240px] snap-start"
                                       >
                                         <RecommendationCard
                                           recommendation={rec}

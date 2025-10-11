@@ -4,16 +4,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageCircle, X, Send, Sparkles, Loader2 } from 'lucide-react';
-import { useAIAdvisor } from '@/hooks/useAIAdvisor';
+import { useAIAdvisor, RecommendationData } from '@/hooks/useAIAdvisor';
 import { RecommendationCard } from './RecommendationCard';
+import { RecommendationViewer } from './RecommendationViewer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const AIAdvisorChat = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [activeRecommendations, setActiveRecommendations] = useState<RecommendationData[]>([]);
+  const [activeMessageId, setActiveMessageId] = useState<string | undefined>();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { messages, sendMessage, isLoading, isTyping, savedPreferences, conversationId } = useAIAdvisor();
+  const isMobile = useIsMobile();
 
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -28,6 +34,12 @@ export const AIAdvisorChat = () => {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const openRecommendationViewer = (recommendations: RecommendationData[], messageId?: string) => {
+    setActiveRecommendations(recommendations);
+    setActiveMessageId(messageId);
+    setViewerOpen(true);
   };
 
   // Auto-scroll to bottom when new messages arrive
@@ -174,7 +186,7 @@ export const AIAdvisorChat = () => {
                       >
                         <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                         
-                        {/* Recommendations - Horizontal Scroll */}
+                        {/* Recommendations - Mobile First */}
                         {msg.recommendations && msg.recommendations.length > 0 && (
                           <motion.div 
                             initial={{ opacity: 0 }}
@@ -186,23 +198,45 @@ export const AIAdvisorChat = () => {
                               <span className="text-xs font-semibold text-muted-foreground">Recommended for you</span>
                               <div className="h-px flex-1 bg-border" />
                             </div>
-                            <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-thin">
-                              {msg.recommendations.map((rec, idx) => (
-                                <motion.div
-                                  key={rec.package_id}
-                                  initial={{ opacity: 0, x: -20 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  transition={{ delay: 0.4 + (idx * 0.1) }}
-                                  className="snap-start flex-shrink-0 w-[320px]"
-                                >
-                                  <RecommendationCard
-                                    recommendation={rec}
-                                    conversationId={conversationId || undefined}
-                                    messageId={msg.id}
-                                  />
-                                </motion.div>
-                              ))}
-                            </div>
+                            
+                            {isMobile ? (
+                              // Mobile: Show first card + "View All" button
+                              <div className="space-y-3">
+                                <RecommendationCard
+                                  recommendation={msg.recommendations[0]}
+                                  conversationId={conversationId || undefined}
+                                  messageId={msg.id}
+                                />
+                                {msg.recommendations.length > 1 && (
+                                  <Button
+                                    variant="outline"
+                                    className="w-full"
+                                    onClick={() => openRecommendationViewer(msg.recommendations!, msg.id)}
+                                  >
+                                    View All {msg.recommendations.length} Recommendations
+                                  </Button>
+                                )}
+                              </div>
+                            ) : (
+                              // Desktop: Keep horizontal scroll
+                              <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-thin">
+                                {msg.recommendations.map((rec, idx) => (
+                                  <motion.div
+                                    key={rec.package_id}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.4 + (idx * 0.1) }}
+                                    className="snap-start flex-shrink-0 w-[320px]"
+                                  >
+                                    <RecommendationCard
+                                      recommendation={rec}
+                                      conversationId={conversationId || undefined}
+                                      messageId={msg.id}
+                                    />
+                                  </motion.div>
+                                ))}
+                              </div>
+                            )}
                           </motion.div>
                         )}
                       </div>
@@ -281,6 +315,15 @@ export const AIAdvisorChat = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Recommendation Viewer Modal */}
+      <RecommendationViewer
+        recommendations={activeRecommendations}
+        isOpen={viewerOpen}
+        onClose={() => setViewerOpen(false)}
+        conversationId={conversationId || undefined}
+        messageId={activeMessageId}
+      />
     </>
   );
 };

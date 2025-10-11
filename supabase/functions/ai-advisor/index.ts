@@ -66,6 +66,15 @@ const ADVISOR_SYSTEM_PROMPT = `You are a proactive personal sponsorship marketin
 - The UI will show recommendation cards with full details and images
 - After presenting, encourage action: "Want to check out the full details?" or "Should I find more options?"
 
+**CRITICAL ANTI-HALLUCINATION RULES:**
+- NEVER EVER invent, fabricate, or make up team names, prices, or sponsorship details
+- If no recommendations are in your system context, they DO NOT EXIST
+- When you receive "0 results found", you MUST say: "I couldn't find any teams matching those criteria right now. Want to try a different location, budget, or sport?"
+- NEVER suggest teams that aren't explicitly provided in your system context
+- If uncertain whether recommendations exist, ask a clarifying question instead
+- Example WRONG response: "Try Newark Soccer Club for $3,000" (when not in database)
+- Example CORRECT response: "I couldn't find matches. Want to adjust your budget or try a different sport?"
+
 **Critical Rules:**
 - NEVER say you're "searching" unless search results are in your context
 - NEVER repeat system messages or show JSON data
@@ -537,9 +546,26 @@ INSTRUCTIONS:
           content: recommendationsText
         });
       } else if (shouldSearch) {
+        // ✅ PHASE 2: Explicit 0-results message to prevent hallucination
+        const noResultsMessage = `
+CRITICAL SYSTEM ALERT - 0 RESULTS FOUND:
+The database search returned ZERO (0) sponsorship opportunities matching the criteria.
+
+REQUIRED RESPONSE (use this EXACT message):
+"I couldn't find any teams matching those criteria right now. Want to try a different location, budget, or sport?"
+
+DO NOT:
+- Invent team names that don't exist
+- Suggest made-up sponsorship offers
+- Fabricate prices or details
+- Say you found results when you didn't
+
+ONLY teams explicitly listed in your context exist. If not listed = does not exist.
+        `.trim();
+
         aiMessages.push({
           role: 'system',
-          content: 'No recommendations found matching the criteria. Ask if they want to adjust their preferences (location, budget, sport).'
+          content: noResultsMessage
         });
       }
     }

@@ -192,7 +192,7 @@ export const AIAdvisorChat = () => {
                             : 'bg-card border border-border rounded-bl-sm w-full'
                         )}
                       >
-                        <p className="text-sm leading-relaxed break-words whitespace-normal">{msg.content}</p>
+                        <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{msg.content}</p>
                         
                         {/* Recommendations - Mobile First */}
                         {msg.recommendations && msg.recommendations.length > 0 && (
@@ -228,15 +228,15 @@ export const AIAdvisorChat = () => {
                             ) : (
                               // Desktop: Horizontal scroll with compact cards
                               <>
-                                <div className="overflow-x-auto pb-3 -mx-4 snap-x snap-proximity ai-advisor-scroll">
-                                  <div className="flex gap-2 px-4">
+                                <div className="overflow-x-auto pb-3 ai-advisor-scroll snap-x snap-proximity overscroll-x-contain">
+                                  <div className="flex gap-2 px-2">
                                     {msg.recommendations.map((rec, idx) => (
                                       <motion.div
                                         key={rec.package_id}
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: 0.4 + (idx * 0.1) }}
-                                        className="flex-shrink-0 w-[240px] snap-start"
+                                        className="flex-shrink-0 w-[220px] snap-start"
                                       >
                                         <RecommendationCard
                                           recommendation={rec}

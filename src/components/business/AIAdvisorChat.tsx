@@ -90,11 +90,19 @@ export const AIAdvisorChat = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.9 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="fixed bottom-6 right-6 z-50 w-[420px] max-w-[calc(100vw-2rem)] sm:max-w-[calc(100vw-3rem)]"
+        className={cn(
+          "fixed z-50",
+          isMobile 
+            ? "inset-0" 
+            : "right-0 top-0 bottom-0 w-[480px] shadow-2xl"
+        )}
           >
-            <Card className="shadow-2xl border-none overflow-hidden backdrop-blur-xl bg-card/95">
+            <Card className={cn(
+              "flex flex-col shadow-2xl border-2 overflow-hidden backdrop-blur-xl bg-card/95",
+              isMobile ? "h-full rounded-none border-0" : "h-full rounded-none"
+            )}>
               {/* Header with Gradient */}
-              <div className="bg-gradient-to-r from-primary via-primary to-primary-dark text-primary-foreground p-5 flex items-center justify-between relative overflow-hidden">
+              <div className="bg-gradient-to-r from-primary via-primary to-primary-dark text-primary-foreground p-5 flex items-center justify-between relative overflow-hidden shrink-0">
                 {/* Animated background effect */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-[shimmer_2s_ease-in-out_infinite]" />
                 
@@ -163,7 +171,7 @@ export const AIAdvisorChat = () => {
               )}
 
               {/* Messages - Enhanced */}
-              <ScrollArea className="h-[500px] p-4 bg-gradient-to-b from-background/50 to-background" ref={scrollAreaRef}>
+              <ScrollArea className="flex-1 p-4 bg-gradient-to-b from-background/50 to-background" ref={scrollAreaRef}>
                 <div className="space-y-4">
                   {messages.map((msg, index) => (
                     <motion.div
@@ -275,7 +283,7 @@ export const AIAdvisorChat = () => {
               </ScrollArea>
 
               {/* Input Area - Enhanced */}
-              <div className="border-t border-border bg-card/50 backdrop-blur-sm p-4">
+              <div className="border-t border-border bg-card/50 backdrop-blur-sm p-4 shrink-0">
                 <div className="flex gap-2">
                   <Input
                     value={inputValue}

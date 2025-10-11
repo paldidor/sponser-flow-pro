@@ -94,7 +94,7 @@ export const AIAdvisorChat = () => {
           "fixed z-50",
           isMobile 
             ? "inset-0" 
-            : "right-0 top-0 bottom-0 w-[480px] shadow-2xl"
+            : "right-0 top-0 bottom-0 w-[520px] shadow-2xl"
         )}
           >
             <Card className={cn(
@@ -186,13 +186,13 @@ export const AIAdvisorChat = () => {
                     >
                       <div
                         className={cn(
-                          "rounded-2xl px-4 py-3 max-w-[85%] shadow-sm",
+                          "rounded-2xl px-4 py-3 shadow-sm",
                           msg.role === 'user'
-                            ? 'bg-gradient-to-br from-primary to-primary-dark text-primary-foreground rounded-br-sm'
-                            : 'bg-card border border-border rounded-bl-sm'
+                            ? 'bg-gradient-to-br from-primary to-primary-dark text-primary-foreground rounded-br-sm max-w-[85%]'
+                            : 'bg-card border border-border rounded-bl-sm w-full'
                         )}
                       >
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                        <p className="text-sm leading-relaxed break-words">{msg.content}</p>
                         
                         {/* Recommendations - Mobile First */}
                         {msg.recommendations && msg.recommendations.length > 0 && (
@@ -226,23 +226,25 @@ export const AIAdvisorChat = () => {
                                 )}
                               </div>
                             ) : (
-                              // Desktop: Keep horizontal scroll
-                              <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-thin">
-                                {msg.recommendations.map((rec, idx) => (
-                                  <motion.div
-                                    key={rec.package_id}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.4 + (idx * 0.1) }}
-                                    className="snap-start flex-shrink-0 w-[320px]"
-                                  >
-                                    <RecommendationCard
-                                      recommendation={rec}
-                                      conversationId={conversationId || undefined}
-                                      messageId={msg.id}
-                                    />
-                                  </motion.div>
-                                ))}
+                              // Desktop: Horizontal scroll with proper overflow
+                              <div className="-mx-4 px-4">
+                                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+                                  {msg.recommendations.map((rec, idx) => (
+                                    <motion.div
+                                      key={rec.package_id}
+                                      initial={{ opacity: 0, x: -20 }}
+                                      animate={{ opacity: 1, x: 0 }}
+                                      transition={{ delay: 0.4 + (idx * 0.1) }}
+                                      className="flex-shrink-0 w-[360px] first:ml-0 last:mr-0"
+                                    >
+                                      <RecommendationCard
+                                        recommendation={rec}
+                                        conversationId={conversationId || undefined}
+                                        messageId={msg.id}
+                                      />
+                                    </motion.div>
+                                  ))}
+                                </div>
                               </div>
                             )}
                           </motion.div>

@@ -7,16 +7,19 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { RecommendationData } from '@/hooks/useAIAdvisor';
 import { useState } from 'react';
+import { cn } from '@/lib/utils';
 
 interface RecommendationCardProps {
   recommendation: RecommendationData;
   conversationId?: string;
   messageId?: string;
+  variant?: 'default' | 'compact';
 }
 
-export const RecommendationCard = ({ recommendation, conversationId, messageId }: RecommendationCardProps) => {
+export const RecommendationCard = ({ recommendation, conversationId, messageId, variant = 'default' }: RecommendationCardProps) => {
   const navigate = useNavigate();
   const [userFeedback, setUserFeedback] = useState<string | null>(null);
+  const isCompact = variant === 'compact';
 
   const trackInteraction = async (action: string) => {
     if (!conversationId) return;
@@ -70,9 +73,9 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId }
   const primaryImage = recommendation.logo || recommendation.images?.[0];
 
   return (
-    <Card className="overflow-hidden bg-card hover:shadow-lg transition-shadow duration-300 border-border">
+    <Card className={cn("overflow-hidden bg-card hover:shadow-lg transition-shadow duration-300 border-border", isCompact && "shadow-sm")}>
       {/* Header Image */}
-      <div className="relative h-40 w-full bg-gradient-to-br from-primary/10 to-accent/10 overflow-hidden">
+      <div className={cn("relative w-full bg-gradient-to-br from-primary/10 to-accent/10 overflow-hidden", isCompact ? "h-28" : "h-40")}>
         {primaryImage ? (
           <img 
             src={primaryImage} 
@@ -102,22 +105,22 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId }
       </div>
 
       {/* Content */}
-      <div className="p-4 space-y-3">
+      <div className={cn("space-y-3", isCompact ? "p-3" : "p-4")}>
         {/* Team & Package Name */}
         <div>
-          <h4 className="font-bold text-lg text-foreground leading-tight">
+          <h4 className={cn("font-bold text-foreground leading-tight", isCompact ? "text-base" : "text-lg")}>
             {recommendation.team_name}
           </h4>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className={cn("text-muted-foreground mt-1", isCompact ? "text-xs" : "text-sm")}>
             {recommendation.package_name}
           </p>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-3 py-3 border-y border-border">
+        <div className={cn("grid grid-cols-2 border-y border-border", isCompact ? "gap-2 py-2" : "gap-3 py-3")}>
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-accent/50">
-              <MapPin className="h-4 w-4 text-primary" />
+            <div className={cn("rounded-lg bg-accent/50", isCompact ? "p-1.5" : "p-2")}>
+              <MapPin className={cn("text-primary", isCompact ? "h-3.5 w-3.5" : "h-4 w-4")} />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Distance</p>
@@ -128,8 +131,8 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId }
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-accent/50">
-              <Users className="h-4 w-4 text-primary" />
+            <div className={cn("rounded-lg bg-accent/50", isCompact ? "p-1.5" : "p-2")}>
+              <Users className={cn("text-primary", isCompact ? "h-3.5 w-3.5" : "h-4 w-4")} />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Reach</p>
@@ -140,8 +143,8 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId }
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-accent/50">
-              <DollarSign className="h-4 w-4 text-primary" />
+            <div className={cn("rounded-lg bg-accent/50", isCompact ? "p-1.5" : "p-2")}>
+              <DollarSign className={cn("text-primary", isCompact ? "h-3.5 w-3.5" : "h-4 w-4")} />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Price</p>
@@ -153,8 +156,8 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId }
 
           {recommendation.est_cpf && (
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-success/10">
-                <TrendingUp className="h-4 w-4 text-success" />
+              <div className={cn("rounded-lg bg-success/10", isCompact ? "p-1.5" : "p-2")}>
+                <TrendingUp className={cn("text-success", isCompact ? "h-3.5 w-3.5" : "h-4 w-4")} />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">CPF</p>
@@ -168,31 +171,31 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId }
 
         {/* Quick Action Buttons */}
         {!userFeedback && (
-          <div className="flex gap-2 mb-3">
+          <div className={cn("flex gap-2", isCompact ? "mb-2" : "mb-3")}>
             <Button
               variant="outline"
               size="sm"
               onClick={handleInterested}
-              className="flex-1 border-success/30 hover:bg-success/10 hover:border-success"
+              className={cn("flex-1 border-success/30 hover:bg-success/10 hover:border-success", isCompact && "text-xs px-2")}
             >
-              <ThumbsUp className="h-3.5 w-3.5 mr-1" />
-              Interested
+              <ThumbsUp className={cn(isCompact ? "h-3 w-3" : "h-3.5 w-3.5", !isCompact && "mr-1")} />
+              {!isCompact && "Interested"}
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={handleSaved}
-              className="border-accent/30 hover:bg-accent/10 hover:border-accent"
+              className={cn("border-accent/30 hover:bg-accent/10 hover:border-accent", isCompact && "px-2")}
             >
-              <Bookmark className="h-3.5 w-3.5" />
+              <Bookmark className={cn(isCompact ? "h-3 w-3" : "h-3.5 w-3.5")} />
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={handleNotInterested}
-              className="border-destructive/30 hover:bg-destructive/10 hover:border-destructive"
+              className={cn("border-destructive/30 hover:bg-destructive/10 hover:border-destructive", isCompact && "px-2")}
             >
-              <ThumbsDown className="h-3.5 w-3.5" />
+              <ThumbsDown className={cn(isCompact ? "h-3 w-3" : "h-3.5 w-3.5")} />
             </Button>
           </div>
         )}
@@ -224,7 +227,7 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId }
         {/* CTA Button */}
         <Button 
           onClick={handleViewDetails}
-          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+          className={cn("w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold", isCompact ? "text-xs py-2" : "text-sm")}
         >
           View Full Details
         </Button>

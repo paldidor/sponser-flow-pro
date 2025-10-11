@@ -192,7 +192,7 @@ export const AIAdvisorChat = () => {
                             : 'bg-card border border-border rounded-bl-sm w-full'
                         )}
                       >
-                        <p className="text-sm leading-relaxed break-words">{msg.content}</p>
+                        <p className="text-sm leading-relaxed break-words whitespace-normal">{msg.content}</p>
                         
                         {/* Recommendations - Mobile First */}
                         {msg.recommendations && msg.recommendations.length > 0 && (
@@ -226,26 +226,36 @@ export const AIAdvisorChat = () => {
                                 )}
                               </div>
                             ) : (
-                              // Desktop: Horizontal scroll with proper overflow
-                              <div className="-mx-4 px-4">
-                                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-                                  {msg.recommendations.map((rec, idx) => (
-                                    <motion.div
-                                      key={rec.package_id}
-                                      initial={{ opacity: 0, x: -20 }}
-                                      animate={{ opacity: 1, x: 0 }}
-                                      transition={{ delay: 0.4 + (idx * 0.1) }}
-                                      className="flex-shrink-0 w-[360px] first:ml-0 last:mr-0"
-                                    >
-                                      <RecommendationCard
-                                        recommendation={rec}
-                                        conversationId={conversationId || undefined}
-                                        messageId={msg.id}
-                                      />
-                                    </motion.div>
-                                  ))}
+                              // Desktop: Horizontal scroll with compact cards
+                              <>
+                                <div className="overflow-x-auto pb-3 -mx-1 ai-advisor-scroll">
+                                  <div className="flex gap-2.5 px-1">
+                                    {msg.recommendations.map((rec, idx) => (
+                                      <motion.div
+                                        key={rec.package_id}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.4 + (idx * 0.1) }}
+                                        className="flex-shrink-0 w-[280px]"
+                                      >
+                                        <RecommendationCard
+                                          recommendation={rec}
+                                          conversationId={conversationId || undefined}
+                                          messageId={msg.id}
+                                          variant="compact"
+                                        />
+                                      </motion.div>
+                                    ))}
+                                  </div>
                                 </div>
-                              </div>
+                                {msg.recommendations.length > 2 && (
+                                  <div className="flex items-center justify-center gap-2 mt-2 text-xs text-muted-foreground">
+                                    <span>←</span>
+                                    <span>Scroll to see all {msg.recommendations.length} recommendations</span>
+                                    <span>→</span>
+                                  </div>
+                                )}
+                              </>
                             )}
                           </motion.div>
                         )}

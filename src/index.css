@@ -164,3 +164,22 @@ All colors MUST be HSL.
   }
 }
 
+/* AI Advisor Chat - Visible Scrollbar for Desktop */
+.ai-advisor-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.ai-advisor-scroll::-webkit-scrollbar-track {
+  background: hsl(var(--muted) / 0.2);
+  border-radius: 4px;
+}
+
+.ai-advisor-scroll::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.4);
+  border-radius: 4px;
+}
+
+.ai-advisor-scroll::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.6);
+}
+

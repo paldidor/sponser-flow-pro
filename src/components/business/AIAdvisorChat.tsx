@@ -45,7 +45,11 @@ export const AIAdvisorChat = () => {
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollAreaRef.current) {
+      // Original attempt on Root
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+      // Radix viewport fallback
+      const viewport = scrollAreaRef.current.querySelector?.('[data-radix-scroll-area-viewport]') as HTMLDivElement | null;
+      if (viewport) viewport.scrollTop = viewport.scrollHeight;
     }
   }, [messages, isTyping]);
 
@@ -98,7 +102,7 @@ export const AIAdvisorChat = () => {
         )}
           >
             <Card className={cn(
-              "flex flex-col shadow-2xl border-2 overflow-hidden backdrop-blur-xl bg-card/95",
+              "flex flex-col shadow-2xl border-2 overflow-y-hidden min-w-0 min-h-0 backdrop-blur-xl bg-card/95",
               isMobile ? "h-full rounded-none border-0" : "h-full rounded-none"
             )}>
               {/* Header with Gradient */}
@@ -171,7 +175,7 @@ export const AIAdvisorChat = () => {
               )}
 
               {/* Messages - Enhanced */}
-              <ScrollArea className="flex-1 p-4 bg-gradient-to-b from-background/50 to-background" ref={scrollAreaRef}>
+              <ScrollArea className="flex-1 p-4 bg-gradient-to-b from-background/50 to-background min-w-0 min-h-0" ref={scrollAreaRef}>
                 <div className="space-y-4">
                   {messages.map((msg, index) => (
                     <motion.div
@@ -180,19 +184,19 @@ export const AIAdvisorChat = () => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
                       className={cn(
-                        "flex gap-2",
+                        "flex gap-2 min-w-0",
                         msg.role === 'user' ? 'justify-end' : 'justify-start'
                       )}
                     >
                       <div
                         className={cn(
-                          "rounded-2xl px-4 py-3 shadow-sm",
+                          "rounded-2xl px-4 py-3 shadow-sm min-w-0",
                           msg.role === 'user'
                             ? 'bg-gradient-to-br from-primary to-primary-dark text-primary-foreground rounded-br-sm max-w-[85%]'
                             : 'bg-card border border-border rounded-bl-sm w-full'
                         )}
                       >
-                        <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{msg.content}</p>
+                        <p className="text-sm leading-relaxed break-words whitespace-pre-wrap [overflow-wrap:anywhere]">{msg.content}</p>
                         
                         {/* Recommendations - Mobile First */}
                         {msg.recommendations && msg.recommendations.length > 0 && (
@@ -228,8 +232,8 @@ export const AIAdvisorChat = () => {
                             ) : (
                               // Desktop: Horizontal scroll with compact cards
                               <>
-                                <div className="overflow-x-auto pb-3 ai-advisor-scroll snap-x snap-proximity overscroll-x-contain">
-                                  <div className="flex gap-2 px-2">
+                                <div className="overflow-x-auto pb-3 ai-advisor-scroll snap-x snap-proximity overscroll-x-contain min-w-0">
+                                  <div className="flex gap-2 px-2 flex-nowrap min-w-max">
                                     {msg.recommendations.map((rec, idx) => (
                                       <motion.div
                                         key={rec.package_id}

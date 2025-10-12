@@ -1,13 +1,18 @@
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { MapPin, Users, DollarSign, TrendingUp, ThumbsUp, ThumbsDown, Bookmark } from 'lucide-react';
+import { MapPin, Users, ThumbsUp, ThumbsDown, Bookmark } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { RecommendationData } from '@/hooks/useAIAdvisor';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { Tag } from '@/components/marketplace/Tag';
+import { StatTile } from '@/components/marketplace/StatTile';
+import { ProgressBar } from '@/components/marketplace/ProgressBar';
+import { formatCurrency, formatDuration, formatLocation } from '@/lib/marketplaceUtils';
+import calendarIcon from '@/assets/icons/calendar-stat.svg';
+import usersIcon from '@/assets/icons/users-stat.svg';
+import targetIcon from '@/assets/icons/target-stat.svg';
 
 interface RecommendationCardProps {
   recommendation: RecommendationData;
@@ -73,110 +78,155 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId, 
   const primaryImage = recommendation.logo || recommendation.images?.[0];
 
   return (
-    <Card className={cn("overflow-hidden bg-card hover:shadow-lg transition-shadow duration-300 border-border", isCompact && "shadow-sm")}>
-      {/* Header Image */}
-      <div className={cn("relative w-full bg-gradient-to-br from-primary/10 to-accent/10 overflow-hidden", isCompact ? "h-28" : "h-40")}>
+    <article 
+      className={cn(
+        "group flex h-full cursor-pointer flex-col overflow-hidden rounded-[14px] border border-[#E5E7EB] bg-white transition-shadow hover:shadow-lg animate-fade-in",
+        isCompact && "max-w-[240px]"
+      )}
+      onClick={handleViewDetails}
+    >
+      {/* Hero Section - Matches OpportunityCard exactly */}
+      <div className={cn("relative w-full bg-gray-100", isCompact ? "h-[96px]" : "h-[128px]")}>
         {primaryImage ? (
           <img 
             src={primaryImage} 
-            alt={recommendation.team_name}
-            className="w-full h-full object-cover"
+            alt={recommendation.title || recommendation.team_name}
+            className="h-full w-full object-cover"
+            loading="lazy"
             onError={(e) => {
-              // Fallback to gradient if image fails to load
               e.currentTarget.style.display = 'none';
             }}
           />
         ) : (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-4xl font-bold text-primary/20">
+          <div className="flex items-center justify-center h-full bg-gradient-to-br from-[#00AAFE]/10 to-[#FFB82D]/10">
+            <div className="text-4xl font-bold text-[#00AAFE]/20">
               {recommendation.team_name.charAt(0)}
             </div>
           </div>
         )}
-        
-        {/* Sport Badge - Top Left */}
+        <div className="absolute inset-0 bg-black/40" />
+
+        {/* Sport Pill - Top Left */}
         {recommendation.sport && (
-          <Badge 
-            className="absolute top-3 left-3 bg-primary text-primary-foreground font-semibold shadow-md"
-          >
+          <span className={cn(
+            "absolute left-3 top-3 rounded-full bg-[#FFB82D] px-3 py-1 font-medium text-black",
+            isCompact ? "text-[10px] leading-3" : "text-[12px] leading-4"
+          )}>
             {recommendation.sport}
-          </Badge>
+          </span>
         )}
+
+        {/* Bookmark Button - Top Right */}
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            handleSaved();
+          }}
+          className={cn(
+            "absolute right-3 top-3 grid place-items-center rounded-full bg-black/20 p-2 transition-colors hover:bg-black/40 active:scale-95",
+            userFeedback === 'saved' && "bg-[#00AAFE] hover:bg-[#00AAFE]/90",
+            isCompact ? "min-h-[36px] min-w-[36px]" : "min-h-[44px] min-w-[44px]"
+          )}
+          aria-label={userFeedback === 'saved' ? "Remove bookmark" : "Save recommendation"}
+        >
+          <Bookmark className={cn(
+            "stroke-white",
+            userFeedback === 'saved' && "fill-white",
+            isCompact ? "h-4 w-4" : "h-5 w-5"
+          )} />
+        </button>
+
+        {/* Hero Text Stack - Bottom Left */}
+        <div className="absolute bottom-3 left-3 flex flex-col gap-0.5">
+          <h3 className={cn(
+            "line-clamp-1 font-bold text-white drop-shadow-md",
+            isCompact ? "text-[14px] leading-[18px]" : "text-[18px] leading-[22.5px]"
+          )}>
+            {recommendation.title || recommendation.team_name}
+          </h3>
+        </div>
       </div>
 
-      {/* Content */}
-      <div className={cn("space-y-3", isCompact ? "p-3" : "p-4")}>
-        {/* Team & Package Name */}
-        <div>
-          <h4 className={cn("font-bold text-foreground leading-tight", isCompact ? "text-base" : "text-lg")}>
-            {recommendation.team_name}
-          </h4>
-          <p className={cn("text-muted-foreground mt-1", isCompact ? "text-xs" : "text-sm")}>
-            {recommendation.package_name}
-          </p>
-        </div>
-
-        {/* Stats Grid */}
-        <div className={cn("grid grid-cols-2 border-y border-border", isCompact ? "gap-2 py-2" : "gap-3 py-3")}>
-          <div className="flex items-center gap-2">
-            <div className={cn("rounded-lg bg-accent/50", isCompact ? "p-1.5" : "p-2")}>
-              <MapPin className={cn("text-primary", isCompact ? "h-3.5 w-3.5" : "h-4 w-4")} />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Distance</p>
-              <p className="text-sm font-semibold text-foreground">
-                {recommendation.distance_km.toFixed(1)} km
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className={cn("rounded-lg bg-accent/50", isCompact ? "p-1.5" : "p-2")}>
-              <Users className={cn("text-primary", isCompact ? "h-3.5 w-3.5" : "h-4 w-4")} />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Reach</p>
-              <p className="text-sm font-semibold text-foreground">
-                {recommendation.total_reach.toLocaleString()}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className={cn("rounded-lg bg-accent/50", isCompact ? "p-1.5" : "p-2")}>
-              <DollarSign className={cn("text-primary", isCompact ? "h-3.5 w-3.5" : "h-4 w-4")} />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Price</p>
-              <p className="text-sm font-semibold text-foreground">
-                ${recommendation.price.toLocaleString()}
-              </p>
-            </div>
-          </div>
-
-          {recommendation.est_cpf && (
-            <div className="flex items-center gap-2">
-              <div className={cn("rounded-lg bg-success/10", isCompact ? "p-1.5" : "p-2")}>
-                <TrendingUp className={cn("text-success", isCompact ? "h-3.5 w-3.5" : "h-4 w-4")} />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">CPF</p>
-                <p className="text-sm font-semibold text-success">
-                  ${recommendation.est_cpf.toFixed(2)}
-                </p>
-              </div>
-            </div>
+      {/* Content Section */}
+      <div className={cn("flex flex-1 flex-col gap-3", isCompact ? "p-3" : "p-4")}>
+        {/* Meta Row - Location, Players, Tier */}
+        <div className={cn(
+          "flex flex-wrap items-center gap-3 text-[#4A5565]",
+          isCompact ? "gap-2 text-[10px] leading-3" : "text-[12px] leading-4"
+        )}>
+          <span className="inline-flex items-center gap-1">
+            <MapPin className={cn(isCompact ? "h-3 w-3" : "h-3.5 w-3.5")} />
+            {formatLocation(recommendation.city, recommendation.state)}
+          </span>
+          {!isCompact && (
+            <>
+              <span className="inline-flex items-center gap-1">
+                <Users className="h-3.5 w-3.5" />
+                {recommendation.players} players
+              </span>
+              <Tag label={recommendation.tier} />
+            </>
           )}
         </div>
 
-        {/* Quick Action Buttons */}
+        {/* Stats Grid */}
+        <div className={cn("grid gap-3", isCompact ? "grid-cols-2" : "grid-cols-3")}>
+          {isCompact ? (
+            <>
+              <StatTile 
+                icon={targetIcon} 
+                value={recommendation.packagesCount} 
+                label="Packages" 
+              />
+              <StatTile 
+                icon={calendarIcon} 
+                value={formatDuration(recommendation.durationMonths)} 
+                label="Duration" 
+              />
+            </>
+          ) : (
+            <>
+              <StatTile 
+                icon={targetIcon} 
+                value={recommendation.packagesCount} 
+                label="Packages" 
+              />
+              <StatTile 
+                icon={usersIcon} 
+                value={recommendation.estWeekly.toLocaleString()} 
+                label="Est. Weekly" 
+              />
+              <StatTile 
+                icon={calendarIcon} 
+                value={formatDuration(recommendation.durationMonths)} 
+                label="Duration" 
+              />
+            </>
+          )}
+        </div>
+
+        {/* Progress Bar - Only in default variant */}
+        {!isCompact && (
+          <ProgressBar 
+            raised={recommendation.raised} 
+            goal={recommendation.goal} 
+          />
+        )}
+
+        {/* Quick Action Buttons - AI Specific Feature */}
         {!userFeedback && (
-          <div className={cn("flex gap-2", isCompact ? "mb-2" : "mb-3")}>
+          <div className={cn("flex gap-2", isCompact && "mt-1")}>
             <Button
               variant="outline"
               size="sm"
-              onClick={handleInterested}
-              className={cn("flex-1 border-success/30 hover:bg-success/10 hover:border-success", isCompact && "text-xs px-2")}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleInterested();
+              }}
+              className={cn(
+                "flex-1 border-[#22C55E]/30 text-[#22C55E] hover:bg-[#22C55E]/10 hover:border-[#22C55E]",
+                isCompact && "text-[10px] px-1.5 h-8"
+              )}
             >
               <ThumbsUp className={cn(isCompact ? "h-3 w-3" : "h-3.5 w-3.5", !isCompact && "mr-1")} />
               {!isCompact && "Interested"}
@@ -184,16 +234,14 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId, 
             <Button
               variant="outline"
               size="sm"
-              onClick={handleSaved}
-              className={cn("border-accent/30 hover:bg-accent/10 hover:border-accent", isCompact && "px-2")}
-            >
-              <Bookmark className={cn(isCompact ? "h-3 w-3" : "h-3.5 w-3.5")} />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleNotInterested}
-              className={cn("border-destructive/30 hover:bg-destructive/10 hover:border-destructive", isCompact && "px-2")}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNotInterested();
+              }}
+              className={cn(
+                "border-[#EF4444]/30 text-[#EF4444] hover:bg-[#EF4444]/10 hover:border-[#EF4444]",
+                isCompact ? "px-1.5 h-8" : "px-3"
+              )}
             >
               <ThumbsDown className={cn(isCompact ? "h-3 w-3" : "h-3.5 w-3.5")} />
             </Button>
@@ -201,37 +249,47 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId, 
         )}
 
         {/* Feedback Badge */}
-        {userFeedback && (
-          <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+        {userFeedback && userFeedback !== 'saved' && userFeedback !== 'clicked' && (
+          <div className={cn(
+            "flex items-center gap-2 text-[#6A7282]",
+            isCompact ? "text-[10px]" : "text-[12px]"
+          )}>
             {userFeedback === 'interested' && (
               <>
-                <ThumbsUp className="h-4 w-4 text-success" />
-                <span>You're interested in this</span>
-              </>
-            )}
-            {userFeedback === 'saved' && (
-              <>
-                <Bookmark className="h-4 w-4 text-accent" />
-                <span>Saved for later</span>
+                <ThumbsUp className={cn("text-[#22C55E]", isCompact ? "h-3 w-3" : "h-4 w-4")} />
+                <span>You're interested</span>
               </>
             )}
             {userFeedback === 'not_interested' && (
               <>
-                <ThumbsDown className="h-4 w-4 text-destructive" />
+                <ThumbsDown className={cn("text-[#EF4444]", isCompact ? "h-3 w-3" : "h-4 w-4")} />
                 <span>Not interested</span>
               </>
             )}
           </div>
         )}
 
-        {/* CTA Button */}
-        <Button 
-          onClick={handleViewDetails}
-          className={cn("w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold", isCompact ? "text-xs py-2" : "text-sm")}
-        >
-          View Full Details
-        </Button>
+        {/* Footer: Price & CTA */}
+        <div className={cn("mt-auto flex items-center justify-between", isCompact ? "pt-1" : "pt-2")}>
+          <div className="flex flex-col">
+            <span className={cn("text-[#6A7282]", isCompact ? "text-[10px]" : "text-[12px]")}>
+              Package Price
+            </span>
+            <span className={cn("font-bold text-[#00AAFE]", isCompact ? "text-[14px] leading-5" : "text-[18px] leading-7")}>
+              {formatCurrency(recommendation.price)}
+            </span>
+          </div>
+          <Button 
+            onClick={handleViewDetails}
+            className={cn(
+              "rounded-[10px] bg-[#00AAFE] font-medium text-white hover:bg-[#00AAFE]/90 active:scale-95",
+              isCompact ? "h-9 px-3 text-[12px]" : "h-11 min-h-[44px] px-4 text-[14px]"
+            )}
+          >
+            View Details
+          </Button>
+        </div>
       </div>
-    </Card>
+    </article>
   );
 };

@@ -81,12 +81,12 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId, 
     <article 
       className={cn(
         "group flex h-full cursor-pointer flex-col overflow-hidden rounded-[14px] border border-[#E5E7EB] bg-white transition-shadow hover:shadow-lg animate-fade-in",
-        isCompact && "max-w-[240px]"
+        isCompact && "max-w-[300px]"
       )}
       onClick={handleViewDetails}
     >
       {/* Hero Section - Matches OpportunityCard exactly */}
-      <div className={cn("relative w-full bg-gray-100", isCompact ? "h-[96px]" : "h-[128px]")}>
+      <div className={cn("relative w-full bg-gray-100", isCompact ? "h-[112px]" : "h-[128px]")}>
         {primaryImage ? (
           <img 
             src={primaryImage} 
@@ -110,7 +110,7 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId, 
         {recommendation.sport && (
           <span className={cn(
             "absolute left-3 top-3 rounded-full bg-[#FFB82D] px-3 py-1 font-medium text-black",
-            isCompact ? "text-[10px] leading-3" : "text-[12px] leading-4"
+            isCompact ? "text-[11px] leading-3" : "text-[12px] leading-4"
           )}>
             {recommendation.sport}
           </span>
@@ -140,7 +140,7 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId, 
         <div className="absolute bottom-3 left-3 flex flex-col gap-0.5">
           <h3 className={cn(
             "line-clamp-1 font-bold text-white drop-shadow-md",
-            isCompact ? "text-[14px] leading-[18px]" : "text-[18px] leading-[22.5px]"
+            isCompact ? "text-[16px] leading-[20px]" : "text-[18px] leading-[22.5px]"
           )}>
             {recommendation.title || recommendation.team_name}
           </h3>
@@ -148,70 +148,50 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId, 
       </div>
 
       {/* Content Section */}
-      <div className={cn("flex flex-1 flex-col gap-3", isCompact ? "p-3" : "p-4")}>
+      <div className={cn("flex flex-1 flex-col gap-3", isCompact ? "p-3.5" : "p-4")}>
         {/* Meta Row - Location, Players, Tier */}
         <div className={cn(
           "flex flex-wrap items-center gap-3 text-[#4A5565]",
-          isCompact ? "gap-2 text-[10px] leading-3" : "text-[12px] leading-4"
+          isCompact ? "gap-2 text-[11px] leading-3" : "text-[12px] leading-4"
         )}>
           <span className="inline-flex items-center gap-1">
             <MapPin className={cn(isCompact ? "h-3 w-3" : "h-3.5 w-3.5")} />
             {formatLocation(recommendation.city, recommendation.state)}
           </span>
+          {/* Show players in compact mode too */}
+          <span className="inline-flex items-center gap-1">
+            <Users className={cn(isCompact ? "h-3 w-3" : "h-3.5 w-3.5")} />
+            {recommendation.players} {isCompact ? '' : 'players'}
+          </span>
           {!isCompact && (
-            <>
-              <span className="inline-flex items-center gap-1">
-                <Users className="h-3.5 w-3.5" />
-                {recommendation.players} players
-              </span>
-              <Tag label={recommendation.tier} />
-            </>
+            <Tag label={recommendation.tier} />
           )}
         </div>
 
-        {/* Stats Grid */}
-        <div className={cn("grid gap-3", isCompact ? "grid-cols-2" : "grid-cols-3")}>
-          {isCompact ? (
-            <>
-              <StatTile 
-                icon={targetIcon} 
-                value={recommendation.packagesCount} 
-                label="Packages" 
-              />
-              <StatTile 
-                icon={calendarIcon} 
-                value={formatDuration(recommendation.durationMonths)} 
-                label="Duration" 
-              />
-            </>
-          ) : (
-            <>
-              <StatTile 
-                icon={targetIcon} 
-                value={recommendation.packagesCount} 
-                label="Packages" 
-              />
-              <StatTile 
-                icon={usersIcon} 
-                value={recommendation.estWeekly.toLocaleString()} 
-                label="Est. Weekly" 
-              />
-              <StatTile 
-                icon={calendarIcon} 
-                value={formatDuration(recommendation.durationMonths)} 
-                label="Duration" 
-              />
-            </>
-          )}
-        </div>
-
-        {/* Progress Bar - Only in default variant */}
-        {!isCompact && (
-          <ProgressBar 
-            raised={recommendation.raised} 
-            goal={recommendation.goal} 
+        {/* Stats Grid - 3 columns in compact for better info density */}
+        <div className="grid grid-cols-3 gap-3">
+          <StatTile 
+            icon={targetIcon} 
+            value={recommendation.packagesCount} 
+            label="Packages" 
           />
-        )}
+          <StatTile 
+            icon={usersIcon} 
+            value={recommendation.estWeekly.toLocaleString()} 
+            label={isCompact ? "Weekly" : "Est. Weekly"}
+          />
+          <StatTile 
+            icon={calendarIcon} 
+            value={formatDuration(recommendation.durationMonths)} 
+            label="Duration" 
+          />
+        </div>
+
+        {/* Progress Bar */}
+        <ProgressBar 
+          raised={recommendation.raised} 
+          goal={recommendation.goal} 
+        />
 
         {/* Quick Action Buttons - AI Specific Feature */}
         {!userFeedback && (
@@ -225,7 +205,7 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId, 
               }}
               className={cn(
                 "flex-1 border-[#22C55E]/30 text-[#22C55E] hover:bg-[#22C55E]/10 hover:border-[#22C55E]",
-                isCompact && "text-[10px] px-1.5 h-8"
+                isCompact && "text-[11px] px-2 h-8"
               )}
             >
               <ThumbsUp className={cn(isCompact ? "h-3 w-3" : "h-3.5 w-3.5", !isCompact && "mr-1")} />
@@ -240,7 +220,7 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId, 
               }}
               className={cn(
                 "border-[#EF4444]/30 text-[#EF4444] hover:bg-[#EF4444]/10 hover:border-[#EF4444]",
-                isCompact ? "px-1.5 h-8" : "px-3"
+                isCompact ? "px-2 h-8" : "px-3"
               )}
             >
               <ThumbsDown className={cn(isCompact ? "h-3 w-3" : "h-3.5 w-3.5")} />
@@ -275,7 +255,7 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId, 
             <span className={cn("text-[#6A7282]", isCompact ? "text-[10px]" : "text-[12px]")}>
               Package Price
             </span>
-            <span className={cn("font-bold text-[#00AAFE]", isCompact ? "text-[14px] leading-5" : "text-[18px] leading-7")}>
+            <span className={cn("font-bold text-[#00AAFE]", isCompact ? "text-[15px] leading-5" : "text-[18px] leading-7")}>
               {formatCurrency(recommendation.price)}
             </span>
           </div>

@@ -45,7 +45,7 @@ export const chatTheme = {
   // Recommendation cards
   recommendations: {
     desktop: {
-      cardWidth: 240,
+      cardWidth: 300,
       scrollHint: true,
     },
     mobile: {

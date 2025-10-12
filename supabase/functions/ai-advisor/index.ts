@@ -745,21 +745,39 @@ DO NOT proceed with recommendations until you have their zip code.` : ''}
           return 'Recreational';
         };
 
-        // Enrich recommendations
+        // Enrich recommendations with robust fallbacks
         recommendations = filteredData.map((rec: any) => {
           const offer = offersMap.get(rec.sponsorship_offer_id);
           const team = teamsMap.get(rec.team_profile_id);
           
           // Parse location (format: "City, State" or "City, ST")
           const locationParts = team?.location?.split(',').map((s: string) => s.trim()) || [];
-          const city = locationParts[0] || 'Unknown';
-          const state = locationParts[1] || 'Unknown';
+          const city = locationParts[0] || rec.team_name?.split(' ')[0] || 'Local';
+          const state = locationParts[1] || 'TBD';
           
-          // Parse number of players
-          const playersStr = team?.number_of_players || '0';
-          const players = playersStr.includes('-') 
-            ? parseInt(playersStr.split('-')[1]) 
-            : parseInt(playersStr) || 0;
+          // Parse number of players with robust fallback
+          const playersStr = team?.number_of_players || offer?.supported_players?.toString() || '0';
+          let players = 0;
+          if (playersStr.includes('-')) {
+            // Range format: "15-20" -> use upper bound
+            players = parseInt(playersStr.split('-')[1]) || 0;
+          } else {
+            players = parseInt(playersStr) || 0;
+          }
+          // Final fallback based on typical team sizes
+          if (players === 0) {
+            players = 20; // Reasonable default for youth sports
+          }
+
+          // Robust package count
+          const packagesCount = packageCountMap.get(rec.sponsorship_offer_id) || 1;
+          
+          // Robust duration parsing
+          const durationMonths = parseDuration(offer?.duration || '') || 6;
+          
+          // Robust reach calculation for weekly estimate
+          const totalReach = team?.reach || rec.total_reach || 0;
+          const estWeekly = totalReach > 0 ? Math.round(totalReach / 52) : Math.round(players * 2); // Fallback: players × 2 (families)
 
           return {
             // Existing RPC fields
@@ -777,18 +795,18 @@ DO NOT proceed with recommendations until you have their zip code.` : ''}
             logo: rec.logo,
             images: rec.images,
             
-            // NEW FIELDS for OpportunityCard parity
-            title: offer?.title || rec.team_name,
+            // NEW FIELDS for OpportunityCard parity (with robust fallbacks)
+            title: offer?.title || `${rec.team_name} Sponsorship`,
             organization: rec.team_name,
             city: city,
             state: state,
             players: players,
             tier: mapLevelToTier(team?.level_of_play, team?.competition_scope),
-            packagesCount: packageCountMap.get(rec.sponsorship_offer_id) || 1,
-            estWeekly: Math.round((team?.reach || rec.total_reach || 0) / 52),
-            durationMonths: parseDuration(offer?.duration || ''),
+            packagesCount: packagesCount,
+            estWeekly: estWeekly,
+            durationMonths: durationMonths,
             raised: 0, // Placeholder - would come from payments table
-            goal: offer?.fundraising_goal || 0,
+            goal: offer?.fundraising_goal || rec.price || 0,
           };
         });
 

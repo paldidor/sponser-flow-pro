@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { messageBubbleVariants, messageRowVariants } from '../theme/chatVariants';
 import { chatTheme } from '../theme/chatTheme';
@@ -13,7 +14,7 @@ interface MessageBubbleProps {
   onViewAllRecommendations?: (messageId: string) => void;
 }
 
-export const MessageBubble = ({
+const MessageBubbleComponent = ({
   message,
   index,
   conversationId,
@@ -49,3 +50,14 @@ export const MessageBubble = ({
     </motion.div>
   );
 };
+
+// Memoize to prevent unnecessary re-renders
+export const MessageBubble = memo(MessageBubbleComponent, (prev, next) => {
+  return (
+    prev.message.id === next.message.id &&
+    prev.message.content === next.message.content &&
+    prev.conversationId === next.conversationId &&
+    prev.isMobile === next.isMobile &&
+    prev.message.recommendations?.length === next.message.recommendations?.length
+  );
+});

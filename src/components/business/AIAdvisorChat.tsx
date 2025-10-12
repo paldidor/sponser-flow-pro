@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import { Card } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAIConversation, RecommendationData } from '@/hooks/useAIConversation';
-import { RecommendationViewer } from './RecommendationViewer';
+import { usePerformanceMonitor, useLatencyTracker } from '@/hooks/usePerformanceMonitor';
 import {
   ChatFloatingButton,
   ChatHeader,
@@ -15,7 +15,15 @@ import {
   chatWindowVariants,
 } from './ai-advisor';
 
+// Lazy load RecommendationViewer for code splitting
+const RecommendationViewer = lazy(() => 
+  import('./RecommendationViewer').then(module => ({ default: module.RecommendationViewer }))
+);
+
 export const AIAdvisorChat = () => {
+  usePerformanceMonitor('AIAdvisorChat');
+  const { trackLatency } = useLatencyTracker();
+  
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -28,9 +36,11 @@ export const AIAdvisorChat = () => {
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
     
+    const startTime = performance.now();
     const message = inputValue;
     setInputValue('');
     await sendMessage(message);
+    trackLatency('AI message send', startTime);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -112,13 +122,15 @@ export const AIAdvisorChat = () => {
         )}
       </AnimatePresence>
 
-      <RecommendationViewer
-        recommendations={activeRecommendations}
-        isOpen={viewerOpen}
-        onClose={() => setViewerOpen(false)}
-        conversationId={conversationId || undefined}
-        messageId={activeMessageId}
-      />
+      <Suspense fallback={null}>
+        <RecommendationViewer
+          recommendations={activeRecommendations}
+          isOpen={viewerOpen}
+          onClose={() => setViewerOpen(false)}
+          conversationId={conversationId || undefined}
+          messageId={activeMessageId}
+        />
+      </Suspense>
     </>
   );
 };

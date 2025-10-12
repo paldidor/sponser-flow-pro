@@ -1,7 +1,9 @@
+import { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { debounce } from '@/lib/performanceUtils';
 
 interface ChatInputAreaProps {
   value: string;
@@ -20,12 +22,29 @@ export const ChatInputArea = ({
   isLoading,
   showHint,
 }: ChatInputAreaProps) => {
+  // Debounce onChange to reduce state updates while typing
+  const debouncedOnChange = useCallback(
+    debounce((newValue: string) => {
+      onChange(newValue);
+    }, 150),
+    [onChange]
+  );
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Update input immediately for responsive UI
+    const newValue = e.target.value;
+    onChange(newValue);
+    
+    // Debounce expensive operations (e.g., typing indicators)
+    debouncedOnChange(newValue);
+  };
+
   return (
     <div className="border-t border-border bg-card/50 backdrop-blur-sm p-4 shrink-0">
       <div className="flex gap-2">
         <Input
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={handleChange}
           onKeyPress={onKeyPress}
           placeholder="Ask about sponsorship opportunities..."
           disabled={isLoading}

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { RecommendationCard } from '../../RecommendationCard';
@@ -12,7 +13,7 @@ interface RecommendationStripProps {
   onViewAll: () => void;
 }
 
-export const RecommendationStrip = ({
+const RecommendationStripComponent = ({
   recommendations,
   messageId,
   conversationId,
@@ -85,3 +86,6 @@ export const RecommendationStrip = ({
     </motion.div>
   );
 };
+
+// Memoize to prevent re-renders when recommendations haven't changed
+export const RecommendationStrip = memo(RecommendationStripComponent);

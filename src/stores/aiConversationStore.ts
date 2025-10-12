@@ -38,6 +38,7 @@ export interface Conversation {
   preferences: SavedPreferences | null;
   lastActivity: Date;
   title: string;
+  serverConversationId?: string;
 }
 
 interface AIConversationState {
@@ -56,6 +57,7 @@ interface AIConversationState {
   addMessage: (conversationId: string, message: AIMessage) => void;
   updateMessages: (conversationId: string, messages: AIMessage[]) => void;
   updatePreferences: (conversationId: string, preferences: SavedPreferences) => void;
+  setServerConversationId: (localId: string, serverId: string) => void;
   setIsLoading: (loading: boolean) => void;
   setIsTyping: (typing: boolean) => void;
   clearConversation: (conversationId: string) => void;
@@ -163,6 +165,23 @@ export const useAIConversationStore = create<AIConversationState>()(
 
           const newConversations = new Map(state.conversations);
           newConversations.set(conversationId, updatedConversation);
+
+          return { conversations: newConversations };
+        });
+      },
+
+      setServerConversationId: (localId, serverId) => {
+        set((state) => {
+          const conversation = state.conversations.get(localId);
+          if (!conversation) return state;
+
+          const updatedConversation = {
+            ...conversation,
+            serverConversationId: serverId,
+          };
+
+          const newConversations = new Map(state.conversations);
+          newConversations.set(localId, updatedConversation);
 
           return { conversations: newConversations };
         });

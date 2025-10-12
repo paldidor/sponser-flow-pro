@@ -22,6 +22,7 @@ export const useAIConversation = () => {
     addMessage,
     updateMessages,
     updatePreferences,
+    setServerConversationId,
     setIsLoading,
     setIsTyping,
     clearConversation,
@@ -54,15 +55,23 @@ export const useAIConversation = () => {
     addMessage(conversationId, userMessage);
 
     try {
+      // Use server conversation ID if available, otherwise use local ID
+      const targetId = activeConversation?.serverConversationId || conversationId;
+      
       const { data, error } = await supabase.functions.invoke('ai-advisor', {
         body: {
           message: text,
-          conversationId,
+          conversationId: targetId,
           filters,
         },
       });
 
       if (error) throw error;
+
+      // Store server conversation ID if returned and different from stored
+      if (data.conversationId && data.conversationId !== activeConversation?.serverConversationId) {
+        setServerConversationId(conversationId, data.conversationId);
+      }
 
       // Load preferences if this is a new conversation
       if (data.conversationId && !activeConversation?.preferences) {
@@ -137,6 +146,9 @@ export const useAIConversation = () => {
       if (!conversation || conversation.messages.length > 0) return;
 
       try {
+        // Use server conversation ID if available, otherwise use local ID
+        const remoteId = conversation.serverConversationId || activeConversationId;
+
         // Load messages with recommendations
         const { data: messagesData, error } = await supabase
           .from('ai_messages')
@@ -150,7 +162,7 @@ export const useAIConversation = () => {
               recommendation_data
             )
           `)
-          .eq('conversation_id', activeConversationId)
+          .eq('conversation_id', remoteId)
           .order('created_at', { ascending: true });
 
         if (error) throw error;
@@ -170,8 +182,8 @@ export const useAIConversation = () => {
           updateMessages(activeConversationId, transformedMessages);
         }
 
-        // Load preferences
-        await loadPreferences(activeConversationId, activeConversationId);
+        // Load preferences using correct IDs
+        await loadPreferences(activeConversationId, remoteId);
       } catch (error) {
         console.error('Error loading conversation:', error);
       }

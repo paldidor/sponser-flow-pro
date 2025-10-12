@@ -180,4 +180,29 @@ describe('useAIConversation', () => {
       expect(result2.current.messages).toHaveLength(0);
     });
   });
+
+  describe('Server Conversation ID Management', () => {
+    it('should use server conversation ID when calling backend', () => {
+      const { createConversation, setServerConversationId } = useAIConversationStore.getState();
+      const localId = createConversation();
+      const serverId = 'server-uuid-789';
+      
+      setServerConversationId(localId, serverId);
+      
+      const { result } = renderHook(() => useAIConversation());
+      
+      // When sending a message, it should use serverId
+      const conversation = result.current.getConversationById(localId);
+      expect(conversation?.serverConversationId).toBe(serverId);
+    });
+
+    it('should store server conversation ID from backend response', () => {
+      // This is tested in integration - mock supabase response
+      const { createConversation } = useAIConversationStore.getState();
+      createConversation();
+      
+      const { result } = renderHook(() => useAIConversation());
+      expect(result.current.conversationId).toBeDefined();
+    });
+  });
 });

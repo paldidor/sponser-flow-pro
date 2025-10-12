@@ -129,6 +129,18 @@ describe('aiConversationStore', () => {
       
       expect(conversation?.preferences).toEqual(preferences);
     });
+
+    it('should set and persist server conversation ID', () => {
+      const { createConversation, setServerConversationId, getConversationById } = useAIConversationStore.getState();
+      
+      const conversationId = createConversation();
+      const serverId = 'server-uuid-123';
+      
+      setServerConversationId(conversationId, serverId);
+      const conversation = getConversationById(conversationId);
+      
+      expect(conversation?.serverConversationId).toBe(serverId);
+    });
   });
 
   describe('UI State Management', () => {
@@ -211,6 +223,19 @@ describe('aiConversationStore', () => {
       
       expect(conversation?.messages).toHaveLength(0);
       expect(conversation?.preferences).toBeNull();
+    });
+
+    it('should preserve server conversation ID when clearing', () => {
+      const { createConversation, setServerConversationId, clearConversation, getConversationById } = useAIConversationStore.getState();
+      
+      const conversationId = createConversation();
+      const serverId = 'server-uuid-456';
+      
+      setServerConversationId(conversationId, serverId);
+      clearConversation(conversationId);
+      
+      const conversation = getConversationById(conversationId);
+      expect(conversation?.serverConversationId).toBe(serverId);
     });
   });
 });

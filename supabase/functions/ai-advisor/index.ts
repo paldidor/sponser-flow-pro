@@ -284,14 +284,61 @@ serve(async (req) => {
       if (convError) throw convError;
       activeConversationId = conv.id;
     } else {
-      // EXISTING CONVERSATION: Load from conversation metadata
-      const { data: existingConv } = await supabaseClient
+      // EXISTING CONVERSATION: Verify it exists, otherwise create new
+      const { data: existingConv, error: convError } = await supabaseClient
         .from('ai_conversations')
-        .select('metadata')
+        .select('id, metadata')
         .eq('id', activeConversationId)
-        .single();
+        .maybeSingle();
       
-      savedPreferences = existingConv?.metadata?.preferences || {};
+      if (convError || !existingConv) {
+        console.warn('⚠️ Conversation ID provided but not found, creating new conversation');
+        
+        // Create new conversation
+        const { data: businessProfile } = await supabaseClient
+          .from('business_profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+
+        // Load persistent user preferences
+        const { data: userPrefs } = await supabaseClient
+          .from('ai_user_preferences')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (userPrefs) {
+          savedPreferences = {
+            sports: userPrefs.preferred_sports || undefined,
+            budgetMin: userPrefs.budget_range 
+              ? parseFloat(userPrefs.budget_range.replace(/[\[\]]/g, '').split(',')[0]) 
+              : undefined,
+            budgetMax: userPrefs.budget_range 
+              ? parseFloat(userPrefs.budget_range.replace(/[\[\]]/g, '').split(',')[1]) 
+              : undefined,
+            radiusKm: userPrefs.interaction_patterns?.last_radius_km || undefined,
+          };
+          console.log('📚 Loaded persistent user preferences for new conversation:', savedPreferences);
+        }
+
+        const { data: newConv, error: newConvError } = await supabaseClient
+          .from('ai_conversations')
+          .insert({
+            user_id: user.id,
+            business_profile_id: businessProfile?.id,
+            channel: 'in-app',
+            metadata: { preferences: savedPreferences },
+          })
+          .select()
+          .single();
+
+        if (newConvError) throw newConvError;
+        activeConversationId = newConv.id;
+        console.log('✅ Created new conversation:', activeConversationId);
+      } else {
+        savedPreferences = existingConv.metadata?.preferences || {};
+      }
     }
 
     // Store user message
@@ -507,12 +554,31 @@ Say something natural like: "To find teams near you, what's your zip code?"
 DO NOT proceed with recommendations until you have their zip code.` : ''}
     `.trim();
 
+    // Detect preference intent before AI call
+    const asksPrefs = /current preferences|my preferences|what.*preferences|show.*preferences/i.test(message);
+    
     // Prepare messages for AI with FULL conversation history
     const aiMessages = [
       { role: 'system', content: ADVISOR_SYSTEM_PROMPT },
       { role: 'system', content: businessContext },
       ...(messages || []).map(m => ({ role: m.role, content: m.content })),
     ];
+
+    // Handle preference intent
+    if (asksPrefs) {
+      console.log('🔍 User asked for current preferences');
+      if (Object.keys(savedPreferences).length > 0) {
+        aiMessages.push({
+          role: 'system',
+          content: `CRITICAL: The user asked to list their saved preferences. Summarize budget, sports, radius that are known. Do NOT ask for them again. Keep under 60 words.`
+        });
+      } else {
+        aiMessages.push({
+          role: 'system',
+          content: `CRITICAL: No saved preferences found. Politely say you don't have them yet and ask ONE next best clarifying question (zip if location missing else budget).`
+        });
+      }
+    }
 
     // Smarter search trigger: detect conversation stage
     // (conversationText already defined above for preference extraction)
@@ -752,7 +818,7 @@ ONLY teams explicitly listed in your context exist. If not listed = does not exi
     }
 
     // Store assistant message
-    const { data: savedMessage } = await supabaseClient
+    const { data: savedMessage, error: saveError } = await supabaseClient
       .from('ai_messages')
       .insert({
         conversation_id: activeConversationId,
@@ -762,6 +828,12 @@ ONLY teams explicitly listed in your context exist. If not listed = does not exi
       })
       .select()
       .single();
+
+    if (saveError) {
+      console.error('❌ Failed to save assistant message:', saveError);
+    } else {
+      console.log('✅ Saved assistant message with ID:', savedMessage?.id);
+    }
 
     // Store recommendations for tracking with full data
     if (recommendations?.length > 0 && savedMessage?.id) {

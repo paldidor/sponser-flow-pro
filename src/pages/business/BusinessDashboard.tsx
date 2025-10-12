@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useBusinessProfile } from "@/hooks/useBusinessProfile";
 import { BusinessDashboardHeader } from "@/components/business/BusinessDashboardHeader";
 import { MetricsCard } from "@/components/business/MetricsCard";
+import { PerformanceChart } from "@/components/business/PerformanceChart";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -155,6 +156,9 @@ const BusinessDashboard = () => {
             icon="trending"
           />
         </div>
+
+        {/* Performance Chart */}
+        <PerformanceChart />
 
         {/* Coming Soon Section */}
         <div className="flex items-center justify-center min-h-[40vh]">

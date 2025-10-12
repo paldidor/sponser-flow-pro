@@ -10,6 +10,7 @@ export interface AIMessage {
 }
 
 export interface RecommendationData {
+  // Existing RPC fields
   team_profile_id: string;
   team_name: string;
   distance_km: number;
@@ -23,6 +24,19 @@ export interface RecommendationData {
   sport: string | null;
   logo: string | null;
   images: string[] | null;
+  
+  // NEW FIELDS for OpportunityCard parity
+  title: string;
+  organization: string;
+  city: string;
+  state: string;
+  players: number;
+  tier: string; // TierType from marketplace
+  packagesCount: number;
+  estWeekly: number;
+  durationMonths: number;
+  raised: number;
+  goal: number;
 }
 
 export interface SavedPreferences {

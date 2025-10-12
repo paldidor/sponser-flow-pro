@@ -683,11 +683,119 @@ DO NOT proceed with recommendations until you have their zip code.` : ''}
       });
 
       // Filter out offers the user marked as "not interested"
-      recommendations = recData?.filter((rec: any) => 
+      const filteredData = recData?.filter((rec: any) => 
         !notInterestedOfferIds.includes(rec.sponsorship_offer_id)
       ).slice(0, 3); // Take top 3 after filtering
 
-      console.log(`✅ Found ${recData?.length || 0} recommendations, showing ${recommendations?.length || 0} after filtering`);
+      console.log(`✅ Found ${recData?.length || 0} recommendations, showing ${filteredData?.length || 0} after filtering`);
+
+      // ✅ ENHANCE RECOMMENDATIONS WITH FULL OPPORTUNITYCARD DATA
+      if (filteredData && filteredData.length > 0) {
+        const offerIds = filteredData.map((r: any) => r.sponsorship_offer_id);
+        const teamIds = filteredData.map((r: any) => r.team_profile_id);
+
+        // Fetch additional data from sponsorship_offers and team_profiles
+        const { data: offersData } = await supabaseClient
+          .from('sponsorship_offers')
+          .select('id, title, fundraising_goal, duration, supported_players')
+          .in('id', offerIds);
+
+        const { data: teamsData } = await supabaseClient
+          .from('team_profiles')
+          .select('id, location, level_of_play, competition_scope, number_of_players, reach')
+          .in('id', teamIds);
+
+        // Create lookup maps
+        const offersMap = new Map(offersData?.map(o => [o.id, o]) || []);
+        const teamsMap = new Map(teamsData?.map(t => [t.id, t]) || []);
+
+        // Count packages per offer
+        const { data: packageCounts } = await supabaseClient
+          .from('sponsorship_packages')
+          .select('sponsorship_offer_id')
+          .in('sponsorship_offer_id', offerIds)
+          .eq('status', 'live');
+
+        const packageCountMap = new Map<string, number>();
+        packageCounts?.forEach((pkg: any) => {
+          const count = packageCountMap.get(pkg.sponsorship_offer_id) || 0;
+          packageCountMap.set(pkg.sponsorship_offer_id, count + 1);
+        });
+
+        // Helper: Parse duration string to months
+        const parseDuration = (duration: string): number => {
+          if (!duration) return 6; // Default
+          const match = duration.match(/(\d+)\s*(month|year)/i);
+          if (!match) return 6;
+          const value = parseInt(match[1]);
+          const unit = match[2].toLowerCase();
+          return unit === 'year' ? value * 12 : value;
+        };
+
+        // Helper: Map level of play to tier
+        const mapLevelToTier = (level?: string, scope?: string): string => {
+          const levelLower = (level || '').toLowerCase();
+          const scopeLower = (scope || '').toLowerCase();
+          
+          if (levelLower.includes('elite') || levelLower.includes('national')) return 'Elite';
+          if (levelLower.includes('premier') || scopeLower.includes('regional')) return 'Premier';
+          if (levelLower.includes('competitive') || scopeLower.includes('state')) return 'Competitive';
+          if (levelLower.includes('travel')) return 'Travel';
+          if (levelLower.includes('local') || scopeLower.includes('local')) return 'Local';
+          return 'Recreational';
+        };
+
+        // Enrich recommendations
+        recommendations = filteredData.map((rec: any) => {
+          const offer = offersMap.get(rec.sponsorship_offer_id);
+          const team = teamsMap.get(rec.team_profile_id);
+          
+          // Parse location (format: "City, State" or "City, ST")
+          const locationParts = team?.location?.split(',').map((s: string) => s.trim()) || [];
+          const city = locationParts[0] || 'Unknown';
+          const state = locationParts[1] || 'Unknown';
+          
+          // Parse number of players
+          const playersStr = team?.number_of_players || '0';
+          const players = playersStr.includes('-') 
+            ? parseInt(playersStr.split('-')[1]) 
+            : parseInt(playersStr) || 0;
+
+          return {
+            // Existing RPC fields
+            team_profile_id: rec.team_profile_id,
+            team_name: rec.team_name,
+            distance_km: rec.distance_km,
+            total_reach: rec.total_reach,
+            sponsorship_offer_id: rec.sponsorship_offer_id,
+            package_id: rec.package_id,
+            package_name: rec.package_name,
+            price: rec.price,
+            est_cpf: rec.est_cpf,
+            marketplace_url: rec.marketplace_url,
+            sport: rec.sport,
+            logo: rec.logo,
+            images: rec.images,
+            
+            // NEW FIELDS for OpportunityCard parity
+            title: offer?.title || rec.team_name,
+            organization: rec.team_name,
+            city: city,
+            state: state,
+            players: players,
+            tier: mapLevelToTier(team?.level_of_play, team?.competition_scope),
+            packagesCount: packageCountMap.get(rec.sponsorship_offer_id) || 1,
+            estWeekly: Math.round((team?.reach || rec.total_reach || 0) / 52),
+            durationMonths: parseDuration(offer?.duration || ''),
+            raised: 0, // Placeholder - would come from payments table
+            goal: offer?.fundraising_goal || 0,
+          };
+        });
+
+        console.log('✨ Enhanced recommendations with OpportunityCard data');
+      } else {
+        recommendations = null;
+      }
 
       // ✅ ADD RECOMMENDATIONS TO AI CONTEXT - BEFORE AI GENERATES RESPONSE
       if (recommendations && recommendations.length > 0) {

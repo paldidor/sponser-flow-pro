@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBusinessProfile } from "@/hooks/useBusinessProfile";
 import { BusinessDashboardHeader } from "@/components/business/BusinessDashboardHeader";
+import { MetricsCard } from "@/components/business/MetricsCard";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -116,12 +117,51 @@ const BusinessDashboard = () => {
         onLogoUpdated={handleLogoUpdated}
       />
 
-      <main className="container mx-auto max-w-7xl px-4 py-8">
-        <div className="flex items-center justify-center min-h-[60vh]">
+      <main className="p-6 space-y-6">
+        {/* KPI Metrics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
+          <MetricsCard
+            title="Total Spend"
+            value="$8,700"
+            color="green"
+            icon="dollar"
+          />
+          <MetricsCard
+            title="Sponsorships"
+            value="12"
+            subtitle="4 placements"
+            color="blue"
+            icon="target"
+          />
+          <MetricsCard
+            title="Est. Reach"
+            value="300K"
+            subtitle="weekly views"
+            color="purple"
+            icon="eye"
+          />
+          <MetricsCard
+            title="Engagement"
+            value="1,053"
+            subtitle="total interactions"
+            color="blue"
+            icon="users"
+          />
+          <MetricsCard
+            title="Impact"
+            value="847"
+            subtitle="players supported"
+            color="yellow"
+            icon="trending"
+          />
+        </div>
+
+        {/* Coming Soon Section */}
+        <div className="flex items-center justify-center min-h-[40vh]">
           <div className="text-center space-y-4">
             <div className="text-6xl mb-4">🚀</div>
             <h2 className="text-2xl font-semibold text-foreground">
-              Dashboard Coming Soon
+              More Dashboard Features Coming Soon
             </h2>
             <p className="text-muted-foreground max-w-md">
               We're building an amazing dashboard experience for your business. 

@@ -26,6 +26,22 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId, 
   const [userFeedback, setUserFeedback] = useState<string | null>(null);
   const isCompact = variant === 'compact';
 
+  // Safe fallback values for backward compatibility with old recommendation data
+  const safeRecommendation = {
+    ...recommendation,
+    estWeekly: recommendation.estWeekly ?? 0,
+    packagesCount: recommendation.packagesCount ?? 1,
+    players: recommendation.players ?? 0,
+    city: recommendation.city ?? 'Unknown',
+    state: recommendation.state ?? 'Unknown',
+    durationMonths: recommendation.durationMonths ?? 6,
+    tier: recommendation.tier ?? 'Local',
+    raised: recommendation.raised ?? 0,
+    goal: recommendation.goal ?? recommendation.price ?? 0,
+    title: recommendation.title ?? recommendation.team_name,
+    organization: recommendation.organization ?? recommendation.team_name,
+  };
+
   const trackInteraction = async (action: string) => {
     if (!conversationId) return;
     
@@ -47,14 +63,14 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId, 
 
   const handleViewDetails = async () => {
     await trackInteraction('clicked');
-    navigate(`/marketplace/${recommendation.sponsorship_offer_id}`);
+    navigate(`/marketplace/${safeRecommendation.sponsorship_offer_id}`);
   };
 
   const handleInterested = async () => {
     await trackInteraction('interested');
     toast({
       title: 'Marked as Interested',
-      description: `We'll remember you're interested in ${recommendation.team_name}`,
+      description: `We'll remember you're interested in ${safeRecommendation.team_name}`,
     });
   };
 
@@ -70,12 +86,12 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId, 
     await trackInteraction('saved');
     toast({
       title: 'Saved for Later',
-      description: `${recommendation.team_name} saved to review later`,
+      description: `${safeRecommendation.team_name} saved to review later`,
     });
   };
 
   // Get the primary image - prefer logo, then first image, then fallback
-  const primaryImage = recommendation.logo || recommendation.images?.[0];
+  const primaryImage = safeRecommendation.logo || safeRecommendation.images?.[0];
 
   return (
     <article 
@@ -90,7 +106,7 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId, 
         {primaryImage ? (
           <img 
             src={primaryImage} 
-            alt={recommendation.title || recommendation.team_name}
+            alt={safeRecommendation.title}
             className="h-full w-full object-cover"
             loading="lazy"
             onError={(e) => {
@@ -100,19 +116,19 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId, 
         ) : (
           <div className="flex items-center justify-center h-full bg-gradient-to-br from-[#00AAFE]/10 to-[#FFB82D]/10">
             <div className="text-4xl font-bold text-[#00AAFE]/20">
-              {recommendation.team_name.charAt(0)}
+              {safeRecommendation.team_name.charAt(0)}
             </div>
           </div>
         )}
         <div className="absolute inset-0 bg-black/40" />
 
         {/* Sport Pill - Top Left */}
-        {recommendation.sport && (
+        {safeRecommendation.sport && (
           <span className={cn(
             "absolute left-3 top-3 rounded-full bg-[#FFB82D] px-3 py-1 font-medium text-black",
             isCompact ? "text-[11px] leading-3" : "text-[12px] leading-4"
           )}>
-            {recommendation.sport}
+            {safeRecommendation.sport}
           </span>
         )}
 
@@ -142,7 +158,7 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId, 
             "line-clamp-1 font-bold text-white drop-shadow-md",
             isCompact ? "text-[16px] leading-[20px]" : "text-[18px] leading-[22.5px]"
           )}>
-            {recommendation.title || recommendation.team_name}
+            {safeRecommendation.title}
           </h3>
         </div>
       </div>
@@ -156,15 +172,15 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId, 
         )}>
           <span className="inline-flex items-center gap-1">
             <MapPin className={cn(isCompact ? "h-3 w-3" : "h-3.5 w-3.5")} />
-            {formatLocation(recommendation.city, recommendation.state)}
+            {formatLocation(safeRecommendation.city, safeRecommendation.state)}
           </span>
           {/* Show players in compact mode too */}
           <span className="inline-flex items-center gap-1">
             <Users className={cn(isCompact ? "h-3 w-3" : "h-3.5 w-3.5")} />
-            {recommendation.players} {isCompact ? '' : 'players'}
+            {safeRecommendation.players} {isCompact ? '' : 'players'}
           </span>
           {!isCompact && (
-            <Tag label={recommendation.tier} />
+            <Tag label={safeRecommendation.tier} />
           )}
         </div>
 
@@ -172,25 +188,25 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId, 
         <div className="grid grid-cols-3 gap-3">
           <StatTile 
             icon={targetIcon} 
-            value={recommendation.packagesCount} 
+            value={safeRecommendation.packagesCount} 
             label="Packages" 
           />
           <StatTile 
             icon={usersIcon} 
-            value={recommendation.estWeekly.toLocaleString()} 
+            value={safeRecommendation.estWeekly.toLocaleString()} 
             label={isCompact ? "Weekly" : "Est. Weekly"}
           />
           <StatTile 
             icon={calendarIcon} 
-            value={formatDuration(recommendation.durationMonths)} 
+            value={formatDuration(safeRecommendation.durationMonths)} 
             label="Duration" 
           />
         </div>
 
         {/* Progress Bar */}
         <ProgressBar 
-          raised={recommendation.raised} 
-          goal={recommendation.goal} 
+          raised={safeRecommendation.raised} 
+          goal={safeRecommendation.goal}
         />
 
         {/* Quick Action Buttons - AI Specific Feature */}
@@ -256,7 +272,7 @@ export const RecommendationCard = ({ recommendation, conversationId, messageId, 
               Package Price
             </span>
             <span className={cn("font-bold text-[#00AAFE]", isCompact ? "text-[15px] leading-5" : "text-[18px] leading-7")}>
-              {formatCurrency(recommendation.price)}
+              {formatCurrency(safeRecommendation.price)}
             </span>
           </div>
           <Button 

@@ -175,7 +175,26 @@ export const useAIConversation = () => {
             content: msg.content,
             timestamp: new Date(msg.created_at),
             recommendations: msg.ai_recommendations
-              ?.map((rec: any) => rec.recommendation_data)
+              ?.map((rec: any) => {
+                const data = rec.recommendation_data;
+                if (!data) return null;
+                
+                // Add fallback values for backward compatibility with old recommendations
+                return {
+                  ...data,
+                  estWeekly: data.estWeekly ?? 0,
+                  packagesCount: data.packagesCount ?? 1,
+                  players: data.players ?? 0,
+                  city: data.city ?? 'Unknown',
+                  state: data.state ?? 'Unknown',
+                  durationMonths: data.durationMonths ?? 6,
+                  tier: data.tier ?? 'Local',
+                  raised: data.raised ?? 0,
+                  goal: data.goal ?? data.price ?? 0,
+                  title: data.title ?? data.team_name,
+                  organization: data.organization ?? data.team_name,
+                };
+              })
               .filter((data: any) => data != null) || undefined,
           }));
 

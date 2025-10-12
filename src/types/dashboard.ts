@@ -63,3 +63,19 @@ export interface ActiveSponsor {
   package_type: string;
   creative_assets: string[];
 }
+
+export interface BusinessSponsorship {
+  id: string;
+  team: string;
+  status: 'Active' | 'Activation' | 'Inactive';
+  teamType: string;
+  location: string;
+  sport: string;
+  amount: string;
+  exposure: string;
+  clicks: number;
+  conversions: number;
+  packageName: string;
+  teamId: string;
+  packageId: string;
+}

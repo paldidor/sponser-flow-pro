@@ -4,6 +4,7 @@ import { useBusinessProfile } from "@/hooks/useBusinessProfile";
 import { BusinessDashboardHeader } from "@/components/business/BusinessDashboardHeader";
 import { MetricsCard } from "@/components/business/MetricsCard";
 import { PerformanceChart } from "@/components/business/PerformanceChart";
+import { SponsorshipTable } from "@/components/business/SponsorshipTable";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -160,18 +161,15 @@ const BusinessDashboard = () => {
         {/* Performance Chart */}
         <PerformanceChart />
 
+        {/* Active Sponsorships Table */}
+        <SponsorshipTable />
+
         {/* Coming Soon Section */}
-        <div className="flex items-center justify-center min-h-[40vh]">
-          <div className="text-center space-y-4">
-            <div className="text-6xl mb-4">🚀</div>
-            <h2 className="text-2xl font-semibold text-foreground">
-              More Dashboard Features Coming Soon
-            </h2>
-            <p className="text-muted-foreground max-w-md">
-              We're building an amazing dashboard experience for your business. 
-              Check back soon!
-            </p>
-          </div>
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-8 text-center">
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">More Features Coming Soon</h3>
+          <p className="text-gray-600">
+            We're working on additional analytics and insights to help you maximize your sponsorship ROI.
+          </p>
         </div>
       </main>
 

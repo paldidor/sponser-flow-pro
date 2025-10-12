@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useAIAdvisor, RecommendationData } from '@/hooks/useAIAdvisor';
+import { useAIConversation, RecommendationData } from '@/hooks/useAIConversation';
 import { RecommendationViewer } from './RecommendationViewer';
 import {
   ChatFloatingButton,
@@ -22,7 +22,7 @@ export const AIAdvisorChat = () => {
   const [activeRecommendations, setActiveRecommendations] = useState<RecommendationData[]>([]);
   const [activeMessageId, setActiveMessageId] = useState<string | undefined>();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const { messages, sendMessage, isLoading, isTyping, savedPreferences, conversationId } = useAIAdvisor();
+  const { messages, sendMessage, isLoading, isTyping, savedPreferences, conversationId } = useAIConversation();
   const isMobile = useIsMobile();
 
   const handleSend = async () => {

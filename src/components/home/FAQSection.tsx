@@ -1,7 +1,12 @@
 import { useState } from "react";
 
-const FAQSection = () => {
-  const [activeTab, setActiveTab] = useState<"brands" | "teams">("brands");
+interface FAQSectionProps {
+  showToggle?: boolean;
+  defaultView?: "brands" | "teams";
+}
+
+const FAQSection = ({ showToggle = true, defaultView = "brands" }: FAQSectionProps = {}) => {
+  const [activeTab, setActiveTab] = useState<"brands" | "teams">(defaultView);
 
   const brandsFAQs = [
     {
@@ -73,60 +78,62 @@ const FAQSection = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex justify-center mb-12">
-          <div 
-            style={{ 
-              width: "189.45px", 
-              height: "51px",
-              background: "white",
-              boxShadow: "0px 1px 2px -1px rgba(0, 0, 0, 0.10)",
-              borderRadius: "8.75px",
-              border: "1px solid #E5E7EB",
-              padding: "4.5px",
-              display: "flex",
-              gap: "0"
-            }}
-          >
-            <button
-              onClick={() => setActiveTab("brands")}
-              style={{
-                width: "91px",
-                height: "42px",
-                background: activeTab === "brands" ? "#00AAFE" : "transparent",
-                boxShadow: activeTab === "brands" ? "0px 1px 2px -1px rgba(0, 0, 0, 0.10)" : "none",
-                borderRadius: "6.75px",
-                color: activeTab === "brands" ? "white" : "#4A5565",
-                fontSize: "14px",
-                fontWeight: 400,
-                lineHeight: "21px",
-                border: "none",
-                cursor: "pointer",
-                transition: "all 0.2s"
+        {showToggle && (
+          <div className="flex justify-center mb-12">
+            <div 
+              style={{ 
+                width: "189.45px", 
+                height: "51px",
+                background: "white",
+                boxShadow: "0px 1px 2px -1px rgba(0, 0, 0, 0.10)",
+                borderRadius: "8.75px",
+                border: "1px solid #E5E7EB",
+                padding: "4.5px",
+                display: "flex",
+                gap: "0"
               }}
             >
-              Brands
-            </button>
-            <button
-              onClick={() => setActiveTab("teams")}
-              style={{
-                width: "89.45px",
-                height: "42px",
-                background: activeTab === "teams" ? "#00AAFE" : "transparent",
-                boxShadow: activeTab === "teams" ? "0px 1px 2px -1px rgba(0, 0, 0, 0.10)" : "none",
-                borderRadius: "6.75px",
-                color: activeTab === "teams" ? "white" : "#4A5565",
-                fontSize: "14px",
-                fontWeight: 400,
-                lineHeight: "21px",
-                border: "none",
-                cursor: "pointer",
-                transition: "all 0.2s"
-              }}
-            >
-              Teams
-            </button>
+              <button
+                onClick={() => setActiveTab("brands")}
+                style={{
+                  width: "91px",
+                  height: "42px",
+                  background: activeTab === "brands" ? "#00AAFE" : "transparent",
+                  boxShadow: activeTab === "brands" ? "0px 1px 2px -1px rgba(0, 0, 0, 0.10)" : "none",
+                  borderRadius: "6.75px",
+                  color: activeTab === "brands" ? "white" : "#4A5565",
+                  fontSize: "14px",
+                  fontWeight: 400,
+                  lineHeight: "21px",
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "all 0.2s"
+                }}
+              >
+                Brands
+              </button>
+              <button
+                onClick={() => setActiveTab("teams")}
+                style={{
+                  width: "89.45px",
+                  height: "42px",
+                  background: activeTab === "teams" ? "#00AAFE" : "transparent",
+                  boxShadow: activeTab === "teams" ? "0px 1px 2px -1px rgba(0, 0, 0, 0.10)" : "none",
+                  borderRadius: "6.75px",
+                  color: activeTab === "teams" ? "white" : "#4A5565",
+                  fontSize: "14px",
+                  fontWeight: 400,
+                  lineHeight: "21px",
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "all 0.2s"
+                }}
+              >
+                Teams
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Content */}
         <div className="max-w-[1008px] mx-auto">

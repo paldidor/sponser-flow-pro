@@ -5,11 +5,13 @@ import { BusinessDashboardHeader } from "@/components/business/BusinessDashboard
 import { MetricsCard } from "@/components/business/MetricsCard";
 import { PerformanceChart } from "@/components/business/PerformanceChart";
 import { SponsorshipTable } from "@/components/business/SponsorshipTable";
+import { AIPreferencesModal } from "@/components/business/AIPreferencesModal";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { AIAdvisorChat } from "@/components/business/AIAdvisorChat";
+import { supabase } from "@/integrations/supabase/client";
 const BusinessDashboard = () => {
   const navigate = useNavigate();
   const {
@@ -21,6 +23,8 @@ const BusinessDashboard = () => {
     refetch
   } = useBusinessProfile();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showPreferencesModal, setShowPreferencesModal] = useState(false);
+  const [checkingPreferences, setCheckingPreferences] = useState(true);
 
   // Onboarding verification - redirect if not completed
   useEffect(() => {
@@ -38,6 +42,57 @@ const BusinessDashboard = () => {
       }
     }
   }, [profile, loading, navigate, toast]);
+
+  // Check for AI preferences - show modal if missing
+  useEffect(() => {
+    const checkPreferences = async () => {
+      if (!profile?.user_id || !profile?.onboarding_completed) {
+        setCheckingPreferences(false);
+        return;
+      }
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setCheckingPreferences(false);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('ai_user_preferences')
+          .select('interaction_patterns')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error checking preferences:', error);
+        }
+
+        // Show modal if no preferences OR preferences not marked as completed
+        const interactionPatterns = data?.interaction_patterns as { preferences_completed?: boolean } | null;
+        const preferencesCompleted = interactionPatterns?.preferences_completed === true;
+        
+        if (!data || !preferencesCompleted) {
+          console.log('📋 No preferences found or incomplete, showing modal');
+          setShowPreferencesModal(true);
+        }
+      } catch (error) {
+        console.error('Exception checking preferences:', error);
+      } finally {
+        setCheckingPreferences(false);
+      }
+    };
+
+    checkPreferences();
+  }, [profile]);
+
+  const handlePreferencesComplete = () => {
+    setShowPreferencesModal(false);
+    toast({
+      title: "Preferences Saved",
+      description: "Your AI advisor is ready to find sponsorship opportunities!",
+    });
+  };
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
@@ -64,11 +119,13 @@ const BusinessDashboard = () => {
   };
 
   // Loading state
-  if (loading) {
+  if (loading || checkingPreferences) {
     return <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <p className="text-sm text-muted-foreground">Loading your dashboard...</p>
+          <p className="text-sm text-muted-foreground">
+            {loading ? 'Loading your dashboard...' : 'Checking your preferences...'}
+          </p>
         </div>
       </div>;
   }
@@ -118,6 +175,18 @@ const BusinessDashboard = () => {
 
       {/* AI Advisor Chat Widget */}
       <AIAdvisorChat />
+
+      {/* AI Preferences Modal */}
+      <AIPreferencesModal
+        isOpen={showPreferencesModal}
+        onClose={() => setShowPreferencesModal(false)}
+        onComplete={handlePreferencesComplete}
+        businessProfile={{
+          city: profile.city,
+          state: profile.state,
+          industry: profile.industry,
+        }}
+      />
     </div>;
 };
 export default BusinessDashboard;

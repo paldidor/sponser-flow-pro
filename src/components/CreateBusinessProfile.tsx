@@ -49,14 +49,17 @@ const CreateBusinessProfile = ({ onComplete, onManualEntry }: CreateBusinessProf
         city: '', // Will be populated by analysis
         state: '', // Will be populated by analysis
         seed_url: normalizedUrl,
+        website: normalizedUrl,
         domain: domain,
         current_onboarding_step: 'business_profile',
-      });
+        analysis_status: 'pending',
+        analysis_started_at: new Date().toISOString(),
+      } as any);
 
       if (error) throw error;
 
       toast({
-        title: "Website submitted",
+        title: "Website Submitted",
         description: "Analyzing your business website...",
       });
 

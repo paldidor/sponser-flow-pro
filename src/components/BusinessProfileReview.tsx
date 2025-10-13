@@ -25,6 +25,20 @@ const BusinessProfileReview = ({ onEdit, onComplete }: BusinessProfileReviewProp
       return;
     }
 
+    // Validate required fields
+    const requiredFields: (keyof typeof profile)[] = ['business_name', 'industry', 'city', 'state'];
+    const missingFields = requiredFields.filter(field => !profile[field] || profile[field] === '');
+
+    if (missingFields.length > 0) {
+      toast({
+        title: "Incomplete Profile",
+        description: `Please fill in: ${missingFields.map(f => f.replace('_', ' ')).join(', ')}`,
+        variant: "destructive",
+      });
+      onEdit();
+      return;
+    }
+
     setIsCompleting(true);
 
     try {
@@ -270,7 +284,7 @@ const BusinessProfileReview = ({ onEdit, onComplete }: BusinessProfileReviewProp
         <Button
           onClick={handleApprove}
           className="flex-1"
-          disabled={isCompleting}
+          disabled={isCompleting || !profile.business_name || !profile.industry || !profile.city || !profile.state}
         >
           {isCompleting ? "Completing..." : "Approve & Complete"}
         </Button>

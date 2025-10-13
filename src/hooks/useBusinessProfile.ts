@@ -183,6 +183,18 @@ export const useBusinessProfile = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No authenticated user');
 
+      // Server-side validation: check required fields before completing
+      const { data: currentProfile } = await supabase
+        .from('business_profiles')
+        .select('business_name, industry, city, state')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!currentProfile?.business_name || !currentProfile?.industry || 
+          !currentProfile?.city || !currentProfile?.state) {
+        throw new Error('Cannot complete onboarding with missing required fields: business_name, industry, city, or state');
+      }
+
       const { data, error } = await supabase
         .from('business_profiles')
         .update({

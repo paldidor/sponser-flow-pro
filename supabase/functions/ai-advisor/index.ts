@@ -554,18 +554,88 @@ ${pastActions.map((action: any) => {
 - If they saved/interested but didn't convert, follow up: "Still considering [Team]?"`
       : '';
     
-    const businessContext = `
-**Business Profile:**
-- Name: ${businessProfile?.business_name || 'Not set'}
-- Industry: ${businessProfile?.industry || 'Not set'}
-- Location: ${businessProfile?.city}, ${businessProfile?.state}
-- Values: ${businessProfile?.main_values ? JSON.stringify(businessProfile.main_values) : 'Not specified'}${preferencesText}${actionsText}${newOffersContext}
-
-${needsZipCode && !hasZipCode ? `
-⚠️ **LOCATION MISSING**: User's location coordinates are not set. You MUST ask for their ZIP CODE in your FIRST response. 
-Say something natural like: "To find teams near you, what's your zip code?"
-DO NOT proceed with recommendations until you have their zip code.` : ''}
-    `.trim();
+    // ✅ PHASE 3: Build rich business context with profile data
+    const businessContextParts = [];
+    
+    businessContextParts.push(`**Business Profile:**`);
+    
+    // Always include business name to personalize
+    if (businessProfile?.business_name) {
+      businessContextParts.push(`- You're assisting: ${businessProfile.business_name}`);
+    }
+    
+    // Include industry for context
+    if (businessProfile?.industry) {
+      businessContextParts.push(`- Industry: ${businessProfile.industry}`);
+    }
+    
+    // Include location - this is critical data the AI should use automatically
+    if (businessProfile?.city && businessProfile?.state) {
+      const locationStr = businessProfile.zip_code 
+        ? `${businessProfile.city}, ${businessProfile.state} ${businessProfile.zip_code}`
+        : `${businessProfile.city}, ${businessProfile.state}`;
+      businessContextParts.push(`- Location: ${locationStr}`);
+    }
+    
+    // Include coordinates status
+    if (businessProfile?.location_lat && businessProfile?.location_lon) {
+      businessContextParts.push(`- Location coordinates: Set ✅ (${businessProfile.location_lat.toFixed(4)}, ${businessProfile.location_lon.toFixed(4)})`);
+    }
+    
+    // Include values if available
+    if (businessProfile?.main_values && Array.isArray(businessProfile.main_values) && businessProfile.main_values.length > 0) {
+      businessContextParts.push(`- Company Values: ${JSON.stringify(businessProfile.main_values)}`);
+    }
+    
+    // Add preferences section
+    businessContextParts.push(preferencesText);
+    
+    // Add past interactions
+    businessContextParts.push(actionsText);
+    
+    // Add new offers context if available
+    if (newOffersContext) {
+      businessContextParts.push(newOffersContext);
+    }
+    
+    // ✅ CRITICAL INSTRUCTION: Tell AI to use existing data
+    if (businessProfile?.business_name || (savedPreferences.budgetMin && savedPreferences.budgetMax) || savedPreferences.sports?.length > 0) {
+      businessContextParts.push(`\n**CRITICAL INSTRUCTIONS:**`);
+      
+      if (businessProfile?.business_name) {
+        businessContextParts.push(`- Use the business name "${businessProfile.business_name}" to personalize your responses`);
+      }
+      
+      if (businessProfile?.zip_code || (businessProfile?.location_lat && businessProfile?.location_lon)) {
+        businessContextParts.push(`- Location is ALREADY SET - do NOT ask for zip code or location again`);
+      }
+      
+      if (savedPreferences.budgetMin !== undefined && savedPreferences.budgetMax !== undefined) {
+        businessContextParts.push(`- Budget is ALREADY SET ($${savedPreferences.budgetMin.toLocaleString()} - $${savedPreferences.budgetMax.toLocaleString()}) - do NOT ask for budget again`);
+      }
+      
+      if (savedPreferences.sports?.length > 0) {
+        businessContextParts.push(`- Sports preference is ALREADY SET (${savedPreferences.sports.join(', ')}) - do NOT ask for sports again`);
+      }
+      
+      // Check if we have minimum data to search
+      const hasLocation = businessProfile?.location_lat && businessProfile?.location_lon;
+      const hasBudget = savedPreferences.budgetMin !== undefined && savedPreferences.budgetMax !== undefined;
+      const hasSport = savedPreferences.sports?.length > 0;
+      
+      if (hasLocation && (hasBudget || hasSport)) {
+        businessContextParts.push(`- YOU HAVE ENOUGH DATA TO SEARCH - if user seems ready, search immediately without asking more questions`);
+      }
+    }
+    
+    // Location missing warning (only if truly missing)
+    if (needsZipCode && !hasZipCode) {
+      businessContextParts.push(`\n⚠️ **LOCATION MISSING**: User's location coordinates are not set. You MUST ask for their ZIP CODE in your FIRST response.`);
+      businessContextParts.push(`Say something natural like: "To find teams near you, what's your zip code?"`);
+      businessContextParts.push(`DO NOT proceed with recommendations until you have their zip code.`);
+    }
+    
+    const businessContext = businessContextParts.join('\n');
 
     // Detect preference intent before AI call
     const asksPrefs = /current preferences|my preferences|what.*preferences|show.*preferences/i.test(message);
@@ -623,7 +693,7 @@ DO NOT proceed with recommendations until you have their zip code.` : ''}
       lastAiMessage.includes("i'll find") ||
       lastAiMessage.includes("let me look");
 
-    // ENHANCED: Detect explicit user intent to see results immediately
+    // ✅ PHASE 3: Enhanced intent detection with minimum data check
     const userWantsResultsNow = 
       /just (show|present|give|display|see).*results?/i.test(message) ||
       /just (go ahead|proceed|continue)/i.test(message) ||
@@ -643,26 +713,60 @@ DO NOT proceed with recommendations until you have their zip code.` : ''}
       message.toLowerCase().includes('okay') ||
       message.toLowerCase().includes('perfect');
 
-    // Force search if user explicitly wants results OR if we have enough data
-    const shouldSearch = userWantsResultsNow || ((hasEnoughInfo && allQuestionsAsked) || aiSaidSearching || userWantsResults);
+    // ✅ PHASE 3: Check if we have minimum data for search (ready to search logic)
+    const hasMinimumDataForSearch = 
+      (businessProfile?.location_lat && businessProfile?.location_lon) && // Has location
+      (
+        (savedPreferences.sports && savedPreferences.sports.length > 0) || // Has sport preference
+        (savedPreferences.budgetMin !== undefined && savedPreferences.budgetMax !== undefined) || // Has budget
+        mentionedSports.length > 0 || // Just mentioned sport in this message
+        userMessage.includes('$') || userMessage.includes('budget') // Just mentioned budget
+      );
+
+    // ✅ PHASE 3: Smarter search trigger logic
+    // Force search if:
+    // 1. User explicitly wants results NOW
+    // 2. User says yes/okay/sure AND we have minimum data
+    // 3. We have ALL required data (location + at least sport OR budget)
+    const shouldSearch = 
+      userWantsResultsNow || 
+      (hasMinimumDataForSearch && userWantsResults) ||
+      ((hasEnoughInfo && allQuestionsAsked) || aiSaidSearching);
     
-    console.log('🎯 Intent Detection:', {
+    console.log('🎯 Enhanced Intent Detection:', {
       userWantsResultsNow,
       userWantsResults,
+      hasMinimumDataForSearch,
+      hasLocation: !!(businessProfile?.location_lat && businessProfile?.location_lon),
+      hasSports: savedPreferences.sports?.length > 0,
+      hasBudget: !!(savedPreferences.budgetMin !== undefined && savedPreferences.budgetMax !== undefined),
       shouldSearch,
       message: message.substring(0, 50) + '...'
     });
 
-    // ✅ CONVERSATION FLOW LOGGING
-    console.log('🤖 Conversation Flow:', {
+    // ✅ PHASE 3: Enhanced conversation flow logging
+    console.log('🤖 Enhanced Conversation Flow:', {
       hasEnoughInfo,
       allQuestionsAsked,
       aiSaidSearching,
       userWantsResults,
+      userWantsResultsNow,
+      hasMinimumDataForSearch,
       shouldSearch,
       willTriggerSearch: shouldSearch && !!businessProfile?.location_lat,
       messageCount: messages?.length || 0,
-      savedPreferences,
+      businessProfile: {
+        name: businessProfile?.business_name,
+        hasLocation: !!(businessProfile?.location_lat && businessProfile?.location_lon),
+        hasZipCode: !!businessProfile?.zip_code,
+      },
+      savedPreferences: {
+        sports: savedPreferences.sports,
+        budgetRange: savedPreferences.budgetMin && savedPreferences.budgetMax 
+          ? `$${savedPreferences.budgetMin}-$${savedPreferences.budgetMax}` 
+          : 'Not set',
+        radiusKm: savedPreferences.radiusKm || 'Not set',
+      },
     });
 
     // ✅ ENHANCED: CHECK FOR ZIP CODE IN MESSAGE AND GEOCODE IMMEDIATELY
@@ -861,15 +965,21 @@ DO NOT proceed with recommendations until you have their zip code.` : ''}
         recommendations = null;
       }
 
-      // ✅ ADD RECOMMENDATIONS TO AI CONTEXT - BEFORE AI GENERATES RESPONSE
+      // ✅ PHASE 3: ADD RECOMMENDATIONS TO AI CONTEXT WITH ENHANCED MESSAGING
       if (recommendations && recommendations.length > 0) {
-        // ✅ STEP 3: Add success message if zip code was just processed
+        // ✅ Success message if zip code was just processed
         const zipSuccessMessage = zipCodeProcessed 
-          ? `\n\n✅ SUCCESS: User provided zip code ${extractedZipCode}. Location is now set (${effectiveLatitude?.toFixed(4)}, ${effectiveLongitude?.toFixed(4)}). Proceed with showing recommendations!\n\n` 
+          ? `\n\n✅ SUCCESS: User provided zip code ${extractedZipCode}. Location is now set (${effectiveLatitude?.toFixed(4)}, ${effectiveLongitude?.toFixed(4)}). Acknowledge briefly and proceed with showing recommendations!\n\n` 
+          : '';
+        
+        // ✅ PHASE 3: Add context about using saved preferences
+        const preferencesUsedMessage = 
+          (savedPreferences.sports?.length > 0 || (savedPreferences.budgetMin && savedPreferences.budgetMax))
+          ? `\n📊 USING SAVED PREFERENCES: These results match the preferences ${businessProfile?.business_name || 'the user'} set earlier. Reference this naturally: "Based on your ${savedPreferences.sports?.length > 0 ? savedPreferences.sports.join('/') + ' preferences' : ''} ${savedPreferences.budgetMin ? 'and $' + savedPreferences.budgetMin.toLocaleString() + '-$' + savedPreferences.budgetMax?.toLocaleString() + ' budget' : ''}..."\n\n`
           : '';
         
         const recommendationsText = `
-SYSTEM INSTRUCTION - DO NOT REPEAT THIS TEXT:${zipSuccessMessage}
+SYSTEM INSTRUCTION - DO NOT REPEAT THIS TEXT:${zipSuccessMessage}${preferencesUsedMessage}
 You have ${recommendations.length} sponsorship opportunities available:
 
 ${recommendations.map((r: any, i: number) => `

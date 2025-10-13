@@ -98,15 +98,15 @@ const Header = () => {
                     </li>
                     <li>
                       <NavigationMenuLink asChild>
-                        <a
-                          href="#competitive"
+                        <Link
+                          to="/elite-clubs"
                           className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                         >
                           <div className="text-sm font-medium leading-none">For Competitive Clubs & Orgs</div>
                           <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
                             Manage multiple teams and sponsorship programs
                           </p>
-                        </a>
+                        </Link>
                       </NavigationMenuLink>
                     </li>
                     <li>
@@ -230,13 +230,13 @@ const Header = () => {
               >
                 For Local Teams & Leagues
               </Link>
-              <a 
-                href="#competitive" 
+              <Link 
+                to="/elite-clubs" 
                 className="text-sm text-white/80 transition-colors hover:text-accent py-2 pl-4 block"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 For Competitive Clubs & Orgs
-              </a>
+              </Link>
               <a 
                 href="#brands" 
                 className="text-sm text-white/80 transition-colors hover:text-accent py-2 pl-4 block"

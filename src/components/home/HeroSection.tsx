@@ -19,7 +19,7 @@ const HeroSection = () => {
     {
       title: "Elite Clubs & Leagues",
       description: "Scale program revenue",
-      path: "/select-user-type",
+      path: "/elite-clubs",
     },
     {
       title: "Brands & Businesses",

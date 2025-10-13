@@ -12,6 +12,10 @@ interface Step {
   imageUrl: string;
 }
 
+interface LocalTeamsHowItWorksProps {
+  steps?: Step[];
+}
+
 const defaultSteps: Step[] = [
   {
     number: "1",
@@ -33,7 +37,7 @@ const defaultSteps: Step[] = [
   }
 ];
 
-export function LocalTeamsHowItWorks() {
+export function LocalTeamsHowItWorks({ steps = defaultSteps }: LocalTeamsHowItWorksProps = {}) {
   const { ref: headerRef, isVisible: headerVisible } = useScrollAnimation();
   const { ref: gridRef, isVisible: gridVisible } = useScrollAnimation();
   const { ref: characterRef, isVisible: characterVisible } = useScrollAnimation();
@@ -80,7 +84,7 @@ export function LocalTeamsHowItWorks() {
           ref={gridRef}
           className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 sm:mb-16"
         >
-          {defaultSteps.map((step, index) => (
+          {steps.map((step, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 30 }}

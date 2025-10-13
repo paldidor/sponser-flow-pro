@@ -30,7 +30,7 @@ const HeroSection = () => {
 
   return (
     <section
-      className="relative w-full overflow-hidden pt-4 sm:pt-6 lg:pt-8 pb-0 px-4 min-h-[650px] sm:min-h-[700px] lg:min-h-[760px]"
+      className="relative w-full overflow-hidden pt-4 sm:pt-6 lg:pt-8 pb-0 px-4 min-h-[1100px] sm:min-h-[700px] lg:min-h-[760px]"
       style={{
         background: "linear-gradient(180deg, #B8E6FE 0%, #DFF2FE 50%, #EFF6FF 100%)",
         fontFamily: "Poppins, sans-serif",
@@ -79,9 +79,9 @@ const HeroSection = () => {
         <div
           className="
             relative z-20
-            grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-6
+            grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-6
             max-w-4xl md:max-w-4xl lg:max-w-6xl mx-auto
-            mb-[-110px] sm:mb-[-128px] lg:mb-[-150px]
+            mb-8 sm:mb-[-128px] lg:mb-[-150px]
           "
         >
           {cardData.map((card, index) => (
@@ -97,7 +97,7 @@ const HeroSection = () => {
                   alt="" 
                   className="w-full h-auto"
                 />
-                <div className="absolute top-0 left-0 right-0 bottom-[30%] flex flex-col items-center justify-center px-4 py-4">
+                <div className="absolute inset-0 flex flex-col items-center justify-center px-4 py-6">
                   <h3 className="text-sm font-extrabold text-center mb-1.5 leading-tight" style={{ color: "#00AAFE" }}>
                     {card.title}
                   </h3>

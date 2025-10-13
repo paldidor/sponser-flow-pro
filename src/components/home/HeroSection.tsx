@@ -14,7 +14,7 @@ const HeroSection = () => {
     {
       title: "Local Teams & Leagues",
       description: "Boost fundraising efforts",
-      path: "/select-user-type",
+      path: "/local-teams",
     },
     {
       title: "Elite Clubs & Leagues",

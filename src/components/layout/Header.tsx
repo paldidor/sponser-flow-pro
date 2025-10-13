@@ -85,15 +85,15 @@ const Header = () => {
                   <ul className="grid w-[400px] gap-3 p-4">
                     <li>
                       <NavigationMenuLink asChild>
-                        <a
-                          href="#teams"
+                        <Link
+                          to="/local-teams"
                           className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                         >
                           <div className="text-sm font-medium leading-none">For Local Teams & Leagues</div>
                           <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
                             Connect with local sponsors and grow your team
                           </p>
-                        </a>
+                        </Link>
                       </NavigationMenuLink>
                     </li>
                     <li>
@@ -223,13 +223,13 @@ const Header = () => {
           <div className="container py-4 px-4 flex flex-col gap-4">
             <div className="space-y-2">
               <div className="text-sm font-medium text-white py-2">Solutions</div>
-              <a 
-                href="#teams" 
+              <Link 
+                to="/local-teams" 
                 className="text-sm text-white/80 transition-colors hover:text-accent py-2 pl-4 block"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 For Local Teams & Leagues
-              </a>
+              </Link>
               <a 
                 href="#competitive" 
                 className="text-sm text-white/80 transition-colors hover:text-accent py-2 pl-4 block"

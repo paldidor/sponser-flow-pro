@@ -116,6 +116,12 @@ const ADVISOR_SYSTEM_PROMPT = `You are a proactive personal sponsorship marketin
 5. **When enough info**: Automatically search and present recommendations
 6. **After recommendations**: Ask what they think, encourage action
 
+**User Intent Recognition (CRITICAL):**
+- If user says "just show results", "present results", "go ahead", "let's see", "show me" → IMMEDIATELY search with available data
+- Don't ask more questions if user is clearly ready for results
+- Use ANY available data (even partial) to search - better to show some results than keep asking questions
+- If user has provided ANY information (sport, budget, location), that's enough to search
+
 **When Recommending Offers:**
 - Keep intro brief and exciting: "Found 3 amazing teams! The top one is [TeamName] - just [Distance]km away with [Reach] reach for $[Price]."
 - Let the recommendation cards show details - don't repeat everything in text
@@ -377,15 +383,22 @@ serve(async (req) => {
     const conversationText = messages?.map(m => m.content).join(' ').toLowerCase() || '';
     const userMessage = message.toLowerCase();
     
-    // Extract budget preferences
+    // Extract budget preferences - ENHANCED to handle single amounts
     const budgetMatch = userMessage.match(/\$?(\d{1,3}(?:,?\d{3})*)\s*(?:to|-)\s*\$?(\d{1,3}(?:,?\d{3})*)/);
     if (budgetMatch) {
+      // Range format: "$3,000 to $5,000" or "3000-5000"
       savedPreferences.budgetMin = parseInt(budgetMatch[1].replace(/,/g, ''));
       savedPreferences.budgetMax = parseInt(budgetMatch[2].replace(/,/g, ''));
+      console.log('💰 Extracted budget range:', savedPreferences.budgetMin, '-', savedPreferences.budgetMax);
     } else {
+      // Single budget amount: "$5,000" or "5000"
       const singleBudget = userMessage.match(/\$?(\d{1,3}(?:,?\d{3})*)/);
-      if (singleBudget && (userMessage.includes('budget') || userMessage.includes('spend'))) {
-        savedPreferences.budgetMax = parseInt(singleBudget[1].replace(/,/g, ''));
+      if (singleBudget && (userMessage.includes('budget') || userMessage.includes('spend') || /\d{4,}/.test(userMessage))) {
+        const amount = parseInt(singleBudget[1].replace(/,/g, ''));
+        // Treat single amount as max budget with min = 0
+        savedPreferences.budgetMin = 0;
+        savedPreferences.budgetMax = amount;
+        console.log('💰 Extracted single budget amount as range: $0 -', amount);
       }
     }
     
@@ -610,7 +623,16 @@ DO NOT proceed with recommendations until you have their zip code.` : ''}
       lastAiMessage.includes("i'll find") ||
       lastAiMessage.includes("let me look");
 
+    // ENHANCED: Detect explicit user intent to see results immediately
+    const userWantsResultsNow = 
+      /just (show|present|give|display|see).*results?/i.test(message) ||
+      /just (go ahead|proceed|continue)/i.test(message) ||
+      /let'?s see/i.test(message) ||
+      /show me/i.test(message) ||
+      /present .*results?/i.test(message);
+
     const userWantsResults = 
+      userWantsResultsNow ||
       message.toLowerCase().includes('show') ||
       message.toLowerCase().includes('find') ||
       message.toLowerCase().includes('yes') ||
@@ -621,7 +643,15 @@ DO NOT proceed with recommendations until you have their zip code.` : ''}
       message.toLowerCase().includes('okay') ||
       message.toLowerCase().includes('perfect');
 
-    const shouldSearch = (hasEnoughInfo && allQuestionsAsked) || aiSaidSearching || userWantsResults;
+    // Force search if user explicitly wants results OR if we have enough data
+    const shouldSearch = userWantsResultsNow || ((hasEnoughInfo && allQuestionsAsked) || aiSaidSearching || userWantsResults);
+    
+    console.log('🎯 Intent Detection:', {
+      userWantsResultsNow,
+      userWantsResults,
+      shouldSearch,
+      message: message.substring(0, 50) + '...'
+    });
 
     // ✅ CONVERSATION FLOW LOGGING
     console.log('🤖 Conversation Flow:', {
@@ -635,7 +665,7 @@ DO NOT proceed with recommendations until you have their zip code.` : ''}
       savedPreferences,
     });
 
-    // ✅ STEP 3: CHECK FOR ZIP CODE IN MESSAGE AND GEOCODE
+    // ✅ ENHANCED: CHECK FOR ZIP CODE IN MESSAGE AND GEOCODE IMMEDIATELY
     const extractedZipCode = extractZipCode(message);
     let effectiveLatitude = businessProfile?.location_lat;
     let effectiveLongitude = businessProfile?.location_lon;
@@ -657,15 +687,31 @@ DO NOT proceed with recommendations until you have their zip code.` : ''}
         effectiveLongitude = geocoded.longitude;
         zipCodeProcessed = true;
         
-        console.log('✅ Zip code processed successfully, coordinates obtained');
+        // Update businessProfile object for immediate use in this request
+        businessProfile.location_lat = effectiveLatitude;
+        businessProfile.location_lon = effectiveLongitude;
+        businessProfile.zip_code = extractedZipCode;
+        
+        console.log('✅ Zip code processed successfully, coordinates obtained and profile updated');
+        console.log('📍 New coordinates:', { lat: effectiveLatitude, lon: effectiveLongitude });
       } else {
         console.warn('❌ Geocoding failed for zip code:', extractedZipCode);
       }
+    } else if (extractedZipCode && effectiveLatitude) {
+      console.log('ℹ️ Zip code provided but location already exists, skipping geocoding');
     }
 
     let recommendations = null;
     if (shouldSearch && effectiveLatitude && effectiveLongitude) {
       console.log('🔍 Searching for recommendations with interaction filtering...');
+      console.log('📊 Search parameters:', {
+        lat: effectiveLatitude,
+        lon: effectiveLongitude,
+        radius: savedPreferences.radiusKm || filters?.radiusKm || 100,
+        budgetMin: savedPreferences.budgetMin || filters?.budgetMin || 0,
+        budgetMax: savedPreferences.budgetMax || filters?.budgetMax || 999999,
+        sport: interestedSports.length > 0 ? interestedSports[0] : (savedPreferences.sports?.[0] || filters?.sport || null)
+      });
       
       // Prefer sports they showed interest in, or use saved preferences
       const preferredSport = interestedSports.length > 0 
@@ -673,8 +719,8 @@ DO NOT proceed with recommendations until you have their zip code.` : ''}
         : (savedPreferences.sports?.[0] || filters?.sport || null);
 
       const { data: recData } = await supabaseClient.rpc('rpc_recommend_offers', {
-        p_lat: businessProfile.location_lat,
-        p_lon: businessProfile.location_lon,
+        p_lat: effectiveLatitude,
+        p_lon: effectiveLongitude,
         p_radius_km: savedPreferences.radiusKm || filters?.radiusKm || 100,
         p_budget_min: savedPreferences.budgetMin || filters?.budgetMin || 0,
         p_budget_max: savedPreferences.budgetMax || filters?.budgetMax || 999999,

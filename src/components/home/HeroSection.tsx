@@ -92,19 +92,24 @@ const HeroSection = () => {
             >
               {/* Mobile Layout */}
               <div className="md:hidden relative">
-                <img src="/images/wooden-sign.png" alt="" className="w-full h-auto" />
-                <div className="absolute inset-0 flex flex-col items-center justify-center px-6 py-8">
-                  <h3 className="text-lg font-extrabold text-center mb-2" style={{ color: "#00AAFE" }}>
+                <img 
+                  src="/images/wooden-sign.png" 
+                  alt="" 
+                  className="w-full h-auto"
+                  style={{ clipPath: "inset(0 0 30% 0)" }}
+                />
+                <div className="absolute top-0 left-0 right-0 bottom-[30%] flex flex-col items-center justify-center px-4 py-4">
+                  <h3 className="text-sm font-extrabold text-center mb-1.5 leading-tight" style={{ color: "#00AAFE" }}>
                     {card.title}
                   </h3>
-                  <p className="text-base text-center mb-4" style={{ color: "rgba(84, 84, 84, 0.7)" }}>
+                  <p className="text-xs text-center mb-3 leading-snug" style={{ color: "rgba(84, 84, 84, 0.7)" }}>
                     {card.description}
                   </p>
                   <div className="flex items-center gap-1 group-hover:gap-2 transition-all">
-                    <span className="text-base" style={{ color: "#00AAFE" }}>
+                    <span className="text-xs font-medium" style={{ color: "#00AAFE" }}>
                       Learn more
                     </span>
-                    <ArrowRight className="w-4 h-4" style={{ color: "#00AAFE" }} />
+                    <ArrowRight className="w-3 h-3" style={{ color: "#00AAFE" }} />
                   </div>
                 </div>
               </div>

@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, User, LogOut } from "lucide-react";
+import { Menu, X, User, LogOut, ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSmartAuth } from "@/hooks/useSmartAuth";
@@ -12,6 +12,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -67,15 +75,71 @@ const Header = () => {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">
-          <a href="#teams" className="text-sm font-medium text-white transition-colors hover:text-accent">
-            Teams
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="bg-transparent text-white hover:text-accent hover:bg-white/10 data-[state=open]:bg-white/10">
+                  Solutions
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="grid w-[400px] gap-3 p-4">
+                    <li>
+                      <NavigationMenuLink asChild>
+                        <a
+                          href="#teams"
+                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        >
+                          <div className="text-sm font-medium leading-none">For Local Teams & Leagues</div>
+                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                            Connect with local sponsors and grow your team
+                          </p>
+                        </a>
+                      </NavigationMenuLink>
+                    </li>
+                    <li>
+                      <NavigationMenuLink asChild>
+                        <a
+                          href="#competitive"
+                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        >
+                          <div className="text-sm font-medium leading-none">For Competitive Clubs & Orgs</div>
+                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                            Manage multiple teams and sponsorship programs
+                          </p>
+                        </a>
+                      </NavigationMenuLink>
+                    </li>
+                    <li>
+                      <NavigationMenuLink asChild>
+                        <a
+                          href="#brands"
+                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        >
+                          <div className="text-sm font-medium leading-none">For Brands & Businesses</div>
+                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                            Find and sponsor youth sports teams in your community
+                          </p>
+                        </a>
+                      </NavigationMenuLink>
+                    </li>
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+          <a 
+            href="#why-sponsa" 
+            onClick={(e) => scrollToSection(e, 'why-it-matters')}
+            className="text-sm font-medium text-white transition-colors hover:text-accent"
+          >
+            Why Sponsa
           </a>
           <a 
             href="#how-it-works" 
-            onClick={(e) => scrollToSection(e, 'how-it-works')}
+            onClick={(e) => scrollToSection(e, 'product')}
             className="text-sm font-medium text-white transition-colors hover:text-accent"
           >
-            Sponsors
+            How it Works
           </a>
           <a 
             href="#community" 
@@ -134,7 +198,7 @@ const Header = () => {
               <Link to="/select-user-type">
                 <Button 
                   size="sm"
-                  className="bg-accent text-foreground hover:bg-accent/90 font-semibold"
+                  className="bg-accent text-white hover:bg-accent/90 font-semibold"
                 >
                   Get Started
                 </Button>
@@ -157,22 +221,49 @@ const Header = () => {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-white/10 bg-primary">
           <div className="container py-4 px-4 flex flex-col gap-4">
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-white py-2">Solutions</div>
+              <a 
+                href="#teams" 
+                className="text-sm text-white/80 transition-colors hover:text-accent py-2 pl-4 block"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                For Local Teams & Leagues
+              </a>
+              <a 
+                href="#competitive" 
+                className="text-sm text-white/80 transition-colors hover:text-accent py-2 pl-4 block"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                For Competitive Clubs & Orgs
+              </a>
+              <a 
+                href="#brands" 
+                className="text-sm text-white/80 transition-colors hover:text-accent py-2 pl-4 block"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                For Brands & Businesses
+              </a>
+            </div>
             <a 
-              href="#teams" 
+              href="#why-sponsa" 
               className="text-sm font-medium text-white transition-colors hover:text-accent py-2"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={(e) => {
+                scrollToSection(e, 'why-it-matters');
+                setMobileMenuOpen(false);
+              }}
             >
-              Teams
+              Why Sponsa
             </a>
             <a 
               href="#how-it-works" 
               className="text-sm font-medium text-white transition-colors hover:text-accent py-2"
               onClick={(e) => {
-                scrollToSection(e, 'how-it-works');
+                scrollToSection(e, 'product');
                 setMobileMenuOpen(false);
               }}
             >
-              Sponsors
+              How it Works
             </a>
             <a 
               href="#community" 
@@ -223,7 +314,7 @@ const Header = () => {
                   </Button>
                 </Link>
                 <Link to="/select-user-type" onClick={() => setMobileMenuOpen(false)}>
-                  <Button size="sm" className="w-full bg-accent text-foreground hover:bg-accent/90">
+                  <Button size="sm" className="w-full bg-accent text-white hover:bg-accent/90">
                     Get Started
                   </Button>
                 </Link>

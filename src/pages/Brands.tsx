@@ -67,7 +67,7 @@ const brandsSteps = [
 export default function Brands() {
   return (
     <div className="min-h-screen w-full bg-white">
-      <div className="w-full pt-16">
+      <div className="w-full">
         <BrandsHero />
         <div id="enhanced-features">
           <LocalTeamsFeatures 

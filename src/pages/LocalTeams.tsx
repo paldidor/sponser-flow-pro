@@ -1,6 +1,4 @@
 import { useEffect } from "react";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 import { LocalTeamsBenefits } from "@/components/home/LocalTeamsBenefits";
 import { LocalTeamsFeatures } from "@/components/home/LocalTeamsFeatures";
 import { LocalTeamsHowItWorks } from "@/components/home/LocalTeamsHowItWorks";
@@ -14,8 +12,7 @@ const LocalTeams = () => {
 
   return (
     <div className="min-h-screen w-full bg-white">
-      <Header />
-      <div className="w-full pt-16">
+      <div className="w-full">
         <LocalTeamsBenefits />
         <div id="features">
           <LocalTeamsFeatures customCharacterImage={mascotCelebratingJump} />
@@ -26,7 +23,6 @@ const LocalTeams = () => {
         <div id="faq">
           <FAQSection showToggle={false} defaultView="teams" />
         </div>
-        <Footer />
       </div>
     </div>
   );

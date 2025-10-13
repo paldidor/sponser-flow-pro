@@ -1,6 +1,4 @@
 import { useEffect } from "react";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 import { EliteClubsHero } from "@/components/home/EliteClubsHero";
 import { LocalTeamsFeatures } from "@/components/home/LocalTeamsFeatures";
 import { LocalTeamsHowItWorks } from "@/components/home/LocalTeamsHowItWorks";
@@ -62,8 +60,7 @@ const EliteClubs = () => {
 
   return (
     <div className="min-h-screen w-full bg-white">
-      <Header />
-      <div className="w-full pt-16">
+      <div className="w-full">
         <EliteClubsHero />
         <div id="enhanced-features">
           <LocalTeamsFeatures 
@@ -79,7 +76,6 @@ const EliteClubs = () => {
         <div id="faq">
           <FAQSection showToggle={false} defaultView="teams" />
         </div>
-        <Footer />
       </div>
     </div>
   );

@@ -93,10 +93,9 @@ const HeroSection = () => {
               {/* Mobile Layout */}
               <div className="md:hidden relative">
                 <img 
-                  src="/images/wooden-sign.png" 
+                  src="/images/wooden-sign-mobile.png" 
                   alt="" 
                   className="w-full h-auto"
-                  style={{ clipPath: "inset(0 0 30% 0)" }}
                 />
                 <div className="absolute top-0 left-0 right-0 bottom-[30%] flex flex-col items-center justify-center px-4 py-4">
                   <h3 className="text-sm font-extrabold text-center mb-1.5 leading-tight" style={{ color: "#00AAFE" }}>

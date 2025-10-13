@@ -111,15 +111,15 @@ const Header = () => {
                     </li>
                     <li>
                       <NavigationMenuLink asChild>
-                        <a
-                          href="#brands"
+                        <Link
+                          to="/brands"
                           className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                         >
                           <div className="text-sm font-medium leading-none">For Brands & Businesses</div>
                           <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                            Find and sponsor youth sports teams in your community
+                            Scale community marketing through youth sports
                           </p>
-                        </a>
+                        </Link>
                       </NavigationMenuLink>
                     </li>
                   </ul>
@@ -237,13 +237,13 @@ const Header = () => {
               >
                 For Competitive Clubs & Orgs
               </Link>
-              <a 
-                href="#brands" 
+              <Link 
+                to="/brands" 
                 className="text-sm text-white/80 transition-colors hover:text-accent py-2 pl-4 block"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 For Brands & Businesses
-              </a>
+              </Link>
             </div>
             <a 
               href="#why-sponsa" 

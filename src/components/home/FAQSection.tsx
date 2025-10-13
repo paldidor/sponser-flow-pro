@@ -11,45 +11,55 @@ const FAQSection = ({ showToggle = true, defaultView = "brands" }: FAQSectionPro
   const brandsFAQs = [
     {
       question: "Can I sponsor multiple teams at once?",
+      answer: "Yes. Sponsa is built to secure & activate sponsorships across at scale. You choose the sponsorships, scope and placements, Sponsa handles the rest.",
       height: "65px"
     },
     {
       question: "What kind of visibility and engagement will my brand get?",
+      answer: "Your brand and messaging appears where families and fans gather — uniforms, fields, streaming, tournaments, and digital channels. Sponsa also enables engagement through measurable touchpoints, not only impressions.",
       height: "65px"
     },
     {
       question: "What kind of reporting will I receive?",
+      answer: "Sponsa tracks a range of metrics from awareness to engagement and impact, providing you with clear analytics, breakdowns and insights into your sponsorships and impact through your dashboard.",
       height: "65px"
     },
     {
       question: "Once I select a sponsorship, how are activations managed?",
+      answer: "After you confirm a sponsorship, activation tasks (like uploading brand assets) appear in your Sponsa portal. Complete your part, and our team takes care of the rest — coordinating with teams, producing materials, and ensuring consistent delivery across every location.",
       height: "86px"
     },
     {
       question: "How much does it cost to sponsor through Sponsa?",
+      answer: "Currently, brands can create a profile for free and activate sponsorships with no upfront costs. Sponsa takes a 15-20% free of the sponsorship value.",
       height: "64px"
     }
   ];
 
   const teamsFAQs = [
     {
-      question: "How do I create a sponsorship listing?",
+      question: "How does Sponsa help my team raise more funding?",
+      answer: "Sponsa matches your team with local, regional and national brands looking to sponsor youth sports. You get access to more funding opportunities without the grind.",
       height: "65px"
     },
     {
-      question: "How quickly can I start receiving sponsorships?",
+      question: "When does our team get paid from sponsorships?",
+      answer: "Sponsa uses Stripe for payments. Your team receives funds immediately when a sponsorship is purchased — deposited directly into the account you provided when creating your profile.",
       height: "65px"
     },
     {
-      question: "What support does Sponsa provide?",
+      question: "Do we get to choose which sponsors we work with?",
+      answer: "Yes. Your team has full control to approve potential sponsorships. You'll only partner with brands that align with your community.",
       height: "65px"
     },
     {
-      question: "Is there a fee to use Sponsa?",
+      question: "What does it cost our team to use Sponsa?",
+      answer: "Teams can create accounts for free & there are no upfront costs. Sponsa earns a fee only on sponsorships closed.",
       height: "65px"
     },
     {
-      question: "How do I manage sponsor relationships?",
+      question: "How do we manage sponsorship progress and payouts?",
+      answer: "After signing up, your Sponsa portal gives you a clear view of sponsorships, tasks, funds raised, and insights. Everything is organized in one place, so you always know where you stand.",
       height: "65px"
     }
   ];

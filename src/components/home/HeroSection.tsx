@@ -23,8 +23,8 @@ const HeroSection = () => {
     },
     {
       title: "Brands & Businesses",
-      description: "Grow community engagement",
-      path: "/select-user-type",
+      description: "Activate youth sponsorships at scale",
+      path: "/brands",
     },
   ];
 

@@ -21,6 +21,7 @@ import BusinessOnboarding from "@/pages/business/BusinessOnboarding";
 import BusinessDashboard from "@/pages/business/BusinessDashboard";
 import LocalTeams from "@/pages/LocalTeams";
 import EliteClubs from "@/pages/EliteClubs";
+import Brands from "@/pages/Brands";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -45,8 +46,9 @@ const App = () => {
             <Routes>
               <Route element={<Layout />}>
                 <Route path="/" element={<Index />} />
-                <Route path="/local-teams" element={<LocalTeams />} />
-                <Route path="/elite-clubs" element={<EliteClubs />} />
+              <Route path="/local-teams" element={<LocalTeams />} />
+              <Route path="/elite-clubs" element={<EliteClubs />} />
+              <Route path="/brands" element={<Brands />} />
                 <Route path="/select-user-type" element={<SelectUserType />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/sign-in" element={<SignIn />} />

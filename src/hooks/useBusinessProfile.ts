@@ -66,6 +66,8 @@ export const useBusinessProfile = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No authenticated user');
 
+      console.log('[useBusinessProfile] Creating profile with data:', profileData);
+
       const insertData: any = {
         user_id: user.id,
         business_name: profileData.business_name || '',
@@ -81,7 +83,12 @@ export const useBusinessProfile = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('[useBusinessProfile] Create error:', error);
+        throw error;
+      }
+
+      console.log('[useBusinessProfile] Profile created successfully:', data);
       setProfile(data);
 
       return { data, error: null };
@@ -101,6 +108,8 @@ export const useBusinessProfile = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No authenticated user');
 
+      console.log('[useBusinessProfile] Updating profile with data:', updates);
+
       // Force an update by including updated_at timestamp
       const { data, error } = await supabase
         .from('business_profiles')
@@ -112,19 +121,33 @@ export const useBusinessProfile = () => {
       // Fallback: if update returns null (406 or PGRST116), fetch current profile
       if (!data || error?.code === 'PGRST116') {
         console.log('⚠️ Update returned no rows, fetching current profile');
-        const { data: currentProfile } = await supabase
+        const { data: currentProfile, error: fetchError } = await supabase
           .from('business_profiles')
           .select('*')
           .eq('user_id', user.id)
           .maybeSingle();
         
+        if (fetchError) {
+          console.error('[useBusinessProfile] Fetch error:', fetchError);
+          throw fetchError;
+        }
+        
         if (currentProfile) {
+          console.log('[useBusinessProfile] Fetched current profile:', currentProfile);
           setProfile(currentProfile);
           return { data: currentProfile, error: null };
+        } else {
+          console.error('[useBusinessProfile] No profile found after update');
+          throw new Error('Profile not found after update');
         }
       }
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error && error.code !== 'PGRST116') {
+        console.error('[useBusinessProfile] Update error:', error);
+        throw error;
+      }
+
+      console.log('[useBusinessProfile] Profile updated successfully:', data);
       if (data) setProfile(data);
 
       return { data, error: null };

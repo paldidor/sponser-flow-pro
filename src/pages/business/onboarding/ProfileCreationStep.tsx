@@ -155,6 +155,11 @@ export const ProfileCreationStep = ({ onComplete }: ProfileCreationStepProps) =>
       setIsSubmitting(true);
       setIsSaving(true);
 
+      console.log('[ProfileCreationStep] Submitting profile data:', {
+        hasExistingProfile: !!profile,
+        formData: data,
+      });
+
       const profileData = {
         business_name: data.business_name,
         industry: data.industry,
@@ -170,21 +175,38 @@ export const ProfileCreationStep = ({ onComplete }: ProfileCreationStepProps) =>
 
       let result;
       if (profile) {
+        console.log('[ProfileCreationStep] Updating existing profile');
         result = await updateProfile(profileData);
       } else {
+        console.log('[ProfileCreationStep] Creating new profile');
         result = await createProfile(profileData);
+      }
+
+      console.log('[ProfileCreationStep] Save result:', result);
+
+      // Check if save was successful
+      if (result?.error) {
+        toast({
+          title: 'Error saving profile',
+          description: result.error.message || 'Failed to save profile',
+          variant: 'destructive',
+        });
+        return;
       }
 
       // Verify required fields were saved in the database
       const savedData = result?.data;
       if (!savedData?.business_name || !savedData?.industry || !savedData?.city || !savedData?.state || !savedData?.domain) {
+        console.error('[ProfileCreationStep] Validation failed - missing required fields:', savedData);
         toast({
           title: 'Profile incomplete',
-          description: 'We couldn\'t save your profile. Please try again.',
+          description: 'Required fields are missing. Please ensure all fields are filled.',
           variant: 'destructive',
         });
         return;
       }
+
+      console.log('[ProfileCreationStep] Profile saved successfully, advancing to socials');
 
       toast({
         title: 'Profile saved',
@@ -193,6 +215,7 @@ export const ProfileCreationStep = ({ onComplete }: ProfileCreationStepProps) =>
 
       onComplete();
     } catch (error: any) {
+      console.error('[ProfileCreationStep] Error in onSubmit:', error);
       toast({
         title: 'Error saving profile',
         description: error.message,
@@ -200,6 +223,7 @@ export const ProfileCreationStep = ({ onComplete }: ProfileCreationStepProps) =>
       });
     } finally {
       setIsSaving(false);
+      // Don't reset isSubmitting - we're navigating away
     }
   };
 

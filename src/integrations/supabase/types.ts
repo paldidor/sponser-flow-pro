@@ -288,9 +288,6 @@ export type Database = {
       }
       business_profiles: {
         Row: {
-          analysis_error: string | null
-          analysis_started_at: string | null
-          analysis_status: string | null
           business_name: string
           city: string
           company_bio: string | null
@@ -311,7 +308,6 @@ export type Database = {
           seed_url: string | null
           sources: Json | null
           state: string
-          tiktok_link: string | null
           twitter_link: string | null
           updated_at: string
           user_id: string
@@ -320,9 +316,6 @@ export type Database = {
           zip_code: string | null
         }
         Insert: {
-          analysis_error?: string | null
-          analysis_started_at?: string | null
-          analysis_status?: string | null
           business_name: string
           city: string
           company_bio?: string | null
@@ -343,7 +336,6 @@ export type Database = {
           seed_url?: string | null
           sources?: Json | null
           state: string
-          tiktok_link?: string | null
           twitter_link?: string | null
           updated_at?: string
           user_id: string
@@ -352,9 +344,6 @@ export type Database = {
           zip_code?: string | null
         }
         Update: {
-          analysis_error?: string | null
-          analysis_started_at?: string | null
-          analysis_status?: string | null
           business_name?: string
           city?: string
           company_bio?: string | null
@@ -375,7 +364,6 @@ export type Database = {
           seed_url?: string | null
           sources?: Json | null
           state?: string
-          tiktok_link?: string | null
           twitter_link?: string | null
           updated_at?: string
           user_id?: string

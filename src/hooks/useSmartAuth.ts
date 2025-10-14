@@ -91,8 +91,7 @@ export const useSmartAuth = () => {
         console.error('Error fetching user role:', roleError);
       }
 
-      // Don't default to 'team' - wait for role to be assigned
-      const userRole = (roleData?.role as UserRole) || null;
+      const userRole = (roleData?.role as UserRole) || 'team'; // Default to team
 
       // Check if user has a team profile (only for team users)
       let hasProfile = false;
@@ -169,10 +168,6 @@ export const useSmartAuth = () => {
         });
       } else if (userRole === 'admin') {
         redirectPath = '/team/dashboard'; // Future: /admin/dashboard
-      } else if (!userRole) {
-        // No role assigned yet - stay on auth/select user type
-        redirectPath = '/select-user-type';
-        console.log('[useSmartAuth] No role found, redirecting to user type selection');
       }
 
       setState({

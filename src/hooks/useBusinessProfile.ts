@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useGeocoding } from '@/hooks/useGeocoding';
 
 interface BusinessProfile {
   id: string;
@@ -35,16 +36,12 @@ export const useBusinessProfile = () => {
   const [profile, setProfile] = useState<BusinessProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { geocodeLocation } = useGeocoding();
 
   const fetchProfile = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        setProfile(null);
-        setLoading(false);
-        return null;
-      }
+      if (!user) return;
 
       const { data, error } = await supabase
         .from('business_profiles')
@@ -53,9 +50,7 @@ export const useBusinessProfile = () => {
         .maybeSingle();
 
       if (error) throw error;
-
       setProfile(data);
-      return data;
     } catch (error: any) {
       console.error('Error fetching business profile:', error);
       toast({
@@ -63,7 +58,6 @@ export const useBusinessProfile = () => {
         description: error.message,
         variant: 'destructive',
       });
-      return null;
     } finally {
       setLoading(false);
     }
@@ -74,46 +68,56 @@ export const useBusinessProfile = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No authenticated user');
 
-      console.log('[useBusinessProfile] Creating/updating profile with data:', profileData);
-
-      const normalize = (v?: string | null): string | null => {
-        if (v === undefined || v === null) return null;
-        const trimmed = String(v).trim();
-        return trimmed.length > 0 ? trimmed : null;
-      };
-
-      const payload: any = {
+      const insertData: any = {
         user_id: user.id,
-        business_name: normalize(profileData.business_name),
-        industry: normalize(profileData.industry),
-        city: normalize(profileData.city),
-        state: normalize(profileData.state),
-        domain: normalize((profileData as any).domain ?? profileData.website),
-        company_bio: normalize(profileData.company_bio),
-        markets_served: normalize(profileData.markets_served),
-        main_values: profileData.main_values ?? [],
-        updated_at: new Date().toISOString(),
+        business_name: profileData.business_name || '',
+        industry: profileData.industry || '',
+        city: profileData.city || '',
+        state: profileData.state || '',
+        ...profileData,
       };
 
       const { data, error } = await supabase
         .from('business_profiles')
-        .upsert(payload, { onConflict: 'user_id' })
+        .insert([insertData])
         .select()
         .single();
 
-      if (error) {
-        console.error('[useBusinessProfile] Upsert error:', error);
-        throw error;
-      }
-
-      console.log('[useBusinessProfile] Profile saved successfully:', data);
+      if (error) throw error;
       setProfile(data);
+
+      // ✅ Geocode location if zip_code provided but coordinates missing
+      if (data && !(data as any).location_lat && (profileData.zip_code || profileData.city)) {
+        console.log('🗺️ Geocoding business location...');
+        const coords = await geocodeLocation(
+          profileData.city || '',
+          profileData.state || '',
+          profileData.zip_code
+        );
+
+        if (coords) {
+          // Update profile with coordinates
+          const { data: updatedData } = await supabase
+            .from('business_profiles')
+            .update({
+              location_lat: coords.latitude,
+              location_lon: coords.longitude,
+            })
+            .eq('id', data.id)
+            .select()
+            .single();
+
+          if (updatedData) {
+            setProfile(updatedData);
+          }
+        }
+      }
 
       return { data, error: null };
     } catch (error: any) {
-      console.error('Error saving business profile:', error);
+      console.error('Error creating business profile:', error);
       toast({
-        title: 'Error saving profile',
+        title: 'Error creating profile',
         description: error.message,
         variant: 'destructive',
       });
@@ -126,41 +130,41 @@ export const useBusinessProfile = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No authenticated user');
 
-      console.log('[useBusinessProfile] Updating profile with data:', updates);
-
-      const normalize = (v?: string | null): string | null => {
-        if (v === undefined || v === null) return null;
-        const trimmed = String(v).trim();
-        return trimmed.length > 0 ? trimmed : null;
-      };
-
-      const payload: any = {
-        user_id: user.id,
-        business_name: normalize(updates.business_name ?? profile?.business_name),
-        industry: normalize(updates.industry ?? profile?.industry),
-        city: normalize(updates.city ?? profile?.city),
-        state: normalize(updates.state ?? profile?.state),
-        domain: normalize((updates as any).domain ?? (updates as any).website ?? profile?.domain),
-        company_bio: normalize(updates.company_bio ?? profile?.company_bio),
-        markets_served: normalize(updates.markets_served ?? profile?.markets_served),
-        main_values: updates.main_values ?? profile?.main_values ?? [],
-        ...updates,
-        updated_at: new Date().toISOString(),
-      };
-
       const { data, error } = await supabase
         .from('business_profiles')
-        .upsert(payload, { onConflict: 'user_id' })
+        .update(updates)
+        .eq('user_id', user.id)
         .select()
         .single();
 
-      if (error) {
-        console.error('[useBusinessProfile] Upsert error:', error);
-        throw error;
-      }
-
-      console.log('[useBusinessProfile] Profile updated successfully:', data);
+      if (error) throw error;
       setProfile(data);
+
+      // ✅ Geocode if location fields updated but coordinates still missing
+      if (data && !(data as any).location_lat && (updates.zip_code || updates.city || updates.state)) {
+        console.log('🗺️ Geocoding updated location...');
+        const coords = await geocodeLocation(
+          data.city || '',
+          data.state || '',
+          (data as any).zip_code
+        );
+
+        if (coords) {
+          const { data: updatedData } = await supabase
+            .from('business_profiles')
+            .update({
+              location_lat: coords.latitude,
+              location_lon: coords.longitude,
+            })
+            .eq('id', data.id)
+            .select()
+            .single();
+
+          if (updatedData) {
+            setProfile(updatedData);
+          }
+        }
+      }
 
       return { data, error: null };
     } catch (error: any) {
@@ -179,31 +183,34 @@ export const useBusinessProfile = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No authenticated user');
 
-      const current = await fetchProfile();
-      
-      if (!current?.business_name || !current?.industry || 
-          !current?.city || !current?.state) {
-        throw new Error('Cannot complete onboarding with missing required fields: business_name, industry, city, or state');
-      }
-
-      const completePayload = {
-        ...current,
-        onboarding_completed: true,
-        current_onboarding_step: 'completed',
-        updated_at: new Date().toISOString(),
-      };
-
       const { data, error } = await supabase
         .from('business_profiles')
-        .upsert(completePayload, { onConflict: 'user_id' })
+        .update({
+          onboarding_completed: true,
+          current_onboarding_step: 'completed',
+        })
+        .eq('user_id', user.id)
         .select()
         .single();
 
       if (error) throw error;
 
-      console.log('[useBusinessProfile] Onboarding completion successful:', data);
-      setProfile(data);
+      // Verify the update persisted
+      await new Promise(resolve => setTimeout(resolve, 500));
       
+      const { data: verifyData } = await supabase
+        .from('business_profiles')
+        .select('onboarding_completed, current_onboarding_step')
+        .eq('user_id', user.id)
+        .single();
+
+      console.log('[useBusinessProfile] Onboarding completion verification:', verifyData);
+
+      if (!verifyData?.onboarding_completed || verifyData?.current_onboarding_step !== 'completed') {
+        throw new Error('Onboarding completion verification failed');
+      }
+
+      setProfile(data);
       return { data, error: null };
     } catch (error: any) {
       console.error('Error completing onboarding:', error);

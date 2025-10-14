@@ -18,16 +18,15 @@ const BusinessOnboarding = () => {
     const initializeOnboarding = async () => {
       if (profileLoading) return;
 
-      // If onboarding is already completed, redirect to dashboard
-      if (profile?.onboarding_completed) {
-        console.log('[BusinessOnboarding] Onboarding already completed, redirecting to dashboard');
-        navigate('/business/dashboard', { replace: true });
+      if (!profile) {
+        setCurrentStep('profile-creation');
         return;
       }
 
-      // Simplified zombie profile recovery: Check if onboarding completed but missing required fields
-      if (profile?.onboarding_completed && 
-          (!profile.business_name || !profile.industry || !profile.city || !profile.state)) {
+      const incomplete = !profile.business_name || !profile.industry || 
+                         !profile.city || !profile.state;
+
+      if (profile.onboarding_completed && incomplete) {
         console.warn('[BusinessOnboarding] Zombie profile detected (incomplete but marked complete), resetting...');
         
         await updateProfile({ 
@@ -45,19 +44,13 @@ const BusinessOnboarding = () => {
         return;
       }
 
-      // Resume logic based on data completeness
-      if (profile) {
-        const hasProfileData = profile.business_name && profile.industry && 
-                               profile.city && profile.state && profile.domain;
-        
-        if (hasProfileData) {
-          // Has complete profile data -> go to socials
-          setCurrentStep('socials');
-        } else {
-          // Missing profile data -> start from beginning
-          setCurrentStep('profile-creation');
-        }
+      if (profile.onboarding_completed && !incomplete) {
+        console.log('[BusinessOnboarding] Onboarding complete, redirecting to dashboard');
+        navigate('/business/dashboard', { replace: true });
+        return;
       }
+
+      setCurrentStep(incomplete ? 'profile-creation' : 'socials');
     };
 
     initializeOnboarding();

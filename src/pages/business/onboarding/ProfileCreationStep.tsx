@@ -63,7 +63,7 @@ interface ProfileCreationStepProps {
 }
 
 export const ProfileCreationStep = ({ onComplete }: ProfileCreationStepProps) => {
-  const { profile, loading: profileLoading, createProfile, updateProfile } = useBusinessProfile();
+  const { profile, loading: profileLoading, createProfile, updateProfile, refetch } = useBusinessProfile();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -171,20 +171,13 @@ export const ProfileCreationStep = ({ onComplete }: ProfileCreationStepProps) =>
         markets_served: data.markets_served,
         main_values: data.main_values || [],
         current_onboarding_step: 'social_links',
+        onboarding_completed: false,
       };
 
-      let result;
-      if (profile) {
-        console.log('[ProfileCreationStep] Updating existing profile');
-        result = await updateProfile(profileData);
-      } else {
-        console.log('[ProfileCreationStep] Creating new profile');
-        result = await createProfile(profileData);
-      }
+      const result = await updateProfile(profileData);
 
       console.log('[ProfileCreationStep] Save result:', result);
 
-      // Check if save was successful
       if (result?.error) {
         toast({
           title: 'Error saving profile',
@@ -194,13 +187,13 @@ export const ProfileCreationStep = ({ onComplete }: ProfileCreationStepProps) =>
         return;
       }
 
-      // Verify required fields were saved in the database
-      const savedData = result?.data;
-      if (!savedData?.business_name || !savedData?.industry || !savedData?.city || !savedData?.state || !savedData?.domain) {
-        console.error('[ProfileCreationStep] Validation failed - missing required fields:', savedData);
+      const saved = await refetch();
+      
+      if (!saved?.business_name || !saved?.industry || !saved?.city || !saved?.state) {
+        console.error('[ProfileCreationStep] Validation failed - missing required fields:', saved);
         toast({
           title: 'Profile incomplete',
-          description: 'Required fields are missing. Please ensure all fields are filled.',
+          description: 'Required fields (business name, industry, city, state) are missing.',
           variant: 'destructive',
         });
         return;
@@ -223,7 +216,6 @@ export const ProfileCreationStep = ({ onComplete }: ProfileCreationStepProps) =>
       });
     } finally {
       setIsSaving(false);
-      // Don't reset isSubmitting - we're navigating away
     }
   };
 

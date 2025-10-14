@@ -132,10 +132,10 @@ export const SocialsStep = ({}: SocialsStepProps) => {
 
       await updateProfile(updates);
 
-      // Refetch and validate profile before completing onboarding
-      await refetch();
+      const fresh = await refetch();
+      const p = fresh ?? profile;
       
-      if (!profile?.business_name || !profile?.industry || !profile?.city || !profile?.state || !profile?.domain) {
+      if (!p?.business_name || !p?.industry || !p?.city || !p?.state) {
         toast({
           title: 'Profile incomplete',
           description: 'Please complete your business info first.',
@@ -145,8 +145,11 @@ export const SocialsStep = ({}: SocialsStepProps) => {
         return;
       }
 
-      // Complete onboarding
-      await completeOnboarding();
+      const result = await completeOnboarding();
+      
+      if (result?.error) {
+        return;
+      }
 
       toast({
         title: 'Profile complete!',
@@ -170,10 +173,10 @@ export const SocialsStep = ({}: SocialsStepProps) => {
     try {
       setIsSaving(true);
       
-      // Refetch and validate profile before completing onboarding
-      await refetch();
+      const fresh = await refetch();
+      const p = fresh ?? profile;
       
-      if (!profile?.business_name || !profile?.industry || !profile?.city || !profile?.state || !profile?.domain) {
+      if (!p?.business_name || !p?.industry || !p?.city || !p?.state) {
         toast({
           title: 'Profile incomplete',
           description: 'Please complete your business info first.',
@@ -183,8 +186,11 @@ export const SocialsStep = ({}: SocialsStepProps) => {
         return;
       }
 
-      // Complete onboarding without social links
-      await completeOnboarding();
+      const result = await completeOnboarding();
+      
+      if (result?.error) {
+        return;
+      }
 
       toast({
         title: 'Profile complete!',

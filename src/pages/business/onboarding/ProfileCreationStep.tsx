@@ -66,6 +66,7 @@ export const ProfileCreationStep = ({ onComplete }: ProfileCreationStepProps) =>
   const { profile, loading: profileLoading, createProfile, updateProfile } = useBusinessProfile();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentValue, setCurrentValue] = useState('');
 
   const {
@@ -123,7 +124,7 @@ export const ProfileCreationStep = ({ onComplete }: ProfileCreationStepProps) =>
 
   // Auto-save with debounce
   useEffect(() => {
-    if (!profile || profileLoading) return;
+    if (!profile || profileLoading || isSubmitting) return;
 
     const timeoutId = setTimeout(async () => {
       // Only auto-save if we have at least business_name filled
@@ -147,10 +148,11 @@ export const ProfileCreationStep = ({ onComplete }: ProfileCreationStepProps) =>
     }, 1000); // 1 second debounce
 
     return () => clearTimeout(timeoutId);
-  }, [formData, profile, profileLoading, updateProfile]);
+  }, [formData, profile, profileLoading, isSubmitting, updateProfile]);
 
   const onSubmit = async (data: ProfileFormData) => {
     try {
+      setIsSubmitting(true);
       setIsSaving(true);
 
       const profileData = {

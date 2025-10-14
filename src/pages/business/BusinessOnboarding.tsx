@@ -3,16 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { useBusinessProfile } from "@/hooks/useBusinessProfile";
 import { ProfileCreationStep } from "./onboarding/ProfileCreationStep";
 import { SocialsStep } from "./onboarding/SocialsStep";
-import BusinessProfileReview from "@/components/BusinessProfileReview";
 import LoadingState from "@/components/LoadingState";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-type OnboardingStep = 'profile-creation' | 'socials' | 'review';
+type OnboardingStep = 'profile-creation' | 'socials';
 
 const BusinessOnboarding = () => {
   const navigate = useNavigate();
-  const { profile, loading: profileLoading, updateProfile, completeOnboarding } = useBusinessProfile();
+  const { profile, loading: profileLoading, updateProfile } = useBusinessProfile();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('profile-creation');
 
@@ -53,10 +51,8 @@ const BusinessOnboarding = () => {
                                profile.city && profile.state && profile.domain;
         
         if (hasProfileData) {
-          // Has complete profile data -> go to socials or review
-          const hasSocials = profile.instagram_link || profile.facebook_link || 
-                            profile.twitter_link || profile.linkedin_link;
-          setCurrentStep(hasSocials ? 'review' : 'socials');
+          // Has complete profile data -> go to socials
+          setCurrentStep('socials');
         } else {
           // Missing profile data -> start from beginning
           setCurrentStep('profile-creation');
@@ -72,34 +68,6 @@ const BusinessOnboarding = () => {
     setCurrentStep('socials');
   };
 
-  const handleSocialsComplete = () => {
-    console.log('[BusinessOnboarding] Socials complete, advancing to review');
-    setCurrentStep('review');
-  };
-
-  const handleSkipSocials = () => {
-    console.log('[BusinessOnboarding] Socials skipped, advancing to review');
-    setCurrentStep('review');
-  };
-
-  const handleEdit = () => {
-    console.log('[BusinessOnboarding] Editing profile, returning to profile creation');
-    setCurrentStep('profile-creation');
-  };
-
-  const handleReviewComplete = async () => {
-    console.log('[BusinessOnboarding] Review complete, finalizing onboarding');
-    
-    const { error } = await completeOnboarding();
-    
-    if (!error) {
-      // Refresh session and navigate to dashboard
-      await supabase.auth.refreshSession();
-      await new Promise(resolve => setTimeout(resolve, 500));
-      navigate('/business/dashboard', { replace: true });
-    }
-  };
-
   if (profileLoading) {
     return <LoadingState />;
   }
@@ -113,13 +81,6 @@ const BusinessOnboarding = () => {
 
         {currentStep === 'socials' && (
           <SocialsStep />
-        )}
-
-        {currentStep === 'review' && (
-          <BusinessProfileReview
-            onEdit={handleEdit}
-            onComplete={handleReviewComplete}
-          />
         )}
       </div>
     </div>

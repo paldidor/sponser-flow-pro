@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useGeocoding } from '@/hooks/useGeocoding';
 
 interface BusinessProfile {
   id: string;
@@ -36,7 +35,6 @@ export const useBusinessProfile = () => {
   const [profile, setProfile] = useState<BusinessProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { geocodeLocation } = useGeocoding();
 
   const fetchProfile = async () => {
     try {
@@ -86,33 +84,6 @@ export const useBusinessProfile = () => {
       if (error) throw error;
       setProfile(data);
 
-      // ✅ Geocode location if zip_code provided but coordinates missing
-      if (data && !(data as any).location_lat && (profileData.zip_code || profileData.city)) {
-        console.log('🗺️ Geocoding business location...');
-        const coords = await geocodeLocation(
-          profileData.city || '',
-          profileData.state || '',
-          profileData.zip_code
-        );
-
-        if (coords) {
-          // Update profile with coordinates
-          const { data: updatedData } = await supabase
-            .from('business_profiles')
-            .update({
-              location_lat: coords.latitude,
-              location_lon: coords.longitude,
-            })
-            .eq('id', data.id)
-            .select()
-            .single();
-
-          if (updatedData) {
-            setProfile(updatedData);
-          }
-        }
-      }
-
       return { data, error: null };
     } catch (error: any) {
       console.error('Error creating business profile:', error);
@@ -155,32 +126,6 @@ export const useBusinessProfile = () => {
 
       if (error && error.code !== 'PGRST116') throw error;
       if (data) setProfile(data);
-
-      // ✅ Geocode if location fields updated but coordinates still missing
-      if (data && !(data as any).location_lat && (updates.zip_code || updates.city || updates.state)) {
-        console.log('🗺️ Geocoding updated location...');
-        const coords = await geocodeLocation(
-          data.city || '',
-          data.state || '',
-          (data as any).zip_code
-        );
-
-        if (coords) {
-          const { data: updatedData } = await supabase
-            .from('business_profiles')
-            .update({
-              location_lat: coords.latitude,
-              location_lon: coords.longitude,
-            })
-            .eq('id', data.id)
-            .select()
-            .maybeSingle();
-
-          if (updatedData) {
-            setProfile(updatedData);
-          }
-        }
-      }
 
       return { data, error: null };
     } catch (error: any) {

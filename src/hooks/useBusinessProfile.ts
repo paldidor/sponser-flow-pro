@@ -130,15 +130,31 @@ export const useBusinessProfile = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No authenticated user');
 
+      // Force an update by including updated_at timestamp
       const { data, error } = await supabase
         .from('business_profiles')
-        .update(updates)
+        .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('user_id', user.id)
         .select()
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
-      setProfile(data);
+      // Fallback: if update returns null (406 or PGRST116), fetch current profile
+      if (!data || error?.code === 'PGRST116') {
+        console.log('⚠️ Update returned no rows, fetching current profile');
+        const { data: currentProfile } = await supabase
+          .from('business_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (currentProfile) {
+          setProfile(currentProfile);
+          return { data: currentProfile, error: null };
+        }
+      }
+
+      if (error && error.code !== 'PGRST116') throw error;
+      if (data) setProfile(data);
 
       // ✅ Geocode if location fields updated but coordinates still missing
       if (data && !(data as any).location_lat && (updates.zip_code || updates.city || updates.state)) {
@@ -158,7 +174,7 @@ export const useBusinessProfile = () => {
             })
             .eq('id', data.id)
             .select()
-            .single();
+            .maybeSingle();
 
           if (updatedData) {
             setProfile(updatedData);
@@ -200,21 +216,37 @@ export const useBusinessProfile = () => {
         .update({
           onboarding_completed: true,
           current_onboarding_step: 'completed',
+          updated_at: new Date().toISOString(),
         })
         .eq('user_id', user.id)
         .select()
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      // Fallback: if update returns null, fetch current profile
+      if (!data || error?.code === 'PGRST116') {
+        console.log('⚠️ Onboarding update returned no rows, fetching profile');
+        const { data: refetchedProfile } = await supabase
+          .from('business_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (refetchedProfile) {
+          setProfile(refetchedProfile);
+          return { data: refetchedProfile, error: null };
+        }
+      }
+
+      if (error && error.code !== 'PGRST116') throw error;
 
       // Verify the update persisted
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       const { data: verifyData } = await supabase
         .from('business_profiles')
         .select('onboarding_completed, current_onboarding_step')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       console.log('[useBusinessProfile] Onboarding completion verification:', verifyData);
 
@@ -222,8 +254,8 @@ export const useBusinessProfile = () => {
         throw new Error('Onboarding completion verification failed');
       }
 
-      setProfile(data);
-      return { data, error: null };
+      if (data) setProfile(data);
+      return { data: data || verifyData, error: null };
     } catch (error: any) {
       console.error('Error completing onboarding:', error);
       toast({

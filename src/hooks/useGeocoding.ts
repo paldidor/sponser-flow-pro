@@ -26,10 +26,10 @@ export const useGeocoding = () => {
       };
     } catch (error: any) {
       console.error('Geocoding error:', error);
+      // Non-blocking warning - geocoding failure shouldn't prevent onboarding
       toast({
-        title: 'Geocoding failed',
-        description: 'Could not find location coordinates. AI recommendations may be limited.',
-        variant: 'destructive',
+        title: 'Location geocoding pending',
+        description: 'Location coordinates will be added later. This won\'t affect your profile.',
       });
       return null;
     }

@@ -161,9 +161,9 @@ const Header = () => {
         <div className="hidden md:flex items-center gap-3">
           {user ? (
             <>
-              <Link to={userRole === 'team' ? '/team/dashboard' : '/marketplace'}>
+              <Link to={userRole === 'team' ? '/team/dashboard' : userRole === 'business' ? '/business/dashboard' : '/marketplace'}>
                 <Button variant="ghost" size="sm" className="text-white hover:text-accent hover:bg-white/10">
-                  {userRole === 'team' ? 'Team Dashboard' : 'Marketplace'}
+                  {userRole === 'team' ? 'Team Dashboard' : userRole === 'business' ? 'Business Dashboard' : 'Marketplace'}
                 </Button>
               </Link>
               <DropdownMenu>
@@ -287,9 +287,9 @@ const Header = () => {
             </a>
             {user ? (
               <>
-                <Link to={userRole === 'team' ? '/team/dashboard' : '/marketplace'} onClick={() => setMobileMenuOpen(false)}>
+                <Link to={userRole === 'team' ? '/team/dashboard' : userRole === 'business' ? '/business/dashboard' : '/marketplace'} onClick={() => setMobileMenuOpen(false)}>
                   <Button variant="ghost" size="sm" className="w-full text-white hover:text-accent hover:bg-white/10 justify-start">
-                    {userRole === 'team' ? 'Team Dashboard' : 'Marketplace'}
+                    {userRole === 'team' ? 'Team Dashboard' : userRole === 'business' ? 'Business Dashboard' : 'Marketplace'}
                   </Button>
                 </Link>
                 <div className="pt-2 border-t border-white/10">

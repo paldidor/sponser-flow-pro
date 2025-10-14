@@ -132,6 +132,7 @@ export const validateSocialMediaURL = (url: string, platform: string): { isValid
     twitter: /twitter\.com|x\.com/i,
     linkedin: /linkedin\.com/i,
     youtube: /youtube\.com|youtu\.be/i,
+    tiktok: /tiktok\.com/i,
   };
 
   const pattern = platformPatterns[platform.toLowerCase()];

@@ -284,9 +284,9 @@ const BusinessProfileReview = ({ onEdit, onComplete }: BusinessProfileReviewProp
         <Button
           onClick={handleApprove}
           className="flex-1"
-          disabled={isCompleting || !profile.business_name || !profile.industry || !profile.city || !profile.state}
+          disabled={isCompleting || !profile.business_name || !profile.industry || !profile.city || !profile.state || !profile.domain || !profile.markets_served}
         >
-          {isCompleting ? "Completing..." : "Approve & Complete"}
+          {isCompleting ? "Completing..." : "Complete Setup"}
         </Button>
       </div>
 

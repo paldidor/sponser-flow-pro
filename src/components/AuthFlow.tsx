@@ -97,6 +97,10 @@ const AuthFlow = ({ userType, onAuthComplete, onBack }: AuthFlowProps) => {
           if (userType) {
             try {
               await assignUserRole(data.user.id, userType);
+              
+              // Small delay to ensure role is registered before redirect
+              await new Promise(resolve => setTimeout(resolve, 500));
+              
               toast({
                 title: "Account created!",
                 description: `Welcome! Let's set up your ${userType === 'team' ? 'team' : 'business'} profile.`,

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import { Share2, Instagram, Facebook, Twitter, Linkedin, Loader2 } from 'lucide-react';
 import { useBusinessProfile } from '@/hooks/useBusinessProfile';
 import { validateSocialMediaURL } from '@/lib/validationUtils';
@@ -18,12 +19,12 @@ interface SocialsFormData {
 }
 
 interface SocialsStepProps {
-  onComplete: () => void;
-  onSkip: () => void;
+  // Props removed - component handles completion internally
 }
 
-export const SocialsStep = ({ onComplete, onSkip }: SocialsStepProps) => {
-  const { profile, loading: profileLoading, updateProfile } = useBusinessProfile();
+export const SocialsStep = ({}: SocialsStepProps) => {
+  const { profile, loading: profileLoading, updateProfile, completeOnboarding } = useBusinessProfile();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -127,17 +128,20 @@ export const SocialsStep = ({ onComplete, onSkip }: SocialsStepProps) => {
         twitter_link: data.twitter_link?.trim() || undefined,
         linkedin_link: data.linkedin_link?.trim() || undefined,
         tiktok_link: data.tiktok_link?.trim() || undefined,
-        current_onboarding_step: 'profile_review',
       };
 
       await updateProfile(updates);
 
+      // Complete onboarding
+      await completeOnboarding();
+
       toast({
-        title: 'Social links saved',
-        description: 'Your social media links have been saved successfully.',
+        title: 'Profile complete!',
+        description: 'Your business profile has been set up successfully.',
       });
 
-      onComplete();
+      // Navigate to dashboard
+      navigate('/business/dashboard');
     } catch (error: any) {
       toast({
         title: 'Error saving links',
@@ -152,8 +156,17 @@ export const SocialsStep = ({ onComplete, onSkip }: SocialsStepProps) => {
   const handleSkip = async () => {
     try {
       setIsSaving(true);
-      await updateProfile({ current_onboarding_step: 'profile_review' });
-      onSkip();
+      
+      // Complete onboarding without social links
+      await completeOnboarding();
+
+      toast({
+        title: 'Profile complete!',
+        description: 'Your business profile has been set up successfully.',
+      });
+
+      // Navigate to dashboard
+      navigate('/business/dashboard');
     } catch (error: any) {
       toast({
         title: 'Error',

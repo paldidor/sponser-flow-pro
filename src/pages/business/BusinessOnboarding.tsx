@@ -112,10 +112,7 @@ const BusinessOnboarding = () => {
         )}
 
         {currentStep === 'socials' && (
-          <SocialsStep 
-            onComplete={handleSocialsComplete}
-            onSkip={handleSkipSocials}
-          />
+          <SocialsStep />
         )}
 
         {currentStep === 'review' && (

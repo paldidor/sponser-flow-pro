@@ -166,10 +166,22 @@ export const ProfileCreationStep = ({ onComplete }: ProfileCreationStepProps) =>
         current_onboarding_step: 'social_links',
       };
 
+      let result;
       if (profile) {
-        await updateProfile(profileData);
+        result = await updateProfile(profileData);
       } else {
-        await createProfile(profileData);
+        result = await createProfile(profileData);
+      }
+
+      // Verify required fields were saved in the database
+      const savedData = result?.data;
+      if (!savedData?.business_name || !savedData?.industry || !savedData?.city || !savedData?.state || !savedData?.domain) {
+        toast({
+          title: 'Profile incomplete',
+          description: 'We couldn\'t save your profile. Please try again.',
+          variant: 'destructive',
+        });
+        return;
       }
 
       toast({

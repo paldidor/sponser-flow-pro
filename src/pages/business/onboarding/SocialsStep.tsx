@@ -23,7 +23,7 @@ interface SocialsStepProps {
 }
 
 export const SocialsStep = ({}: SocialsStepProps) => {
-  const { profile, loading: profileLoading, updateProfile, completeOnboarding } = useBusinessProfile();
+  const { profile, loading: profileLoading, updateProfile, completeOnboarding, refetch } = useBusinessProfile();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
@@ -132,6 +132,19 @@ export const SocialsStep = ({}: SocialsStepProps) => {
 
       await updateProfile(updates);
 
+      // Refetch and validate profile before completing onboarding
+      await refetch();
+      
+      if (!profile?.business_name || !profile?.industry || !profile?.city || !profile?.state || !profile?.domain) {
+        toast({
+          title: 'Profile incomplete',
+          description: 'Please complete your business info first.',
+          variant: 'destructive',
+        });
+        navigate('/business/onboarding');
+        return;
+      }
+
       // Complete onboarding
       await completeOnboarding();
 
@@ -157,6 +170,19 @@ export const SocialsStep = ({}: SocialsStepProps) => {
     try {
       setIsSaving(true);
       
+      // Refetch and validate profile before completing onboarding
+      await refetch();
+      
+      if (!profile?.business_name || !profile?.industry || !profile?.city || !profile?.state || !profile?.domain) {
+        toast({
+          title: 'Profile incomplete',
+          description: 'Please complete your business info first.',
+          variant: 'destructive',
+        });
+        navigate('/business/onboarding');
+        return;
+      }
+
       // Complete onboarding without social links
       await completeOnboarding();
 

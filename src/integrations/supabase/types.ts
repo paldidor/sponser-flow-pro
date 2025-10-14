@@ -311,6 +311,7 @@ export type Database = {
           seed_url: string | null
           sources: Json | null
           state: string
+          tiktok_link: string | null
           twitter_link: string | null
           updated_at: string
           user_id: string
@@ -342,6 +343,7 @@ export type Database = {
           seed_url?: string | null
           sources?: Json | null
           state: string
+          tiktok_link?: string | null
           twitter_link?: string | null
           updated_at?: string
           user_id: string
@@ -373,6 +375,7 @@ export type Database = {
           seed_url?: string | null
           sources?: Json | null
           state?: string
+          tiktok_link?: string | null
           twitter_link?: string | null
           updated_at?: string
           user_id?: string

@@ -3,7 +3,6 @@ import { Package, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { OfferCard } from "./OfferCard";
-import { AddOfferDialog } from "./AddOfferDialog";
 import { OfferEditDialog } from "./OfferEditDialog";
 import { OfferDeleteDialog } from "./OfferDeleteDialog";
 import { PackageEditModal } from "./PackageEditModal";
@@ -15,7 +14,7 @@ export const SponsorshipOffersSection = () => {
   const { data, isLoading, error } = useSponsorshipOffers();
   const navigate = useNavigate();
   const [editingPackage, setEditingPackage] = useState<SponsorshipPackage | null>(null);
-  const [showAddOfferDialog, setShowAddOfferDialog] = useState(false);
+  const [creatingPackageForOfferId, setCreatingPackageForOfferId] = useState<string | null>(null);
   const [editingOffer, setEditingOffer] = useState<SponsorshipOfferWithPackages | null>(null);
   const [deletingOfferId, setDeletingOfferId] = useState<string | null>(null);
   const [deletingOfferTitle, setDeletingOfferTitle] = useState("");
@@ -25,7 +24,7 @@ export const SponsorshipOffersSection = () => {
   const totalPackages = data?.totalPackages || 0;
 
   const handleAddOffer = () => {
-    setShowAddOfferDialog(true);
+    navigate('/team/create-offer');
   };
 
   const handleEditOffer = (offer: SponsorshipOfferWithPackages) => {
@@ -42,7 +41,7 @@ export const SponsorshipOffersSection = () => {
   };
 
   const handleAddPackage = (offerId: string) => {
-    navigate(`/team/create-offer?offerId=${offerId}`);
+    setCreatingPackageForOfferId(offerId);
   };
 
   const handleEditPackage = (pkg: SponsorshipPackage) => {
@@ -127,11 +126,6 @@ export const SponsorshipOffersSection = () => {
         )}
       </CollapsibleSection>
 
-      <AddOfferDialog
-        open={showAddOfferDialog}
-        onOpenChange={setShowAddOfferDialog}
-      />
-
       <OfferEditDialog
         offer={editingOffer}
         open={!!editingOffer}
@@ -148,8 +142,14 @@ export const SponsorshipOffersSection = () => {
 
       <PackageEditModal
         package={editingPackage}
-        open={!!editingPackage}
-        onOpenChange={(open) => !open && setEditingPackage(null)}
+        offerId={creatingPackageForOfferId}
+        open={!!editingPackage || !!creatingPackageForOfferId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingPackage(null);
+            setCreatingPackageForOfferId(null);
+          }
+        }}
       />
     </>
   );

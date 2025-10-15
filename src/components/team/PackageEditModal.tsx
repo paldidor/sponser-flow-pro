@@ -14,11 +14,12 @@ import { useQueryClient } from "@tanstack/react-query";
 
 interface PackageEditModalProps {
   package: SponsorshipPackage | null;
+  offerId?: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export const PackageEditModal = ({ package: pkg, open, onOpenChange }: PackageEditModalProps) => {
+export const PackageEditModal = ({ package: pkg, offerId, open, onOpenChange }: PackageEditModalProps) => {
   const [name, setName] = useState("");
   const [price, setPrice] = useState(0);
   const [description, setDescription] = useState("");
@@ -33,15 +34,25 @@ export const PackageEditModal = ({ package: pkg, open, onOpenChange }: PackageEd
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (pkg && open) {
-      setName(pkg.name);
-      setPrice(pkg.price);
-      setDescription(pkg.description || "");
-      setStatus(pkg.status);
-      setSelectedPlacementIds(pkg.placements.map(p => p.id));
+    if (open) {
+      if (pkg) {
+        // Edit mode: load existing package data
+        setName(pkg.name);
+        setPrice(pkg.price);
+        setDescription(pkg.description || "");
+        setStatus(pkg.status);
+        setSelectedPlacementIds(pkg.placements.map(p => p.id));
+      } else {
+        // Create mode: reset to defaults
+        setName("");
+        setPrice(0);
+        setDescription("");
+        setStatus("live");
+        setSelectedPlacementIds([]);
+      }
       fetchPlacements();
     }
-  }, [pkg, open]);
+  }, [pkg, offerId, open]);
 
   const fetchPlacements = async () => {
     setLoading(true);
@@ -106,8 +117,6 @@ export const PackageEditModal = ({ package: pkg, open, onOpenChange }: PackageEd
   };
 
   const handleSave = async () => {
-    if (!pkg) return;
-
     if (!name.trim()) {
       toast.error("Package name is required");
       return;
@@ -125,83 +134,119 @@ export const PackageEditModal = ({ package: pkg, open, onOpenChange }: PackageEd
 
     setSaving(true);
     try {
-      // Validation: Prevent invalid status transitions
-      if (status === "sold-active" && !pkg.sponsor_name) {
-        toast.error("Cannot set status to 'Sold' without an active sponsor");
-        setSaving(false);
-        return;
-      }
+      if (pkg) {
+        // EDIT MODE: Update existing package
+        // Validation: Prevent invalid status transitions
+        if (status === "sold-active" && !pkg.sponsor_name) {
+          toast.error("Cannot set status to 'Sold' without an active sponsor");
+          setSaving(false);
+          return;
+        }
 
-      // Update package basic info
-      const { error: updateError } = await supabase
-        .from("sponsorship_packages")
-        .update({
-          name,
-          price,
-          description: description || null,
-          status,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", pkg.id);
+        // Update package basic info
+        const { error: updateError } = await supabase
+          .from("sponsorship_packages")
+          .update({
+            name,
+            price,
+            description: description || null,
+            status,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", pkg.id);
 
-      if (updateError) throw updateError;
+        if (updateError) throw updateError;
 
-      // Get current placements
-      const { data: currentPlacements, error: fetchError } = await supabase
-        .from("package_placements")
-        .select("placement_option_id")
-        .eq("package_id", pkg.id);
-
-      if (fetchError) throw fetchError;
-
-      const currentIds = currentPlacements?.map(p => p.placement_option_id) || [];
-
-      // Determine which placements to add and remove
-      const toAdd = selectedPlacementIds.filter(id => !currentIds.includes(id));
-      const toRemove = currentIds.filter(id => !selectedPlacementIds.includes(id));
-
-      // Remove old placements
-      if (toRemove.length > 0) {
-        const { error: deleteError } = await supabase
+        // Get current placements
+        const { data: currentPlacements, error: fetchError } = await supabase
           .from("package_placements")
-          .delete()
-          .eq("package_id", pkg.id)
-          .in("placement_option_id", toRemove);
+          .select("placement_option_id")
+          .eq("package_id", pkg.id);
 
-        if (deleteError) throw deleteError;
-      }
+        if (fetchError) throw fetchError;
 
-      // Add new placements
-      if (toAdd.length > 0) {
-        const { error: insertError } = await supabase
-          .from("package_placements")
-          .insert(
-            toAdd.map(placementId => ({
-              package_id: pkg.id,
-              placement_option_id: placementId,
-            }))
-          );
+        const currentIds = currentPlacements?.map(p => p.placement_option_id) || [];
+
+        // Determine which placements to add and remove
+        const toAdd = selectedPlacementIds.filter(id => !currentIds.includes(id));
+        const toRemove = currentIds.filter(id => !selectedPlacementIds.includes(id));
+
+        // Remove old placements
+        if (toRemove.length > 0) {
+          const { error: deleteError } = await supabase
+            .from("package_placements")
+            .delete()
+            .eq("package_id", pkg.id)
+            .in("placement_option_id", toRemove);
+
+          if (deleteError) throw deleteError;
+        }
+
+        // Add new placements
+        if (toAdd.length > 0) {
+          const { error: insertError } = await supabase
+            .from("package_placements")
+            .insert(
+              toAdd.map(placementId => ({
+                package_id: pkg.id,
+                placement_option_id: placementId,
+              }))
+            );
+
+          if (insertError) throw insertError;
+        }
+
+        toast.success("Package updated successfully");
+      } else if (offerId) {
+        // CREATE MODE: Insert new package
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
+
+        // Insert package
+        const { data: newPackage, error: insertError } = await supabase
+          .from("sponsorship_packages")
+          .insert({
+            sponsorship_offer_id: offerId,
+            name,
+            price,
+            description: description || null,
+            status,
+          })
+          .select()
+          .single();
 
         if (insertError) throw insertError;
+
+        // Add placements
+        if (selectedPlacementIds.length > 0) {
+          const { error: placementError } = await supabase
+            .from("package_placements")
+            .insert(
+              selectedPlacementIds.map(placementId => ({
+                package_id: newPackage.id,
+                placement_option_id: placementId,
+              }))
+            );
+
+          if (placementError) throw placementError;
+        }
+
+        toast.success("Package created successfully");
       }
 
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["sponsorship-offers"] });
-      
-      toast.success("Package updated successfully");
       onOpenChange(false);
     } catch (error) {
-      console.error("Error updating package:", error);
-      toast.error("Failed to update package");
+      console.error("Error saving package:", error);
+      toast.error(pkg ? "Failed to update package" : "Failed to create package");
     } finally {
       setSaving(false);
     }
   };
 
-  if (!pkg) return null;
-
   const mockPackage = {
-    id: pkg.id,
+    id: pkg?.id || "new",
     name,
     price,
     placementIds: selectedPlacementIds,
@@ -211,7 +256,7 @@ export const PackageEditModal = ({ package: pkg, open, onOpenChange }: PackageEd
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Package</DialogTitle>
+          <DialogTitle>{pkg ? "Edit Package" : "Create New Package"}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
@@ -304,7 +349,7 @@ export const PackageEditModal = ({ package: pkg, open, onOpenChange }: PackageEd
                 Saving...
               </>
             ) : (
-              "Save Changes"
+              pkg ? "Save Changes" : "Create Package"
             )}
           </Button>
         </DialogFooter>

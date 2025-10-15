@@ -200,6 +200,13 @@ export type Database = {
             foreignKeyName: "ai_recommendations_sponsorship_offer_id_fkey"
             columns: ["sponsorship_offer_id"]
             isOneToOne: false
+            referencedRelation: "sponsorship_offer_pricing_summary"
+            referencedColumns: ["sponsorship_offer_id"]
+          },
+          {
+            foreignKeyName: "ai_recommendations_sponsorship_offer_id_fkey"
+            columns: ["sponsorship_offer_id"]
+            isOneToOne: false
             referencedRelation: "sponsorship_offers"
             referencedColumns: ["id"]
           },
@@ -288,6 +295,9 @@ export type Database = {
       }
       business_profiles: {
         Row: {
+          analysis_error: string | null
+          analysis_started_at: string | null
+          analysis_status: string | null
           business_name: string
           city: string
           company_bio: string | null
@@ -308,6 +318,7 @@ export type Database = {
           seed_url: string | null
           sources: Json | null
           state: string
+          tiktok_link: string | null
           twitter_link: string | null
           updated_at: string
           user_id: string
@@ -316,6 +327,9 @@ export type Database = {
           zip_code: string | null
         }
         Insert: {
+          analysis_error?: string | null
+          analysis_started_at?: string | null
+          analysis_status?: string | null
           business_name: string
           city: string
           company_bio?: string | null
@@ -336,6 +350,7 @@ export type Database = {
           seed_url?: string | null
           sources?: Json | null
           state: string
+          tiktok_link?: string | null
           twitter_link?: string | null
           updated_at?: string
           user_id: string
@@ -344,6 +359,9 @@ export type Database = {
           zip_code?: string | null
         }
         Update: {
+          analysis_error?: string | null
+          analysis_started_at?: string | null
+          analysis_status?: string | null
           business_name?: string
           city?: string
           company_bio?: string | null
@@ -364,6 +382,7 @@ export type Database = {
           seed_url?: string | null
           sources?: Json | null
           state?: string
+          tiktok_link?: string | null
           twitter_link?: string | null
           updated_at?: string
           user_id?: string
@@ -655,6 +674,13 @@ export type Database = {
             foreignKeyName: "fk_sponsorship_packages_offer"
             columns: ["sponsorship_offer_id"]
             isOneToOne: false
+            referencedRelation: "sponsorship_offer_pricing_summary"
+            referencedColumns: ["sponsorship_offer_id"]
+          },
+          {
+            foreignKeyName: "fk_sponsorship_packages_offer"
+            columns: ["sponsorship_offer_id"]
+            isOneToOne: false
             referencedRelation: "sponsorship_offers"
             referencedColumns: ["id"]
           },
@@ -683,6 +709,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_questionnaire_responses_offer"
+            columns: ["sponsorship_offer_id"]
+            isOneToOne: false
+            referencedRelation: "sponsorship_offer_pricing_summary"
+            referencedColumns: ["sponsorship_offer_id"]
+          },
           {
             foreignKeyName: "fk_questionnaire_responses_offer"
             columns: ["sponsorship_offer_id"]
@@ -809,45 +842,6 @@ export type Database = {
         }
         Relationships: []
       }
-      team_sponsorship_combined: {
-        Row: {
-          fundraising_goal: string | null
-          level_of_play: string | null
-          location: string | null
-          location_lat: number | null
-          location_lon: number | null
-          number_of_players: string | null
-          sponsorship_offer_id: string
-          sport: string | null
-          team_name: string | null
-          team_profile_id: string
-        }
-        Insert: {
-          fundraising_goal?: string | null
-          level_of_play?: string | null
-          location?: string | null
-          location_lat?: number | null
-          location_lon?: number | null
-          number_of_players?: string | null
-          sponsorship_offer_id: string
-          sport?: string | null
-          team_name?: string | null
-          team_profile_id: string
-        }
-        Update: {
-          fundraising_goal?: string | null
-          level_of_play?: string | null
-          location?: string | null
-          location_lat?: number | null
-          location_lon?: number | null
-          number_of_players?: string | null
-          sponsorship_offer_id?: string
-          sport?: string | null
-          team_name?: string | null
-          team_profile_id?: string
-        }
-        Relationships: []
-      }
       user_roles: {
         Row: {
           created_at: string
@@ -871,7 +865,17 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      sponsorship_offer_pricing_summary: {
+        Row: {
+          max_package_price: number | null
+          min_package_price: number | null
+          sponsorship_offer_id: string | null
+          sponsorship_offer_name: string | null
+          team_profilename: string | null
+          total_packages: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       create_complete_sponsorship_offer: {

@@ -14,11 +14,12 @@ export const useSponsorshipOffers = () => {
       
       if (!user) throw new Error("Not authenticated");
 
-      // Fetch sponsorship offers
+      // Fetch sponsorship offers (exclude deleted)
       const { data: offers, error: offersError } = await supabase
         .from("sponsorship_offers")
         .select("*")
         .eq("user_id", user.id)
+        .neq("status", "deleted")
         .order("created_at", { ascending: false });
 
       if (offersError) throw offersError;
@@ -27,7 +28,7 @@ export const useSponsorshipOffers = () => {
         return { offers: [], totalPackages: 0 };
       }
 
-      // Fetch packages for all offers with sponsors data
+      // Fetch packages for all offers with sponsors data (exclude deleted)
       const { data: packages, error: packagesError } = await supabase
         .from("sponsorship_packages")
         .select(`
@@ -42,6 +43,7 @@ export const useSponsorshipOffers = () => {
           )
         `)
         .in("sponsorship_offer_id", offers.map(o => o.id))
+        .neq("status", "deleted")
         .order("package_order", { ascending: true });
 
       if (packagesError) throw packagesError;

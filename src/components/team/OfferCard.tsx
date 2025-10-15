@@ -24,14 +24,19 @@ export const OfferCard = ({
 }: OfferCardProps) => {
   const [isOpen, setIsOpen] = useState(true);
 
+  // Calculate metrics
+  const totalValue = offer.packages.reduce((sum, pkg) => sum + Number(pkg.price), 0);
+  const livePackagesCount = offer.packages.filter(pkg => pkg.status === "live").length;
+
   return (
     <Card className="border border-[#00aafe]/30 hover:bg-[#00aafe]/5 transition-colors duration-200">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <div className="p-4">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            {/* Top row: Chevron + Title + Metrics */}
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="p-0 h-auto hover:bg-transparent">
+                <Button variant="ghost" size="sm" className="p-0 h-auto hover:bg-transparent shrink-0">
                   {isOpen ? (
                     <ChevronUp className="h-5 w-5 text-[#00aafe]" />
                   ) : (
@@ -41,22 +46,30 @@ export const OfferCard = ({
               </CollapsibleTrigger>
               
               <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-semibold text-foreground truncate font-['Poppins']">
-                  {offer.title}
-                </h3>
+                <div className="flex items-start sm:items-center gap-2 flex-col sm:flex-row">
+                  <h3 className="text-lg font-semibold text-foreground truncate font-['Poppins']">
+                    {offer.title}
+                  </h3>
+                  
+                  {/* Metrics Badge - Always visible */}
+                  <Badge 
+                    variant="secondary" 
+                    className="bg-[#00aafe]/10 text-[#00aafe] border-[#00aafe]/30 text-xs font-medium whitespace-nowrap"
+                  >
+                    ${totalValue.toLocaleString()} • {livePackagesCount} live
+                  </Badge>
+                </div>
+                
                 {offer.description && (
-                  <p className="text-sm text-muted-foreground truncate">
+                  <p className="text-sm text-muted-foreground truncate mt-1">
                     {offer.description}
                   </p>
                 )}
               </div>
-
-              <Badge variant="secondary" className="text-xs font-medium">
-                {offer.package_count} {offer.package_count === 1 ? 'package' : 'packages'}
-              </Badge>
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* Action buttons - Right side on desktop, below on mobile */}
+            <div className="flex items-center gap-2 ml-auto sm:ml-0">
               <Button
                 variant="ghost"
                 size="sm"

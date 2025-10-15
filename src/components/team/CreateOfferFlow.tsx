@@ -370,6 +370,7 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
             <CreateSponsorshipOffer 
               onSelectMethod={handleSelectMethod}
               onPDFUpload={handleDirectPDFUpload}
+              onCancel={onCancel}
             />
           </Suspense>
         );

@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Upload, Globe, FileText, Clock, ArrowRight } from "lucide-react";
+import { Upload, Globe, FileText, Clock, ArrowRight, ArrowLeft } from "lucide-react";
 import ProgressIndicator from "./ProgressIndicator";
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,9 +12,10 @@ import { validatePDFFile } from "@/lib/validationUtils";
 interface CreateSponsorshipOfferProps {
   onSelectMethod: (method: "form" | "website" | "pdf", url?: string) => void;
   onPDFUpload?: (fileUrl: string, fileName: string, file: File) => void;
+  onCancel?: () => void;
 }
 
-const CreateSponsorshipOffer = ({ onSelectMethod, onPDFUpload }: CreateSponsorshipOfferProps) => {
+const CreateSponsorshipOffer = ({ onSelectMethod, onPDFUpload, onCancel }: CreateSponsorshipOfferProps) => {
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -84,6 +85,16 @@ const CreateSponsorshipOffer = ({ onSelectMethod, onPDFUpload }: CreateSponsorsh
   return (
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto space-y-8">
+        {onCancel && (
+          <Button
+            variant="ghost"
+            onClick={onCancel}
+            className="mb-4"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </Button>
+        )}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold">Create Sponsorship Offer</h1>
           <p className="text-muted-foreground">

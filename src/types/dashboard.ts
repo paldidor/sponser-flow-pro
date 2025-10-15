@@ -37,6 +37,17 @@ export interface SponsorshipOffer {
   updated_at: string;
 }
 
+export interface SponsorshipOfferWithPackages {
+  id: string;
+  title: string;
+  description: string | null;
+  duration: string;
+  package_count: number;
+  packages: SponsorshipPackage[];
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ActivationTask {
   id: string;
   task_name: string;

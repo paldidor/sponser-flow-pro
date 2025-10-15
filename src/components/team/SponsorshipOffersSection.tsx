@@ -1,22 +1,48 @@
 import { useState } from "react";
 import { Package, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CollapsibleSection } from "./CollapsibleSection";
-import { SponsorshipCard } from "./SponsorshipCard";
+import { OfferCard } from "./OfferCard";
+import { AddOfferDialog } from "./AddOfferDialog";
+import { OfferEditDialog } from "./OfferEditDialog";
+import { OfferDeleteDialog } from "./OfferDeleteDialog";
 import { PackageEditModal } from "./PackageEditModal";
 import { useSponsorshipOffers } from "@/hooks/useSponsorshipOffers";
-import { SponsorshipPackage } from "@/types/dashboard";
+import { SponsorshipPackage, SponsorshipOfferWithPackages } from "@/types/dashboard";
 import { useNavigate } from "react-router-dom";
 
 export const SponsorshipOffersSection = () => {
-  const { data: packages, isLoading, error } = useSponsorshipOffers();
+  const { data, isLoading, error } = useSponsorshipOffers();
   const navigate = useNavigate();
   const [editingPackage, setEditingPackage] = useState<SponsorshipPackage | null>(null);
-  const [statusFilter, setStatusFilter] = useState<"all" | "live" | "sold-active" | "draft" | "inactive">("all");
+  const [showAddOfferDialog, setShowAddOfferDialog] = useState(false);
+  const [editingOffer, setEditingOffer] = useState<SponsorshipOfferWithPackages | null>(null);
+  const [deletingOfferId, setDeletingOfferId] = useState<string | null>(null);
+  const [deletingOfferTitle, setDeletingOfferTitle] = useState("");
+  const [deletingOfferPackageCount, setDeletingOfferPackageCount] = useState(0);
 
-  const handleAddPackage = () => {
-    navigate("/team/create-offer");
+  const offers = data?.offers || [];
+  const totalPackages = data?.totalPackages || 0;
+
+  const handleAddOffer = () => {
+    setShowAddOfferDialog(true);
+  };
+
+  const handleEditOffer = (offer: SponsorshipOfferWithPackages) => {
+    setEditingOffer(offer);
+  };
+
+  const handleDeleteOffer = (offerId: string) => {
+    const offer = offers.find(o => o.id === offerId);
+    if (offer) {
+      setDeletingOfferId(offerId);
+      setDeletingOfferTitle(offer.title);
+      setDeletingOfferPackageCount(offer.package_count);
+    }
+  };
+
+  const handleAddPackage = (offerId: string) => {
+    navigate(`/team/create-offer?offerId=${offerId}`);
   };
 
   const handleEditPackage = (pkg: SponsorshipPackage) => {
@@ -33,7 +59,7 @@ export const SponsorshipOffersSection = () => {
         borderColor="blue"
       >
         <div className="text-center py-8 text-muted-foreground">
-          Loading sponsorship packages...
+          Loading sponsorship offers...
         </div>
       </CollapsibleSection>
     );
@@ -47,90 +73,78 @@ export const SponsorshipOffersSection = () => {
         borderColor="blue"
       >
         <div className="text-center py-8 text-destructive">
-          Error loading packages. Please try again.
+          Error loading offers. Please try again.
         </div>
       </CollapsibleSection>
     );
   }
-
-  // Filter packages based on selected status
-  const filteredPackages = packages?.filter(pkg => {
-    if (statusFilter === "all") return true;
-    return pkg.status === statusFilter;
-  }) || [];
-
-  const activeCount = packages?.filter(p => p.status !== "inactive").length || 0;
-  const liveCount = packages?.filter(p => p.status === "live").length || 0;
-  const soldCount = packages?.filter(p => p.status === "sold-active").length || 0;
-  const draftCount = packages?.filter(p => p.status === "draft").length || 0;
-  const inactiveCount = packages?.filter(p => p.status === "inactive").length || 0;
 
   return (
     <>
       <CollapsibleSection
         title="Sponsorship Offers"
         icon={Package}
-        badge={`${activeCount} Active`}
+        badge={`${offers.length} ${offers.length === 1 ? 'offer' : 'offers'} • ${totalPackages} ${totalPackages === 1 ? 'package' : 'packages'}`}
         badgeVariant="blue"
         borderColor="blue"
         actionButton={
           <Button 
-            onClick={handleAddPackage}
+            onClick={handleAddOffer}
             className="bg-primary hover:bg-primary/90 text-white h-10 sm:h-9 touch-manipulation"
             size="sm"
           >
             <Plus className="h-4 w-4 mr-1 sm:mr-2" />
-            <span className="hidden xs:inline">Add new Package</span>
-            <span className="xs:hidden">Add</span>
+            <span className="hidden xs:inline">Add New Sponsorship Offer</span>
+            <span className="xs:hidden">Add Offer</span>
           </Button>
         }
       >
-        {packages && packages.length > 0 ? (
+        {offers.length > 0 ? (
           <div className="space-y-4">
-            {/* Status Filter Tabs */}
-            <Tabs value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)} className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="all">All ({packages.length})</TabsTrigger>
-                <TabsTrigger value="live">Live ({liveCount})</TabsTrigger>
-                <TabsTrigger value="sold-active">Sold ({soldCount})</TabsTrigger>
-                <TabsTrigger value="draft">Draft ({draftCount})</TabsTrigger>
-                <TabsTrigger value="inactive">Inactive ({inactiveCount})</TabsTrigger>
-              </TabsList>
-            </Tabs>
-
-            {/* Package Cards */}
-            {filteredPackages.length > 0 ? (
-              <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6 pb-2">
-                <div className="flex gap-3 sm:gap-4 min-w-min">
-                  {filteredPackages.map((pkg) => (
-                    <SponsorshipCard
-                      key={pkg.id}
-                      package={pkg}
-                      onEdit={handleEditPackage}
-                    />
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                No packages with status: {statusFilter}
-              </div>
-            )}
+            {offers.map((offer) => (
+              <OfferCard
+                key={offer.id}
+                offer={offer}
+                onEditOffer={handleEditOffer}
+                onDeleteOffer={handleDeleteOffer}
+                onAddPackage={handleAddPackage}
+                onEditPackage={handleEditPackage}
+              />
+            ))}
           </div>
         ) : (
           <div className="text-center py-12">
             <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground mb-4 px-4">No sponsorship packages yet</p>
+            <p className="text-muted-foreground mb-4 px-4">No sponsorship offers yet</p>
             <Button 
-              onClick={handleAddPackage} 
+              onClick={handleAddOffer} 
               className="bg-primary hover:bg-primary/90 text-white h-11 touch-manipulation"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Create your first package
+              Create your first offer
             </Button>
           </div>
         )}
       </CollapsibleSection>
+
+      <AddOfferDialog
+        open={showAddOfferDialog}
+        onOpenChange={setShowAddOfferDialog}
+      />
+
+      <OfferEditDialog
+        offer={editingOffer}
+        open={!!editingOffer}
+        onOpenChange={(open) => !open && setEditingOffer(null)}
+      />
+
+      <OfferDeleteDialog
+        offerId={deletingOfferId}
+        offerTitle={deletingOfferTitle}
+        packageCount={deletingOfferPackageCount}
+        open={!!deletingOfferId}
+        onOpenChange={(open) => !open && setDeletingOfferId(null)}
+      />
 
       <PackageEditModal
         package={editingPackage}

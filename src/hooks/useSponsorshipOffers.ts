@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SponsorshipPackage } from "@/types/dashboard";
+import { SponsorshipPackage, SponsorshipOfferWithPackages } from "@/types/dashboard";
 
 export const useSponsorshipOffers = () => {
   return useQuery({
@@ -14,7 +14,7 @@ export const useSponsorshipOffers = () => {
       
       if (!user) throw new Error("Not authenticated");
 
-      // Fetch sponsorship offers with packages
+      // Fetch sponsorship offers
       const { data: offers, error: offersError } = await supabase
         .from("sponsorship_offers")
         .select("*")
@@ -23,7 +23,9 @@ export const useSponsorshipOffers = () => {
 
       if (offersError) throw offersError;
 
-      if (!offers || offers.length === 0) return [];
+      if (!offers || offers.length === 0) {
+        return { offers: [], totalPackages: 0 };
+      }
 
       // Fetch packages for all offers with sponsors data
       const { data: packages, error: packagesError } = await supabase
@@ -61,11 +63,8 @@ export const useSponsorshipOffers = () => {
 
       // Transform packages to include placements
       const transformedPackages: SponsorshipPackage[] = (packages || []).map((pkg: any) => {
-        // Check if this package has a sponsor (is sold)
         const hasSponsor = pkg.sponsors && pkg.sponsors.length > 0;
         const sponsor = hasSponsor ? pkg.sponsors[0] : null;
-        
-        // Status now comes directly from the database
         const status: SponsorshipPackage["status"] = pkg.status || "live";
 
         return {
@@ -76,7 +75,7 @@ export const useSponsorshipOffers = () => {
           sponsorship_offer_id: pkg.sponsorship_offer_id,
           package_order: pkg.package_order,
           status,
-          duration: offers[0]?.duration || "1 year",
+          duration: pkg.duration || "1 year",
           sponsor_name: sponsor?.name,
           open_tasks: openTasksMap.get(pkg.id) || undefined,
           placements: pkg.package_placements?.map((pp: any) => ({
@@ -91,7 +90,28 @@ export const useSponsorshipOffers = () => {
         };
       });
 
-      return transformedPackages;
+      // Group packages by offer
+      const offersWithPackages: SponsorshipOfferWithPackages[] = offers.map(offer => {
+        const offerPackages = transformedPackages.filter(
+          pkg => pkg.sponsorship_offer_id === offer.id
+        );
+
+        return {
+          id: offer.id,
+          title: offer.title,
+          description: offer.description,
+          duration: offer.duration,
+          package_count: offerPackages.length,
+          packages: offerPackages,
+          created_at: offer.created_at,
+          updated_at: offer.updated_at,
+        };
+      });
+
+      return {
+        offers: offersWithPackages,
+        totalPackages: transformedPackages.length,
+      };
     },
   });
 };

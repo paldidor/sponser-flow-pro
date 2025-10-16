@@ -20,7 +20,7 @@ const CreateTeamProfile = ({ onAnalyzeWebsite, onFillManually }: CreateTeamProfi
 
   const extractDomain = (url: string) => {
     try {
-      const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
+      const urlObj = new URL(url.startsWith("http") ? url : `https://${url}`);
       return urlObj.hostname;
     } catch {
       return url;
@@ -29,7 +29,7 @@ const CreateTeamProfile = ({ onAnalyzeWebsite, onFillManually }: CreateTeamProfi
 
   const validateUrl = (url: string) => {
     try {
-      new URL(url.startsWith('http') ? url : `https://${url}`);
+      new URL(url.startsWith("http") ? url : `https://${url}`);
       return true;
     } catch {
       return false;
@@ -42,7 +42,7 @@ const CreateTeamProfile = ({ onAnalyzeWebsite, onFillManually }: CreateTeamProfi
     // Set a timeout to proceed even if webhook fails (30 seconds)
     const timeoutId = setTimeout(() => {
       if (isAnalyzing) {
-        console.log('Webhook timeout - proceeding to review');
+        console.log("Webhook timeout - proceeding to review");
         setIsAnalyzing(false);
         toast({
           title: "Analysis taking longer than expected",
@@ -53,22 +53,22 @@ const CreateTeamProfile = ({ onAnalyzeWebsite, onFillManually }: CreateTeamProfi
     }, 30000);
 
     const channel = supabase
-      .channel('team-profile-updates')
+      .channel("team-profile-updates")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'team_profiles',
+          event: "UPDATE",
+          schema: "public",
+          table: "team_profiles",
           filter: `id=eq.${profileId}`,
         },
         (payload) => {
-          console.log('Profile updated:', payload);
+          console.log("Profile updated:", payload);
           const newData = payload.new as any;
-          
+
           // Check if any meaningful field has been populated (not just timestamps)
           const hasData = newData.team_name || newData.team_bio || newData.location || newData.sport;
-          
+
           if (hasData) {
             clearTimeout(timeoutId);
             setIsAnalyzing(false);
@@ -78,7 +78,7 @@ const CreateTeamProfile = ({ onAnalyzeWebsite, onFillManually }: CreateTeamProfi
             });
             onAnalyzeWebsite(websiteUrl);
           }
-        }
+        },
       )
       .subscribe();
 
@@ -103,17 +103,19 @@ const CreateTeamProfile = ({ onAnalyzeWebsite, onFillManually }: CreateTeamProfi
     setIsAnalyzing(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
         throw new Error("User not authenticated");
       }
 
-      const normalizedUrl = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
+      const normalizedUrl = websiteUrl.startsWith("http") ? websiteUrl : `https://${websiteUrl}`;
       const domain = extractDomain(websiteUrl);
 
       const { data, error } = await supabase
-        .from('team_profiles')
+        .from("team_profiles")
         .insert({
           user_id: user.id,
           seed_url: normalizedUrl,
@@ -125,7 +127,7 @@ const CreateTeamProfile = ({ onAnalyzeWebsite, onFillManually }: CreateTeamProfi
       if (error) throw error;
 
       setProfileId(data.id);
-      
+
       toast({
         title: "Analyzing website...",
         description: "We're extracting information from your website.",
@@ -133,7 +135,7 @@ const CreateTeamProfile = ({ onAnalyzeWebsite, onFillManually }: CreateTeamProfi
 
       // The realtime subscription will handle navigation when webhook updates the profile
     } catch (error: any) {
-      console.error('Error creating team profile:', error);
+      console.error("Error creating team profile:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to analyze website",
@@ -155,10 +157,8 @@ const CreateTeamProfile = ({ onAnalyzeWebsite, onFillManually }: CreateTeamProfi
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-4xl font-bold text-gray-700">Congratulations!</h1>
-          <p className="text-lg text-gray-600">
-            Your account has been created. Now let's get your team set up!
-          </p>
+          <h1 className="text-4xl font-bold text-gray-700">Welcome to Sponsa!</h1>
+          <p className="text-lg text-gray-600">Account created - check! Now let’s get your org set up!</p>
         </div>
 
         <ProgressIndicator currentStep={2} />
@@ -168,17 +168,15 @@ const CreateTeamProfile = ({ onAnalyzeWebsite, onFillManually }: CreateTeamProfi
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
               <Rocket className="w-6 h-6 text-primary" />
             </div>
-            <h2 className="text-2xl font-semibold text-gray-700">Complete Team Profile</h2>
+            <h2 className="text-2xl font-semibold text-gray-700">Complete Your Team Profile</h2>
           </div>
 
           <p className="text-gray-600">
-            Let's get your team set up! Enter your team's website URL and we'll automatically pull your profile details, images, and information.
+            Enter your youth sports org’s website URL and we’ll generate your profile for you!
           </p>
 
           <div className="text-left space-y-3">
-            <label className="text-sm font-semibold text-gray-700">
-              Team Website URL
-            </label>
+            <label className="text-sm font-semibold text-gray-700">Team Website URL</label>
             <div className="relative">
               <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
@@ -195,20 +193,11 @@ const CreateTeamProfile = ({ onAnalyzeWebsite, onFillManually }: CreateTeamProfi
             Don't have a website? No problem! You can fill out your profile manually below.
           </p>
 
-          <Button
-            size="lg"
-            className="w-full py-6 text-lg"
-            onClick={handleContinue}
-            disabled={!websiteUrl.trim()}
-          >
+          <Button size="lg" className="w-full py-6 text-lg" onClick={handleContinue} disabled={!websiteUrl.trim()}>
             Continue
           </Button>
 
-          <Button
-            variant="ghost"
-            className="w-full text-gray-600 hover:text-gray-700"
-            onClick={onFillManually}
-          >
+          <Button variant="ghost" className="w-full text-gray-600 hover:text-gray-700" onClick={onFillManually}>
             Fill manually
           </Button>
         </div>

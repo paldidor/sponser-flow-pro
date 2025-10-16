@@ -10,24 +10,20 @@ interface SupportedPlayersStepProps {
   onValidityChange: (isValid: boolean) => void;
 }
 
-const SupportedPlayersStep = ({
-  initialValue,
-  onValueChange,
-  onValidityChange,
-}: SupportedPlayersStepProps) => {
+const SupportedPlayersStep = ({ initialValue, onValueChange, onValidityChange }: SupportedPlayersStepProps) => {
   const [players, setPlayers] = useState(initialValue?.toString() || "");
   const [error, setError] = useState("");
 
   useEffect(() => {
     const numericPlayers = parseInt(players);
     const isValid = players !== "" && !isNaN(numericPlayers) && numericPlayers > 0;
-    
+
     if (players !== "" && !isValid) {
       setError("Please enter a valid number of players");
     } else {
       setError("");
     }
-    
+
     onValidityChange(isValid);
     if (isValid) {
       onValueChange(numericPlayers);
@@ -53,12 +49,10 @@ const SupportedPlayersStep = ({
           <div className="p-2 rounded-lg bg-primary/10">
             <Users className="w-6 h-6 text-primary" />
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
-            Team Size Matters
-          </h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-foreground">Sponsorship Reach</h1>
         </div>
         <p className="text-base sm:text-lg text-muted-foreground">
-          Show sponsors the reach of their investment across your team
+          Tell sponsors how many players this sponsorship covers
         </p>
       </div>
 
@@ -103,20 +97,16 @@ const SupportedPlayersStep = ({
                 <Badge variant="secondary">{getTeamSizeCategory(parseInt(players))}</Badge>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4 pt-2">
               <div className="bg-secondary/30 rounded-lg p-3 space-y-1">
                 <p className="text-xs text-muted-foreground">Cost per player</p>
-                <p className="text-lg font-semibold text-foreground">
-                  {getCostPerPlayer(parseInt(players))}
-                </p>
+                <p className="text-lg font-semibold text-foreground">{getCostPerPlayer(parseInt(players))}</p>
                 <p className="text-xs text-muted-foreground">Based on $10k goal</p>
               </div>
               <div className="bg-primary/10 rounded-lg p-3 space-y-1">
                 <p className="text-xs text-muted-foreground">Total reach</p>
-                <p className="text-lg font-semibold text-primary">
-                  {parseInt(players) * 4}+
-                </p>
+                <p className="text-lg font-semibold text-primary">{parseInt(players) * 4}+</p>
                 <p className="text-xs text-muted-foreground">Including families</p>
               </div>
             </div>
@@ -131,12 +121,10 @@ const SupportedPlayersStep = ({
 
       <Card className="p-4 bg-secondary/30 border-secondary">
         <div className="space-y-2">
-          <p className="text-sm font-semibold text-secondary-foreground flex items-center gap-2">
-            💡 Pro Tip
-          </p>
+          <p className="text-sm font-semibold text-secondary-foreground flex items-center gap-2">💡 Pro Tip</p>
           <p className="text-sm text-muted-foreground">
-            Include <strong>all team members</strong>: starters, reserves, practice squad, 
-            and development players. Sponsors want to see the full impact of their contribution.
+            Include <strong>all team members</strong>: starters, reserves, practice squad, and development players.
+            Sponsors want to see the full impact of their contribution.
           </p>
         </div>
       </Card>

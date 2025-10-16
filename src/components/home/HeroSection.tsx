@@ -78,11 +78,12 @@ const HeroSection = () => {
         {/* Three Wooden Sign Cards */}
         <div
           className="
-            relative z-20
+            relative
             grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-6
             max-w-4xl md:max-w-4xl lg:max-w-6xl mx-auto
-            mb-0 pb-12 sm:pb-16 lg:pb-24
-          "
+            mb-0 pb-0
+            "
+          style={{ paddingBottom: "clamp(60px, 12vw, 200px)" }}
         >
           {cardData.map((card, index) => (
             <div

@@ -49,10 +49,7 @@ const AnalysisSpinner = ({ type, fileName }: AnalysisSpinnerProps) => {
         setCurrentStep(currentStepIndex);
       }
 
-      const progressPercentage =
-        ((currentStepIndex + accumulatedTime / currentStepDuration) /
-          totalSteps) *
-        100;
+      const progressPercentage = ((currentStepIndex + accumulatedTime / currentStepDuration) / totalSteps) * 100;
       setProgress(Math.min(progressPercentage, 95));
     }, 100);
 
@@ -74,19 +71,7 @@ const AnalysisSpinner = ({ type, fileName }: AnalysisSpinnerProps) => {
         </div>
 
         <div className="space-y-3 text-center">
-          <h2 className="text-3xl font-bold">
-            Analyzing {type === "pdf" ? "Your PDF" : "Website"}
-          </h2>
-          <p className="text-muted-foreground text-lg">
-            {fileName ? (
-              <span className="flex items-center justify-center gap-2">
-                <FileText className="w-4 h-4" />
-                {fileName}
-              </span>
-            ) : (
-              "Extracting sponsorship information..."
-            )}
-          </p>
+          <h2 className="text-3xl font-bold">Analyzing {type === "pdf" ? "Your PDF" : "Website"}</h2>
         </div>
 
         <div className="space-y-4">
@@ -97,12 +82,10 @@ const AnalysisSpinner = ({ type, fileName }: AnalysisSpinnerProps) => {
             </div>
             <Progress value={progress} className="h-3" />
           </div>
-          
+
           <div className="min-h-[24px]">
             <p className="text-sm text-muted-foreground font-medium">
-              {currentStep < steps.length
-                ? steps[currentStep].label
-                : "Finalizing..."}
+              {currentStep < steps.length ? steps[currentStep].label : "Finalizing..."}
             </p>
           </div>
         </div>

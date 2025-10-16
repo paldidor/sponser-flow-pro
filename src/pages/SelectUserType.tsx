@@ -92,13 +92,6 @@ const SelectUserType = () => {
 
               {/* Title */}
               <h2 className="text-2xl lg:text-3xl font-bold mb-4 text-foreground">Looking to Sponsor</h2>
-
-              {/* Description */}
-              <p className="text-muted-foreground mb-6 flex-1">
-                Find sponsorship opportunities and connect with youth sports teams. Support local communities while
-                building brand awareness and driving measurable results.
-              </p>
-
               {/* Features List */}
               <ul className="text-sm text-muted-foreground space-y-2 mb-8 text-left w-full">
                 <li className="flex items-start">

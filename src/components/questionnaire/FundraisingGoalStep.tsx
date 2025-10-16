@@ -17,11 +17,7 @@ const suggestedGoals = [
   { amount: 50000, label: "Advanced" },
 ];
 
-const FundraisingGoalStep = ({
-  initialValue = "",
-  onValueChange,
-  onValidityChange,
-}: FundraisingGoalStepProps) => {
+const FundraisingGoalStep = ({ initialValue = "", onValueChange, onValidityChange }: FundraisingGoalStepProps) => {
   const [goal, setGoal] = useState(initialValue);
   const [error, setError] = useState("");
   const [touched, setTouched] = useState(false);
@@ -29,7 +25,7 @@ const FundraisingGoalStep = ({
   useEffect(() => {
     const numericGoal = parseFloat(goal);
     const isValid = goal !== "" && !isNaN(numericGoal) && numericGoal > 0;
-    
+
     if (touched && goal !== "" && !isValid) {
       setError("Please enter a valid amount greater than $0");
     } else if (touched && numericGoal > 0 && numericGoal < 500) {
@@ -37,7 +33,7 @@ const FundraisingGoalStep = ({
     } else {
       setError("");
     }
-    
+
     onValidityChange(isValid && numericGoal >= 500);
     onValueChange(goal);
   }, [goal, touched, onValueChange, onValidityChange]);
@@ -60,12 +56,10 @@ const FundraisingGoalStep = ({
           <div className="p-2 rounded-lg bg-primary/10">
             <Target className="w-6 h-6 text-primary" />
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
-            Set Your Fundraising Goal
-          </h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-foreground">Set Your Fundraising Goal</h1>
         </div>
         <p className="text-base sm:text-lg text-muted-foreground">
-          Choose a realistic target that covers your team's needs for the season
+          Choose a realistic target that covers your team's needs
         </p>
       </div>
 
@@ -77,16 +71,12 @@ const FundraisingGoalStep = ({
             <Card
               key={suggestion.amount}
               className={`p-4 cursor-pointer transition-all hover:shadow-md hover:scale-105 ${
-                goal === suggestion.amount.toString()
-                  ? "ring-2 ring-primary bg-primary/5"
-                  : "hover:border-primary/50"
+                goal === suggestion.amount.toString() ? "ring-2 ring-primary bg-primary/5" : "hover:border-primary/50"
               }`}
               onClick={() => handleQuickSelect(suggestion.amount)}
             >
               <div className="text-center space-y-1">
-                <p className="text-lg font-bold text-foreground">
-                  ${(suggestion.amount / 1000).toFixed(0)}k
-                </p>
+                <p className="text-lg font-bold text-foreground">${(suggestion.amount / 1000).toFixed(0)}k</p>
                 <Badge variant="outline" className="text-xs">
                   {suggestion.label}
                 </Badge>
@@ -134,9 +124,7 @@ const FundraisingGoalStep = ({
           <div className="pt-4 border-t border-border space-y-3 animate-fade-in">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">Your Goal:</p>
-              <p className="text-2xl font-bold text-primary">
-                ${formatCurrency(goal)}
-              </p>
+              <p className="text-2xl font-bold text-primary">${formatCurrency(goal)}</p>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <TrendingUp className="w-4 h-4 text-green-600" />
@@ -163,13 +151,17 @@ const FundraisingGoalStep = ({
         </Card>
         <Card className="p-4 bg-accent/10 border-accent/50">
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-accent-foreground flex items-center gap-2">
-              📊 Average Goals
-            </p>
+            <p className="text-sm font-semibold text-accent-foreground flex items-center gap-2">📊 Average Goals</p>
             <ul className="text-sm text-muted-foreground space-y-1">
-              <li>Youth teams: <strong>$5k - $15k</strong></li>
-              <li>Club teams: <strong>$15k - $35k</strong></li>
-              <li>Competitive: <strong>$35k+</strong></li>
+              <li>
+                Youth teams: <strong>$5k - $15k</strong>
+              </li>
+              <li>
+                Club teams: <strong>$15k - $35k</strong>
+              </li>
+              <li>
+                Competitive: <strong>$35k+</strong>
+              </li>
             </ul>
           </div>
         </Card>

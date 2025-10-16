@@ -32,7 +32,7 @@ const PDFAnalysisProgress = ({ fileName, onCancel, offerId, onRetry }: PDFAnalys
     const interval = setInterval(() => {
       elapsed += 100;
       const elapsedSeconds = Math.floor(elapsed / 1000);
-      
+
       // Calculate progress (stop at 95% until actual completion)
       const newProgress = Math.min((elapsed / totalDuration) * 100, 95);
       setProgress(newProgress);
@@ -79,12 +79,12 @@ const PDFAnalysisProgress = ({ fileName, onCancel, offerId, onRetry }: PDFAnalys
             </div>
             <Progress value={progress} className="h-3" />
           </div>
-          
+
           {/* Estimated Time */}
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <span>Estimated time remaining:</span>
             <span className="font-semibold text-foreground">
-              {estimatedTimeRemaining > 0 ? `${estimatedTimeRemaining}s` : 'Almost done...'}
+              {estimatedTimeRemaining > 0 ? `${estimatedTimeRemaining}s` : "Almost done..."}
             </span>
           </div>
         </div>
@@ -101,7 +101,7 @@ const PDFAnalysisProgress = ({ fileName, onCancel, offerId, onRetry }: PDFAnalys
             <Loader2 className="w-3 h-3 animate-spin" />
             <span>AI-powered analysis • Secure processing</span>
           </div>
-          
+
           <div className="flex justify-center gap-2">
             {onRetry && offerId && (
               <Button variant="default" size="sm" onClick={onRetry}>
@@ -121,12 +121,8 @@ const PDFAnalysisProgress = ({ fileName, onCancel, offerId, onRetry }: PDFAnalys
           <div className="flex gap-3">
             <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
             <div className="space-y-1 text-sm">
-              <p className="font-medium text-blue-900 dark:text-blue-100">
-                Processing Tips
-              </p>
-              <p className="text-blue-700 dark:text-blue-300">
-                Large PDFs may take longer. We analyze up to 50 pages for optimal results.
-              </p>
+              <p className="font-medium text-blue-900 dark:text-blue-100">Processing Tips</p>
+              <p className="text-blue-700 dark:text-blue-300">Large PDFs may take longer.</p>
             </div>
           </div>
         </div>

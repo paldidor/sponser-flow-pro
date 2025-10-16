@@ -25,13 +25,14 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface SponsorshipReviewProps {
+  offerId: string;
   sponsorshipData: SponsorshipData;
   teamData: TeamProfile | null;
   onApprove: () => void;
   onBack: () => void;
 }
 
-const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: SponsorshipReviewProps) => {
+const SponsorshipReview = ({ offerId, sponsorshipData, teamData, onApprove, onBack }: SponsorshipReviewProps) => {
   const [team, setTeam] = useState<TeamProfile | null>(teamData);
   const [isLoading, setIsLoading] = useState(!teamData);
   const [packages, setPackages] = useState<SponsorshipPackage[]>(sponsorshipData.packages);
@@ -41,7 +42,6 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
   const [editingPackageData, setEditingPackageData] = useState<any>(null);
   const [editorMode, setEditorMode] = useState<"create" | "edit">("create");
   const [deletePackageId, setDeletePackageId] = useState<string | null>(null);
-  const [offerId, setOfferId] = useState<string | null>(null);
   const [isEditingTeam, setIsEditingTeam] = useState(false);
   
   // Campaign details editing state
@@ -115,6 +115,20 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
 
   useEffect(() => {
     const fetchData = async () => {
+      // Validate offerId prop
+      if (!offerId) {
+        console.error('❌ SponsorshipReview: No offerId provided');
+        toast({
+          title: "Error",
+          description: "Offer ID is missing. Please refresh the page or try again.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      console.log(`✅ SponsorshipReview using offerId: ${offerId}`);
+
       if (teamData) {
         setTeam(teamData);
       }
@@ -149,19 +163,6 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
             setTeam(teamProfile);
           }
         }
-
-        // Fetch the offer ID to use for package operations
-        const { data: offerData } = await supabase
-          .from('sponsorship_offers')
-          .select('id')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (offerData) {
-          setOfferId(offerData.id);
-        }
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -170,7 +171,7 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
     };
 
     fetchData();
-  }, [teamData]);
+  }, [teamData, offerId]);
 
   const refreshPackages = async (showLoading = false) => {
     if (!offerId) return;

@@ -3,6 +3,7 @@ import SponsorshipReview from "@/components/SponsorshipReview";
 import type { TeamProfile } from "@/types/flow";
 
 interface ReviewStepProps {
+  offerId?: string;
   offerData: any;
   teamData: TeamProfile | null;
   isLoading: boolean;
@@ -12,6 +13,7 @@ interface ReviewStepProps {
 }
 
 export const ReviewStep = ({
+  offerId,
   offerData,
   teamData,
   isLoading,
@@ -19,7 +21,7 @@ export const ReviewStep = ({
   onApprove,
   onBack,
 }: ReviewStepProps) => {
-  if (!offerData || isLoading) {
+  if (!offerData || isLoading || !offerId) {
     return (
       <LoadingState 
         variant="page"
@@ -32,6 +34,7 @@ export const ReviewStep = ({
 
   return (
     <SponsorshipReview
+      offerId={offerId}
       sponsorshipData={offerData}
       teamData={teamData}
       onApprove={onApprove}

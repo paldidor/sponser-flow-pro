@@ -499,6 +499,7 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
         return (
           <Suspense fallback={<LoadingFallback />}>
             <SponsorshipReview
+              offerId={currentOfferId!}
               sponsorshipData={offerData}
               teamData={null}
               onApprove={handleReviewApprove}

@@ -287,6 +287,7 @@ const TeamOnboarding = () => {
     if (currentStep === 'review') {
       return (
         <ReviewStep
+          offerId={currentOfferId || undefined}
           offerData={offerData}
           teamData={teamData}
           isLoading={isLoading}

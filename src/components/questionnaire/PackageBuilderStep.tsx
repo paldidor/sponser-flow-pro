@@ -12,11 +12,7 @@ interface PackageBuilderStepProps {
   onValidityChange: (isValid: boolean) => void;
 }
 
-const PackageBuilderStep = ({
-  initialPackages = [],
-  onValueChange,
-  onValidityChange,
-}: PackageBuilderStepProps) => {
+const PackageBuilderStep = ({ initialPackages = [], onValueChange, onValidityChange }: PackageBuilderStepProps) => {
   const {
     packages,
     placements,
@@ -41,12 +37,10 @@ const PackageBuilderStep = ({
           <div className="p-2 rounded-lg bg-primary/10">
             <Package className="w-6 h-6 text-primary" />
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
-            Build Your Packages
-          </h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-foreground">Build Sponsorship Packages</h1>
         </div>
         <p className="text-base sm:text-lg text-muted-foreground">
-          Create tiered sponsorship options with specific benefits and visibility placements
+          Choose available placements where sponsors can appear — on uniforms, signs, banners, or digital placements
         </p>
       </div>
 
@@ -88,12 +82,14 @@ const PackageBuilderStep = ({
       {/* Tips Section */}
       <Card className="p-4 bg-secondary/30 border-secondary">
         <div className="space-y-2">
-          <p className="text-sm font-semibold text-secondary-foreground flex items-center gap-2">
-            💡 Package Tips
-          </p>
+          <p className="text-sm font-semibold text-secondary-foreground flex items-center gap-2">💡 Package Tips</p>
           <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
-            <li><strong>Bronze/Silver/Gold</strong> tiers work well for most teams</li>
-            <li>Higher tiers should include <strong>more visible placements</strong></li>
+            <li>
+              <strong>Bronze/Silver/Gold</strong> tiers work well for most teams
+            </li>
+            <li>
+              Higher tiers should include <strong>more visible placements</strong>
+            </li>
             <li>Popular placements like uniforms attract premium sponsors</li>
             <li>Mix physical and digital placements for broader appeal</li>
           </ul>

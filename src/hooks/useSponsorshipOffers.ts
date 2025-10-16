@@ -28,21 +28,8 @@ export const useSponsorshipOffers = () => {
         return { offers: [], totalPackages: 0 };
       }
 
-      // Filter out empty draft offers (abandoned/incomplete)
-      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-      const filteredOffers = offers.filter(offer => {
-        // Keep all published offers
-        if (offer.status === 'published') return true;
-        
-        // For drafts, only keep if they're recent (< 1 hour old)
-        if (offer.status === 'draft') {
-          const offerCreatedAt = new Date(offer.created_at);
-          const isRecent = offerCreatedAt > oneHourAgo;
-          return isRecent;
-        }
-        
-        return true;
-      });
+      // Filter to only show published offers on dashboard
+      const filteredOffers = offers.filter(offer => offer.status === 'published');
 
       if (filteredOffers.length === 0) {
         return { offers: [], totalPackages: 0 };

@@ -10,7 +10,10 @@ export interface QuestionnaireServiceError {
 /**
  * Get or create a draft sponsorship offer for the current user
  */
-export async function getOrCreateDraftOffer(userId: string): Promise<{ offerId: string; data: MultiStepOfferData | null; error?: QuestionnaireServiceError }> {
+export async function getOrCreateDraftOffer(
+  userId: string, 
+  skipCreation = false
+): Promise<{ offerId: string; data: MultiStepOfferData | null; error?: QuestionnaireServiceError }> {
   try {
     // Check for existing draft
     const { data: existingDrafts, error: fetchError } = await supabase
@@ -41,6 +44,44 @@ export async function getOrCreateDraftOffer(userId: string): Promise<{ offerId: 
       };
 
       return { offerId: draft.id, data: formData };
+    }
+
+    // Check for recently published offers (within last 5 minutes)
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const { data: recentPublished } = await supabase
+      .from('sponsorship_offers')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('status', 'published')
+      .eq('source', 'questionnaire')
+      .gte('updated_at', fiveMinutesAgo)
+      .limit(1)
+      .maybeSingle();
+
+    // If recently published offer exists, don't create new draft
+    if (recentPublished) {
+      console.log('⚠️ Preventing draft creation - recent offer exists:', recentPublished.id);
+      return { 
+        offerId: recentPublished.id, 
+        data: null,
+        error: {
+          message: 'Offer already published',
+          code: 'ALREADY_PUBLISHED'
+        }
+      };
+    }
+
+    // If skipCreation flag is set, don't create new draft
+    if (skipCreation) {
+      console.log('⚠️ Draft creation skipped due to flag');
+      return { 
+        offerId: '', 
+        data: null,
+        error: {
+          message: 'Draft creation disabled',
+          code: 'CREATION_DISABLED'
+        }
+      };
     }
 
     // Fetch user's team_profile_id before creating draft

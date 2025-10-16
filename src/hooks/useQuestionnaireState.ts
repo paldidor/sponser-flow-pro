@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { MultiStepOfferData } from "@/types/flow";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -26,10 +26,20 @@ export function useQuestionnaireState({
   const [teamProfileId, setTeamProfileId] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasFinalized, setHasFinalized] = useState(false);
+  const initializationAttempted = useRef(false);
   const { toast } = useToast();
 
   // Initialize draft and load user data
   useEffect(() => {
+    // Prevent re-initialization after finalization
+    if (hasFinalized || initializationAttempted.current) {
+      console.log('⚠️ Skipping initialization - already completed or attempted');
+      return;
+    }
+
+    initializationAttempted.current = true;
+
     const initialize = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -45,10 +55,25 @@ export function useQuestionnaireState({
           return;
         }
 
-        // Get or create draft offer
-        const { offerId: draftId, data: existingData, error: draftError } = await getOrCreateDraftOffer(user.id);
+        // Get or create draft offer - with skipCreation if already finalized
+        const { offerId: draftId, data: existingData, error: draftError } = 
+          await getOrCreateDraftOffer(user.id, hasFinalized);
         
         if (draftError) {
+          // If error is ALREADY_PUBLISHED, it's okay - user already completed
+          if (draftError.code === 'ALREADY_PUBLISHED') {
+            console.log('✅ Offer already published, no action needed');
+            setIsInitializing(false);
+            return;
+          }
+
+          // If error is CREATION_DISABLED, it's okay - finalization in progress
+          if (draftError.code === 'CREATION_DISABLED') {
+            console.log('✅ Draft creation disabled after finalization');
+            setIsInitializing(false);
+            return;
+          }
+
           toast({
             title: "Initialization failed",
             description: draftError.message,
@@ -88,7 +113,7 @@ export function useQuestionnaireState({
     };
 
     initialize();
-  }, [toast, onBack]);
+  }, [hasFinalized, toast, onBack]);
 
   const handleComplete = useCallback(async () => {
     if (!offerId || !formData.packages || formData.packages.length === 0) {
@@ -109,6 +134,10 @@ export function useQuestionnaireState({
       if (!result.success) {
         throw new Error(result.error?.message || 'Failed to finalize offer');
       }
+
+      // Mark as finalized to prevent re-initialization
+      setHasFinalized(true);
+      console.log('✅ Offer finalized, draft creation now disabled');
 
       toast({
         title: "Success!",

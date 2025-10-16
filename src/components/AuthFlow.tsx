@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface AuthFlowProps {
-  userType?: 'team' | 'business' | null;
+  userType?: "team" | "business" | null;
   onAuthComplete: () => void;
   onBack: () => void;
 }
@@ -21,23 +21,21 @@ const AuthFlow = ({ userType, onAuthComplete, onBack }: AuthFlowProps) => {
   const { toast } = useToast();
 
   // Helper function to assign user role
-  const assignUserRole = async (userId: string, role: 'team' | 'business') => {
+  const assignUserRole = async (userId: string, role: "team" | "business") => {
     try {
-      const { error } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: userId,
-          role: role,
-        });
+      const { error } = await supabase.from("user_roles").insert({
+        user_id: userId,
+        role: role,
+      });
 
       if (error) {
-        console.error('Role assignment error:', error);
+        console.error("Role assignment error:", error);
         throw error;
       }
 
       console.log(`Successfully assigned role: ${role} to user: ${userId}`);
     } catch (error: any) {
-      console.error('Failed to assign role:', error);
+      console.error("Failed to assign role:", error);
       throw error;
     }
   };
@@ -80,7 +78,7 @@ const AuthFlow = ({ userType, onAuthComplete, onBack }: AuthFlowProps) => {
 
         if (error) {
           // Handle specific signup errors
-          if (error.message.includes('already registered')) {
+          if (error.message.includes("already registered")) {
             toast({
               title: "Account exists",
               description: "This email is already registered. Try signing in instead.",
@@ -99,7 +97,7 @@ const AuthFlow = ({ userType, onAuthComplete, onBack }: AuthFlowProps) => {
               await assignUserRole(data.user.id, userType);
               toast({
                 title: "Account created!",
-                description: `Welcome! Let's set up your ${userType === 'team' ? 'team' : 'business'} profile.`,
+                description: `Welcome! Let's set up your ${userType === "team" ? "team" : "business"} profile.`,
               });
             } catch (roleError) {
               toast({
@@ -107,7 +105,7 @@ const AuthFlow = ({ userType, onAuthComplete, onBack }: AuthFlowProps) => {
                 description: "Account created but role assignment failed. Please contact support.",
                 variant: "destructive",
               });
-              console.error('Role assignment failed:', roleError);
+              console.error("Role assignment failed:", roleError);
             }
           } else {
             // Default message if no userType specified
@@ -126,7 +124,7 @@ const AuthFlow = ({ userType, onAuthComplete, onBack }: AuthFlowProps) => {
 
         if (error) {
           // Handle specific sign-in errors
-          if (error.message.includes('Invalid login credentials')) {
+          if (error.message.includes("Invalid login credentials")) {
             toast({
               title: "Invalid credentials",
               description: "Email or password is incorrect. Please try again.",
@@ -134,7 +132,7 @@ const AuthFlow = ({ userType, onAuthComplete, onBack }: AuthFlowProps) => {
             });
             return;
           }
-          if (error.message.includes('Email not confirmed')) {
+          if (error.message.includes("Email not confirmed")) {
             toast({
               title: "Email not confirmed",
               description: "Please check your email and confirm your account.",
@@ -170,7 +168,7 @@ const AuthFlow = ({ userType, onAuthComplete, onBack }: AuthFlowProps) => {
     try {
       // Store userType in localStorage to retrieve after OAuth redirect
       if (userType) {
-        localStorage.setItem('pending_user_type', userType);
+        localStorage.setItem("pending_user_type", userType);
       }
 
       const { error } = await supabase.auth.signInWithOAuth({
@@ -181,7 +179,7 @@ const AuthFlow = ({ userType, onAuthComplete, onBack }: AuthFlowProps) => {
       });
 
       if (error) {
-        if (error.message.includes('popup')) {
+        if (error.message.includes("popup")) {
           toast({
             title: "Popup blocked",
             description: "Please allow popups for this site and try again.",
@@ -205,29 +203,23 @@ const AuthFlow = ({ userType, onAuthComplete, onBack }: AuthFlowProps) => {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="max-w-md w-full space-y-8">
-        <Button
-          variant="ghost"
-          className="mb-4"
-          onClick={onBack}
-        >
+        <Button variant="ghost" className="mb-4" onClick={onBack}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
 
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">
-            {isSignUp ? "Create your account" : "Welcome back"}
-          </h1>
+          <h1 className="text-3xl font-bold">{isSignUp ? "Create Your Account" : "Welcome back"}</h1>
           <p className="text-muted-foreground">
             {isSignUp
-              ? userType === 'business'
+              ? userType === "business"
                 ? "Find sponsorship opportunities that matter."
                 : "Take sponsorships off your plate."
               : "Sign in to continue to your dashboard."}
           </p>
           {userType && (
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
-              {userType === 'team' ? '👥 Team Account' : '💼 Business Account'}
+              {userType === "team" ? "👥 Team Account" : "💼 Business Account"}
             </div>
           )}
         </div>
@@ -235,12 +227,7 @@ const AuthFlow = ({ userType, onAuthComplete, onBack }: AuthFlowProps) => {
         <ProgressIndicator currentStep={1} />
 
         <div className="bg-card rounded-2xl p-8 shadow-sm space-y-6">
-          <Button
-            variant="outline"
-            className="w-full py-6"
-            onClick={handleGoogleAuth}
-            disabled={isLoading}
-          >
+          <Button variant="outline" className="w-full py-6" onClick={handleGoogleAuth} disabled={isLoading}>
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
               <path
                 fill="currentColor"
@@ -283,7 +270,7 @@ const AuthFlow = ({ userType, onAuthComplete, onBack }: AuthFlowProps) => {
                   className="pl-10"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAuth()}
+                  onKeyDown={(e) => e.key === "Enter" && handleAuth()}
                 />
               </div>
             </div>
@@ -299,7 +286,7 @@ const AuthFlow = ({ userType, onAuthComplete, onBack }: AuthFlowProps) => {
                   className="pl-10"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAuth()}
+                  onKeyDown={(e) => e.key === "Enter" && handleAuth()}
                 />
               </div>
               {!isSignUp && (
@@ -320,18 +307,14 @@ const AuthFlow = ({ userType, onAuthComplete, onBack }: AuthFlowProps) => {
               )}
             </div>
 
-            <Button
-              className="w-full py-6"
-              onClick={handleAuth}
-              disabled={isLoading || !email || !password}
-            >
+            <Button className="w-full py-6" onClick={handleAuth} disabled={isLoading || !email || !password}>
               {isLoading
                 ? isSignUp
                   ? "Creating Account..."
                   : "Signing In..."
                 : isSignUp
-                ? "Create Account"
-                : "Sign In"}
+                  ? "Create Account"
+                  : "Sign In"}
             </Button>
           </div>
 

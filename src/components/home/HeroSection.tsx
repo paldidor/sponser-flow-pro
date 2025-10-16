@@ -30,7 +30,7 @@ const HeroSection = () => {
 
   return (
     <section
-      className="relative w-full overflow-hidden pt-4 sm:pt-6 lg:pt-8 pb-0 px-4 min-h-[1100px] sm:min-h-[700px] lg:min-h-[760px]"
+      className="relative w-full overflow-hidden pt-4 sm:pt-6 lg:pt-8 pb-0 px-4"
       style={{
         background: "linear-gradient(180deg, #B8E6FE 0%, #DFF2FE 50%, #EFF6FF 100%)",
         fontFamily: "Poppins, sans-serif",
@@ -81,7 +81,7 @@ const HeroSection = () => {
             relative z-20
             grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-6
             max-w-4xl md:max-w-4xl lg:max-w-6xl mx-auto
-            mb-8 sm:mb-[-128px] lg:mb-[-150px]
+            mb-0 pb-12 sm:pb-16 lg:pb-24
           "
         >
           {cardData.map((card, index) => (
@@ -92,11 +92,7 @@ const HeroSection = () => {
             >
               {/* Mobile Layout */}
               <div className="md:hidden relative">
-                <img 
-                  src="/images/wooden-sign-mobile.png" 
-                  alt="" 
-                  className="w-full h-auto"
-                />
+                <img src="/images/wooden-sign-mobile.png" alt="" className="w-full h-auto" />
                 <div className="absolute inset-0 flex flex-col items-center justify-center px-4 py-6">
                   <h3 className="text-sm font-extrabold text-center mb-1.5 leading-tight" style={{ color: "#00AAFE" }}>
                     {card.title}
@@ -115,7 +111,7 @@ const HeroSection = () => {
 
               {/* Desktop/Tablet Layout */}
               <div className="hidden md:block relative">
-                <img src="/images/wooden-sign.png" alt="" className="w-full h-auto scale-125 origin-center" />
+                <img src="/images/wooden-sign.png" alt="" className="w-full h-auto" />
                 <div className="absolute inset-0 flex flex-col items-center justify-start pt-[18%] pb-[22%] px-8">
                   <h3
                     className="text-sm lg:text-base xl:text-lg font-extrabold text-center mb-2"
@@ -142,12 +138,12 @@ const HeroSection = () => {
         </div>
       </div>
 
-      {/* Grass ground strip */}
-      <div className="absolute bottom-0 left-0 right-0 z-40 pointer-events-none overflow-hidden h-12 sm:h-16 lg:h-24">
+      {/* Grass ground strip - positioned to overlap signs */}
+      <div className="absolute bottom-0 left-0 right-0 z-30 overflow-hidden h-16 sm:h-20 lg:h-32">
         <img
           src="/images/grass-background.png"
           alt="Grass ground"
-          className="w-full h-full object-cover object-bottom min-w-[100vw]"
+          className="w-full h-full object-cover"
           style={{ objectPosition: "center bottom" }}
         />
       </div>

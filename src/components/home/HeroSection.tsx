@@ -75,15 +75,14 @@ const HeroSection = () => {
           </p>
         </div>
 
-        {/* Three Wooden Sign Cards */}
+        {/* Three Wooden Sign Cards - Extended into grass with negative margin */}
         <div
           className="
-            relative
+            relative z-20
             grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-6
             max-w-4xl md:max-w-4xl lg:max-w-6xl mx-auto
-            mb-0 pb-0
-            "
-          style={{ paddingBottom: "clamp(60px, 12vw, 200px)" }}
+            -mb-32 sm:-mb-40 lg:-mb-48
+          "
         >
           {cardData.map((card, index) => (
             <div
@@ -140,7 +139,7 @@ const HeroSection = () => {
       </div>
 
       {/* Grass ground strip - positioned to overlap signs */}
-      <div className="absolute bottom-0 left-0 right-0 z-30 overflow-hidden h-16 sm:h-20 lg:h-32">
+      <div className="absolute bottom-0 left-0 right-0 z-30 overflow-hidden h-32 sm:h-40 lg:h-48">
         <img
           src="/images/grass-background.png"
           alt="Grass ground"

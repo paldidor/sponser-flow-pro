@@ -166,19 +166,38 @@ export const useOfferCreation = () => {
 
       if (error) throw error;
 
-      // Invalidate all relevant queries to refresh dashboard
+      // Phase 3B: Optimized cache invalidation with proper options
+      console.log('🔄 Invalidating queries after publish...');
+      
+      // Invalidate dashboard metrics first (most critical)
+      await queryClient.invalidateQueries({ 
+        queryKey: ['team-dashboard-metrics'],
+        refetchType: 'active'
+      });
+      
+      // Invalidate all sponsorship-related queries
       await queryClient.invalidateQueries({ 
         queryKey: ['sponsorship-offers'], 
-        exact: false 
+        exact: false,
+        refetchType: 'active'
       });
+      
       await queryClient.invalidateQueries({ 
         queryKey: ['team-dashboard'], 
-        exact: false 
+        exact: false,
+        refetchType: 'active'
       });
+      
       await queryClient.invalidateQueries({ 
         queryKey: ['sponsorship-packages'], 
-        exact: false 
+        exact: false,
+        refetchType: 'active'
       });
+
+      // Add slight delay to ensure cache updates propagate
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      console.log('✅ Cache invalidation complete');
 
       toast({
         title: "Success!",

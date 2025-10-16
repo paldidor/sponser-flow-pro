@@ -180,6 +180,7 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
     }
 
     try {
+      console.log(`🔄 Fetching packages for offer ${offerId}...`);
       const { data: packagesData, error } = await supabase
         .from('sponsorship_packages')
         .select(`
@@ -201,14 +202,20 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
         placements: (pkg.package_placements || []).map((pp: any) => pp.placement_option?.name).filter(Boolean),
       }));
 
+      console.log(`✅ Loaded ${formattedPackages.length} package(s)`);
       setPackages(formattedPackages);
       
-      // If no packages after 5 seconds, offer retry
-      if (formattedPackages.length === 0 && packageRetryCount === 0) {
+      // Phase 2A: Enhanced retry mechanism - if no packages after initial load, set up retry
+      if (formattedPackages.length === 0 && packageRetryCount === 0 && showLoading) {
+        console.log('⏳ No packages found, waiting 5 seconds before offering retry...');
         setTimeout(() => {
-          if (packages.length === 0) {
-            setPackageRetryCount(1);
-          }
+          // Check if packages still empty after 5 seconds
+          setPackages(prev => {
+            if (prev.length === 0) {
+              setPackageRetryCount(1);
+            }
+            return prev;
+          });
         }, 5000);
       }
     } catch (error) {
@@ -531,24 +538,14 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
   const totalPotential = packages.reduce((sum, pkg) => sum + pkg.price, 0);
   const totalReachValue = totalReach.toLocaleString();
 
-  if (isLoading) {
+  // Phase 2A: Show loading state for packages explicitly
+  if (isLoading || isLoadingPackages) {
     return (
       <LoadingState 
         variant="page"
         size="lg"
-        message="Loading Team Profile"
-        submessage="Gathering all the information for your sponsorship offer..."
-      />
-    );
-  }
-
-  if (isLoadingPackages) {
-    return (
-      <LoadingState 
-        variant="page"
-        size="lg"
-        message="Loading Sponsorship Packages"
-        submessage="Fetching your packages, this should only take a moment..."
+        message={isLoadingPackages ? "Loading Sponsorship Packages" : "Loading Team Profile"}
+        submessage={isLoadingPackages ? "This should only take a few seconds..." : "Gathering all the information for your sponsorship offer..."}
       />
     );
   }
@@ -818,7 +815,25 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
           </div>
 
           <div className="space-y-4">
-            {packages.length === 0 ? (
+            {/* Phase 2A: Retry button if no packages after timeout */}
+            {packages.length === 0 && packageRetryCount > 0 && (
+              <div className="text-center py-8 space-y-4">
+                <p className="text-muted-foreground">
+                  Packages are taking longer than expected to load.
+                </p>
+                <Button 
+                  onClick={() => {
+                    setPackageRetryCount(0);
+                    refreshPackages(true);
+                  }}
+                  variant="outline"
+                >
+                  Retry Loading Packages
+                </Button>
+              </div>
+            )}
+
+            {packages.length === 0 && packageRetryCount === 0 ? (
               <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
                 <p className="text-lg font-medium mb-2">No packages created yet</p>
                 <p className="text-sm mb-4">Create your first sponsorship package to get started</p>

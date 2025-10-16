@@ -111,20 +111,83 @@ const TeamOnboarding = () => {
       }
 
       toast({
-        title: "Loading Your Offer",
-        description: "Preparing your sponsorship offer for review...",
+        title: "Creating Packages",
+        description: "Preparing your sponsorship packages...",
       });
 
       const offerData = await loadLatestQuestionnaireOffer();
       
-      if (offerData) {
-        setCurrentStep('review');
-      } else {
+      if (!offerData) {
         toast({
           title: "Offer Created",
           description: "Your offer was created but couldn't be loaded for review. Please refresh or try again.",
           variant: "destructive",
         });
+        return;
+      }
+
+      // Phase 1A: Poll for packages to ensure they exist before showing review
+      const offerId = offerData.packages?.[0]?.id ? 
+        (await supabase.from('sponsorship_packages').select('sponsorship_offer_id').eq('id', offerData.packages[0].id).single()).data?.sponsorship_offer_id 
+        : null;
+
+      if (!offerId) {
+        // Try to get offer ID from latest offer
+        const { data: latestOffer } = await supabase
+          .from('sponsorship_offers')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('source', 'questionnaire')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (!latestOffer?.id) {
+          toast({
+            title: "Error Loading Offer",
+            description: "Unable to find your offer. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Poll for packages to be created
+        console.log('📦 Polling for packages to be created...');
+        const maxAttempts = 20; // 10 seconds total (500ms * 20)
+        let attempts = 0;
+        let packagesFound = false;
+
+        while (attempts < maxAttempts && !packagesFound) {
+          const { data: packages } = await supabase
+            .from('sponsorship_packages')
+            .select('id')
+            .eq('sponsorship_offer_id', latestOffer.id);
+
+          if (packages && packages.length > 0) {
+            console.log(`✅ Found ${packages.length} package(s) after ${attempts * 500}ms`);
+            packagesFound = true;
+            // Reload offer data with packages
+            const reloadedData = await loadOfferData(latestOffer.id, 'questionnaire');
+            if (reloadedData) {
+              setCurrentStep('review');
+            }
+            break;
+          }
+
+          attempts++;
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        if (!packagesFound) {
+          toast({
+            title: "Package Loading Delayed",
+            description: "Your packages are taking longer than expected. You can continue to review or wait.",
+          });
+          setCurrentStep('review');
+        }
+      } else {
+        // Packages already loaded
+        setCurrentStep('review');
       }
     } catch (error) {
       console.error('Unexpected error during questionnaire completion:', error);

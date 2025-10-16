@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import CreateOfferFlow from "@/components/team/CreateOfferFlow";
 import { TeamProfileEditor } from "@/components/team/TeamProfileEditor";
 import { TeamProfile } from "@/types/flow";
+import { cleanupAbandonedDrafts } from "@/lib/cleanupDrafts";
 
 const TeamDashboard = () => {
   const navigate = useNavigate();
@@ -72,6 +73,20 @@ const TeamDashboard = () => {
 
     verifyOnboardingComplete();
   }, [navigate, toast]);
+
+  // CLEANUP: Remove abandoned empty drafts on mount
+  useEffect(() => {
+    const cleanup = async () => {
+      const count = await cleanupAbandonedDrafts();
+      if (count > 0) {
+        console.log(`✅ Cleaned up ${count} abandoned draft(s)`);
+        // Trigger a refetch if drafts were cleaned up
+        refetch();
+      }
+    };
+    
+    cleanup();
+  }, [refetch]);
 
   // FIRST-RUN CHECK: Auto-open Create Offer modal if no published offers exist
   useEffect(() => {

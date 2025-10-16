@@ -28,7 +28,27 @@ export const useSponsorshipOffers = () => {
         return { offers: [], totalPackages: 0 };
       }
 
-      // Fetch packages for all offers with sponsors data (exclude deleted)
+      // Filter out empty draft offers (abandoned/incomplete)
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      const filteredOffers = offers.filter(offer => {
+        // Keep all published offers
+        if (offer.status === 'published') return true;
+        
+        // For drafts, only keep if they're recent (< 1 hour old)
+        if (offer.status === 'draft') {
+          const offerCreatedAt = new Date(offer.created_at);
+          const isRecent = offerCreatedAt > oneHourAgo;
+          return isRecent;
+        }
+        
+        return true;
+      });
+
+      if (filteredOffers.length === 0) {
+        return { offers: [], totalPackages: 0 };
+      }
+
+      // Fetch packages for filtered offers with sponsors data (exclude deleted)
       const { data: packages, error: packagesError } = await supabase
         .from("sponsorship_packages")
         .select(`
@@ -42,7 +62,7 @@ export const useSponsorshipOffers = () => {
             name
           )
         `)
-        .in("sponsorship_offer_id", offers.map(o => o.id))
+        .in("sponsorship_offer_id", filteredOffers.map(o => o.id))
         .neq("status", "deleted")
         .order("package_order", { ascending: true });
 
@@ -93,7 +113,7 @@ export const useSponsorshipOffers = () => {
       });
 
       // Group packages by offer
-      const offersWithPackages: SponsorshipOfferWithPackages[] = offers.map(offer => {
+      const offersWithPackages: SponsorshipOfferWithPackages[] = filteredOffers.map(offer => {
         const offerPackages = transformedPackages.filter(
           pkg => pkg.sponsorship_offer_id === offer.id
         );

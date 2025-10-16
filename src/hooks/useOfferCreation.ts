@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import type { SponsorshipData } from "@/types/flow";
 
 export const useOfferCreation = () => {
@@ -9,6 +10,7 @@ export const useOfferCreation = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState<string>("");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const loadOfferData = async (offerId: string, source: 'pdf' | 'questionnaire' = 'questionnaire') => {
     try {
@@ -163,6 +165,20 @@ export const useOfferCreation = () => {
         .eq('id', targetOfferId);
 
       if (error) throw error;
+
+      // Invalidate all relevant queries to refresh dashboard
+      await queryClient.invalidateQueries({ 
+        queryKey: ['sponsorship-offers'], 
+        exact: false 
+      });
+      await queryClient.invalidateQueries({ 
+        queryKey: ['team-dashboard'], 
+        exact: false 
+      });
+      await queryClient.invalidateQueries({ 
+        queryKey: ['sponsorship-packages'], 
+        exact: false 
+      });
 
       toast({
         title: "Success!",

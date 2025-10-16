@@ -32,6 +32,34 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
     maxAttempts: 60,
     onComplete: async (offerId) => {
       await loadOfferData(offerId, 'pdf');
+      
+      // Wait for packages to be created (poll for up to 10 seconds)
+      let packageCheckAttempts = 0;
+      const maxPackageAttempts = 20; // 20 attempts * 500ms = 10 seconds
+      
+      while (packageCheckAttempts < maxPackageAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const { data: packages } = await supabase
+          .from('sponsorship_packages')
+          .select('id')
+          .eq('sponsorship_offer_id', offerId);
+        
+        if (packages && packages.length > 0) {
+          console.log(`✅ Found ${packages.length} packages after ${packageCheckAttempts + 1} attempts`);
+          break;
+        }
+        
+        packageCheckAttempts++;
+      }
+      
+      if (packageCheckAttempts >= maxPackageAttempts) {
+        toast({
+          title: "Package Loading Delayed",
+          description: "Packages are still being created. They will appear shortly.",
+        });
+      }
+      
       setCurrentStep('review');
     },
     onFailed: (offerId, errorMessage) => {
@@ -324,6 +352,54 @@ const CreateOfferFlow = ({ onComplete, onCancel }: CreateOfferFlowProps) => {
     const data = await loadLatestQuestionnaireOffer();
     
     if (data) {
+      // Get the offer ID from the loaded data
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: offer } = await supabase
+          .from('sponsorship_offers')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('source', 'questionnaire')
+          .eq('status', 'published')
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        if (offer) {
+          // Wait for packages to be created (poll for up to 10 seconds)
+          toast({
+            title: "Preparing Packages",
+            description: "Loading your sponsorship packages...",
+          });
+          
+          let packageCheckAttempts = 0;
+          const maxPackageAttempts = 20; // 20 attempts * 500ms = 10 seconds
+          
+          while (packageCheckAttempts < maxPackageAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            const { data: packages } = await supabase
+              .from('sponsorship_packages')
+              .select('id')
+              .eq('sponsorship_offer_id', offer.id);
+            
+            if (packages && packages.length > 0) {
+              console.log(`✅ Found ${packages.length} packages after ${packageCheckAttempts + 1} attempts`);
+              break;
+            }
+            
+            packageCheckAttempts++;
+          }
+          
+          if (packageCheckAttempts >= maxPackageAttempts) {
+            toast({
+              title: "Package Loading Delayed",
+              description: "Packages are still being created. They will appear shortly.",
+            });
+          }
+        }
+      }
+      
       setCurrentStep('review');
     } else {
       // If we can't load for review, just go to completion

@@ -35,6 +35,8 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
   const [team, setTeam] = useState<TeamProfile | null>(teamData);
   const [isLoading, setIsLoading] = useState(!teamData);
   const [packages, setPackages] = useState<SponsorshipPackage[]>(sponsorshipData.packages);
+  const [isLoadingPackages, setIsLoadingPackages] = useState(false);
+  const [packageRetryCount, setPackageRetryCount] = useState(0);
   const [isEditingPackage, setIsEditingPackage] = useState(false);
   const [editingPackageData, setEditingPackageData] = useState<any>(null);
   const [editorMode, setEditorMode] = useState<"create" | "edit">("create");
@@ -170,8 +172,12 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
     fetchData();
   }, [teamData]);
 
-  const refreshPackages = async () => {
+  const refreshPackages = async (showLoading = false) => {
     if (!offerId) return;
+
+    if (showLoading) {
+      setIsLoadingPackages(true);
+    }
 
     try {
       const { data: packagesData, error } = await supabase
@@ -196,6 +202,15 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
       }));
 
       setPackages(formattedPackages);
+      
+      // If no packages after 5 seconds, offer retry
+      if (formattedPackages.length === 0 && packageRetryCount === 0) {
+        setTimeout(() => {
+          if (packages.length === 0) {
+            setPackageRetryCount(1);
+          }
+        }, 5000);
+      }
     } catch (error) {
       console.error('Error refreshing packages:', error);
       toast({
@@ -203,6 +218,10 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
         description: "Unable to refresh package list. Please try refreshing the page.",
         variant: "destructive",
       });
+    } finally {
+      if (showLoading) {
+        setIsLoadingPackages(false);
+      }
     }
   };
 
@@ -223,10 +242,10 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
   useEffect(() => {
     if (!offerId) return;
 
-    // Initial fetch
-    refreshPackages();
+    // Initial fetch with loading state
+    refreshPackages(true);
 
-    // Subscribe to real-time package inserts
+    // Subscribe to real-time package changes (INSERT and UPDATE)
     const channel = supabase
       .channel('package-updates')
       .on(
@@ -239,7 +258,40 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
         },
         (payload) => {
           console.log('✅ New package created:', payload.new);
-          debouncedRefreshPackages(); // Use debounced version to batch updates
+          
+          // Immediate state update for new package
+          const newPackage: SponsorshipPackage = {
+            id: payload.new.id,
+            name: payload.new.name,
+            price: payload.new.price,
+            benefits: payload.new.benefits || [],
+            placements: [], // Will be loaded on refresh
+          };
+          
+          setPackages(prev => [...prev, newPackage]);
+          
+          // Refresh to get complete data with placements
+          setTimeout(() => refreshPackages(false), 100);
+          
+          toast({
+            title: "New Package Added!",
+            description: `${payload.new.name} has been added to your offer.`,
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'sponsorship_packages',
+          filter: `sponsorship_offer_id=eq.${offerId}`
+        },
+        (payload) => {
+          console.log('🔄 Package updated:', payload.new);
+          
+          // Immediate refresh for updates
+          refreshPackages(false);
         }
       )
       .subscribe();
@@ -250,7 +302,7 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
       }
       supabase.removeChannel(channel);
     };
-  }, [offerId, debouncedRefreshPackages]);
+  }, [offerId]);
 
   const handleEditPackage = async (packageId: string) => {
     if (!offerId) {
@@ -486,6 +538,17 @@ const SponsorshipReview = ({ sponsorshipData, teamData, onApprove, onBack }: Spo
         size="lg"
         message="Loading Team Profile"
         submessage="Gathering all the information for your sponsorship offer..."
+      />
+    );
+  }
+
+  if (isLoadingPackages) {
+    return (
+      <LoadingState 
+        variant="page"
+        size="lg"
+        message="Loading Sponsorship Packages"
+        submessage="Fetching your packages, this should only take a moment..."
       />
     );
   }

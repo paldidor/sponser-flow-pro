@@ -24,6 +24,9 @@ export interface MultiStepOfferData {
   weeklyTrainingSessions?: string;
   numberOfGames?: number;
   duration?: string;
+  seasonStartDate?: string;
+  seasonEndDate?: string;
+  durationYears?: number;
   packages?: EnhancedSponsorshipPackage[];
   currentStep: number;
 }

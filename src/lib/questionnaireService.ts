@@ -39,7 +39,19 @@ export async function getOrCreateDraftOffer(
         fundraisingGoal: draft.fundraising_goal?.toString(),
         impactTags: draft.impact ? draft.impact.split(', ') : undefined,
         supportedPlayers: draft.supported_players || undefined,
+        avgGameAttendance: (draft.draft_data && typeof draft.draft_data === 'object' && 'avgGameAttendance' in draft.draft_data) 
+          ? draft.draft_data.avgGameAttendance as number 
+          : undefined,
+        weeklyTrainingSessions: (draft.draft_data && typeof draft.draft_data === 'object' && 'weeklyTrainingSessions' in draft.draft_data) 
+          ? draft.draft_data.weeklyTrainingSessions as string 
+          : undefined,
+        numberOfGames: (draft.draft_data && typeof draft.draft_data === 'object' && 'numberOfGames' in draft.draft_data) 
+          ? draft.draft_data.numberOfGames as number 
+          : undefined,
         duration: draft.duration || undefined,
+        seasonStartDate: draft.season_start_date || undefined,
+        seasonEndDate: draft.season_end_date || undefined,
+        durationYears: draft.duration_years || undefined,
         packages: undefined, // Will be loaded separately if needed
       };
 
@@ -157,8 +169,37 @@ export async function updateDraftStep(
       updateData.supported_players = stepData.supportedPlayers;
     }
 
+    // Store additional player data in draft_data JSON field
+    if (stepData.avgGameAttendance !== undefined || 
+        stepData.weeklyTrainingSessions !== undefined || 
+        stepData.numberOfGames !== undefined) {
+      const draftData: any = {};
+      if (stepData.avgGameAttendance !== undefined) {
+        draftData.avgGameAttendance = stepData.avgGameAttendance;
+      }
+      if (stepData.weeklyTrainingSessions !== undefined) {
+        draftData.weeklyTrainingSessions = stepData.weeklyTrainingSessions;
+      }
+      if (stepData.numberOfGames !== undefined) {
+        draftData.numberOfGames = stepData.numberOfGames;
+      }
+      updateData.draft_data = draftData;
+    }
+
     if (stepData.duration !== undefined) {
-      updateData.duration = stepData.duration;
+      updateData.duration = stepData.duration || null;
+    }
+
+    if (stepData.seasonStartDate !== undefined) {
+      updateData.season_start_date = stepData.seasonStartDate || null;
+    }
+
+    if (stepData.seasonEndDate !== undefined) {
+      updateData.season_end_date = stepData.seasonEndDate || null;
+    }
+
+    if (stepData.durationYears !== undefined) {
+      updateData.duration_years = stepData.durationYears || null;
     }
 
     // Fetch team name from the offer's team_profile_id

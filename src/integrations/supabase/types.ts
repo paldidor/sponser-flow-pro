@@ -571,10 +571,13 @@ export type Database = {
           description: string | null
           draft_data: Json | null
           duration: string
+          duration_years: number | null
           fundraising_goal: number | null
           id: string
           impact: string
           pdf_public_url: string | null
+          season_end_date: string | null
+          season_start_date: string | null
           source: string
           source_file_name: string | null
           status: string
@@ -590,10 +593,13 @@ export type Database = {
           description?: string | null
           draft_data?: Json | null
           duration: string
+          duration_years?: number | null
           fundraising_goal?: number | null
           id?: string
           impact: string
           pdf_public_url?: string | null
+          season_end_date?: string | null
+          season_start_date?: string | null
           source?: string
           source_file_name?: string | null
           status?: string
@@ -609,10 +615,13 @@ export type Database = {
           description?: string | null
           draft_data?: Json | null
           duration?: string
+          duration_years?: number | null
           fundraising_goal?: number | null
           id?: string
           impact?: string
           pdf_public_url?: string | null
+          season_end_date?: string | null
+          season_start_date?: string | null
           source?: string
           source_file_name?: string | null
           status?: string

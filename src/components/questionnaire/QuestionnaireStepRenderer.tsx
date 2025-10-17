@@ -83,8 +83,17 @@ export function QuestionnaireStepRenderer({
         return (
           <DurationSelectionStep
             initialValue={formData.duration}
-            onValueChange={(value) =>
-              onFormDataChange({ ...formData, duration: value })
+            initialSeasonStart={formData.seasonStartDate}
+            initialSeasonEnd={formData.seasonEndDate}
+            initialDurationYears={formData.durationYears}
+            onValueChange={(data) =>
+              onFormDataChange({
+                ...formData,
+                duration: data.duration,
+                seasonStartDate: data.seasonStartDate,
+                seasonEndDate: data.seasonEndDate,
+                durationYears: data.durationYears,
+              })
             }
             onValidityChange={onValidityChange}
           />

@@ -20,6 +20,9 @@ export interface MultiStepOfferData {
   fundraisingGoal?: string;
   impactTags?: string[];
   supportedPlayers?: number;
+  avgGameAttendance?: number;
+  weeklyTrainingSessions?: string;
+  numberOfGames?: number;
   duration?: string;
   packages?: EnhancedSponsorshipPackage[];
   currentStep: number;

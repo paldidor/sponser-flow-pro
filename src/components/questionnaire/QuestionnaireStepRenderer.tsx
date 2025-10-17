@@ -63,9 +63,18 @@ export function QuestionnaireStepRenderer({
       case 2:
         return (
           <SupportedPlayersStep
-            initialValue={formData.supportedPlayers}
-            onValueChange={(value) =>
-              onFormDataChange({ ...formData, supportedPlayers: value })
+            initialPlayers={formData.supportedPlayers}
+            initialAttendance={formData.avgGameAttendance}
+            initialSessions={formData.weeklyTrainingSessions}
+            initialGames={formData.numberOfGames}
+            onValueChange={(data) =>
+              onFormDataChange({ 
+                ...formData, 
+                supportedPlayers: data.players,
+                avgGameAttendance: data.attendance,
+                weeklyTrainingSessions: data.sessions,
+                numberOfGames: data.games
+              })
             }
             onValidityChange={onValidityChange}
           />

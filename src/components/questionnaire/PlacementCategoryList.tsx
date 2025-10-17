@@ -5,7 +5,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, Star, Shirt, Building2, Smartphone, Calendar, Sparkles } from "lucide-react";
+import { ChevronDown, ChevronUp, Star, Shirt, Building2, Smartphone, Calendar, Sparkles, Plus } from "lucide-react";
 import { PlacementOption } from "@/hooks/usePackageBuilder";
 import { EnhancedSponsorshipPackage } from "@/types/flow";
 
@@ -18,16 +18,31 @@ interface PlacementCategoryListProps {
   onTogglePlacement: (packageId: string, placementId: string) => void;
 }
 
+// Define explicit category order
+const CATEGORY_ORDER = [
+  'popular',      // Always first (if exists)
+  'recommended',  // AI-recommended placements
+  'uniform',      // Uniform & Apparel
+  'facility',     // Facility & Venue
+  'digital',      // Digital & Online
+  'events',       // Events & Programs
+  'custom',       // Custom Placements (always last)
+];
+
+// Icon mapping for categories
 const categoryIcons: Record<string, any> = {
+  recommended: Sparkles,
   uniform: Shirt,
   facility: Building2,
   digital: Smartphone,
   events: Calendar,
-  custom: Sparkles,
+  custom: Plus,
   general: Star,
 };
 
+// Category display names
 const categoryLabels: Record<string, string> = {
+  recommended: "Recommended for You",
   uniform: "Uniform & Apparel",
   facility: "Facility & Venue",
   digital: "Digital & Online",
@@ -59,6 +74,19 @@ export function PlacementCategoryList({
     }
     return acc;
   }, {} as Record<string, PlacementOption[]>);
+
+  // Sort categories by predefined order
+  const sortedCategories = Object.entries(categorizedPlacements).sort(([a], [b]) => {
+    const aIndex = CATEGORY_ORDER.indexOf(a);
+    const bIndex = CATEGORY_ORDER.indexOf(b);
+    
+    // If not in order array, push to end
+    if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+    if (aIndex === -1) return 1;
+    if (bIndex === -1) return -1;
+    
+    return aIndex - bIndex;
+  });
 
   const renderPlacementBadge = (placement: PlacementOption) => {
     const isSelected = pkg.placementIds.includes(placement.id);
@@ -114,10 +142,8 @@ export function PlacementCategoryList({
         </Collapsible>
       )}
 
-      {/* Categorized Placements */}
-      {Object.entries(categorizedPlacements)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([category, categoryPlacements]) => {
+      {/* Categorized Placements (sorted) */}
+      {sortedCategories.map(([category, categoryPlacements]) => {
           const Icon = categoryIcons[category] || Star;
           const label = categoryLabels[category] || category;
           

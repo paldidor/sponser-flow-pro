@@ -31,6 +31,7 @@ export const PackageEditModal = ({ package: pkg, offerId, open, onOpenChange }: 
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({ popular: true });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [fundraisingGoal, setFundraisingGoal] = useState<number | undefined>();
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -51,6 +52,22 @@ export const PackageEditModal = ({ package: pkg, offerId, open, onOpenChange }: 
         setSelectedPlacementIds([]);
       }
       fetchPlacements();
+      
+      // Fetch fundraising goal if offerId exists
+      if (offerId) {
+        const fetchOffer = async () => {
+          const { data } = await supabase
+            .from('sponsorship_offers')
+            .select('fundraising_goal')
+            .eq('id', offerId)
+            .single();
+          
+          if (data) {
+            setFundraisingGoal(data.fundraising_goal);
+          }
+        };
+        fetchOffer();
+      }
     }
   }, [pkg, offerId, open]);
 
@@ -93,8 +110,16 @@ export const PackageEditModal = ({ package: pkg, offerId, open, onOpenChange }: 
       if (error) throw error;
 
       setPlacements([...placements, data]);
+      
+      // Auto-select the new placement
+      setSelectedPlacementIds(prev => [...prev, data.id]);
+      
       setNewPlacementName("");
-      toast.success(`"${trimmed}" added to placement options`);
+      
+      // Expand custom category
+      setExpandedCategories(prev => ({ ...prev, custom: true }));
+      
+      toast.success(`"${trimmed}" added and selected`);
     } catch (error) {
       console.error("Error adding placement:", error);
       toast.error("Failed to add custom placement");

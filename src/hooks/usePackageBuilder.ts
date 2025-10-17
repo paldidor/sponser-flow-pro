@@ -13,6 +13,7 @@ export interface PlacementOption {
 
 export function usePackageBuilder(
   initialPackages: EnhancedSponsorshipPackage[],
+  fundraisingGoal: number | undefined,
   onValueChange: (packages: EnhancedSponsorshipPackage[]) => void,
   onValidityChange: (isValid: boolean) => void
 ) {
@@ -32,13 +33,21 @@ export function usePackageBuilder(
     fetchPlacements();
   }, []);
 
+  // Calculate total package prices and remaining budget
+  const totalPrice = packages.reduce((sum, pkg) => sum + (pkg.price || 0), 0);
+  const remainingBudget = fundraisingGoal ? fundraisingGoal - totalPrice : null;
+
   useEffect(() => {
     const isValid = packages.every(
       (pkg) => pkg.name.trim() !== "" && pkg.price > 0 && pkg.placementIds.length > 0
     );
-    onValidityChange(isValid);
+    
+    // If fundraising goal exists, check if total matches (within $1 tolerance)
+    const matchesBudget = !fundraisingGoal || Math.abs(totalPrice - fundraisingGoal) < 1;
+    
+    onValidityChange(isValid && matchesBudget);
     onValueChange(packages);
-  }, [packages, onValueChange, onValidityChange]);
+  }, [packages, fundraisingGoal, totalPrice, onValueChange, onValidityChange]);
 
   const fetchPlacements = async () => {
     try {
@@ -68,12 +77,11 @@ export function usePackageBuilder(
     }
   };
 
-  const addCustomPlacement = async () => {
+  const addCustomPlacement = async (packageId?: string) => {
     const trimmed = newPlacementName.trim();
     if (!trimmed) return;
 
-    // Check for duplicates
-    if (placements.some(p => p.name.toLowerCase() === trimmed.toLowerCase())) {
+    if (placements.some((p) => p.name.toLowerCase() === trimmed.toLowerCase())) {
       toast({
         title: "Duplicate",
         description: "This placement already exists",
@@ -92,10 +100,26 @@ export function usePackageBuilder(
       if (error) throw error;
 
       setPlacements([...placements, data]);
+      
+      // Auto-select for the current package if packageId provided
+      if (packageId) {
+        setPackages((prevPackages) =>
+          prevPackages.map((pkg) =>
+            pkg.id === packageId
+              ? { ...pkg, placementIds: [...pkg.placementIds, data.id] }
+              : pkg
+          )
+        );
+      }
+      
       setNewPlacementName("");
+      
+      // Expand custom category to show new placement
+      setExpandedCategories((prev) => ({ ...prev, custom: true }));
+      
       toast({
         title: "Success",
-        description: `"${trimmed}" added to placement options`,
+        description: `"${trimmed}" added and selected`,
       });
     } catch (error) {
       console.error("Error adding placement:", error);
@@ -108,15 +132,17 @@ export function usePackageBuilder(
   };
 
   const addPackage = () => {
+    const newId = Date.now().toString();
     setPackages([
       ...packages,
       {
-        id: Date.now().toString(),
+        id: newId,
         name: "",
         price: 0,
         placementIds: [],
       },
     ]);
+    return newId;
   };
 
   const removePackage = (id: string) => {
@@ -172,5 +198,7 @@ export function usePackageBuilder(
     updatePackage,
     togglePlacement,
     toggleCategory,
+    totalPrice,
+    remainingBudget,
   };
 }

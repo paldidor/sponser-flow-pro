@@ -44,13 +44,13 @@ export function PlacementSelector({
         )}
       </div>
 
-      {/* Search Bar */}
+      {/* Search bar */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
+          placeholder="Search placements..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search placements..."
           className="pl-9 pr-9"
         />
         {searchQuery && (
@@ -63,7 +63,7 @@ export function PlacementSelector({
         )}
       </div>
 
-      {/* Category List */}
+      {/* Placement categories */}
       <PlacementCategoryList
         placements={placements}
         pkg={pkg}
@@ -73,18 +73,18 @@ export function PlacementSelector({
         onTogglePlacement={onTogglePlacement}
       />
 
-      {/* Add Custom Placement */}
-      <Card className="p-4 bg-muted/30">
-        <div className="space-y-3">
+      {/* Custom placement creation - MOVED TO BOTTOM */}
+      <Card className="border-dashed border-2 border-primary/30 bg-primary/5">
+        <div className="p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <Label className="text-sm font-medium">Add Custom Placement</Label>
+            <Plus className="w-4 h-4 text-primary" />
+            <p className="text-sm font-semibold text-foreground">Add Custom Placement</p>
           </div>
           <div className="flex gap-2">
             <Input
               value={newPlacementName}
               onChange={(e) => onNewPlacementChange(e.target.value)}
-              placeholder="e.g., Stadium Scoreboard"
+              placeholder="e.g., Team Bus Logo"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -94,38 +94,37 @@ export function PlacementSelector({
               className="flex-1"
             />
             <Button
-              type="button"
               onClick={onAddCustomPlacement}
               disabled={!newPlacementName.trim()}
-              variant="outline"
               size="sm"
+              className="flex-shrink-0"
             >
               <Plus className="w-4 h-4 mr-1" />
               Add
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Create unique placement options for your team
+            Create a unique placement option for your sponsorships
           </p>
         </div>
       </Card>
 
-      {/* Selection Status */}
-      {pkg.placementIds.length > 0 ? (
-        <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
-          <p className="text-sm font-medium text-primary flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4" />
-            {pkg.placementIds.length} placement
-            {pkg.placementIds.length !== 1 ? "s" : ""} selected
-          </p>
-        </div>
-      ) : (
-        <div className="p-3 bg-muted/30 rounded-lg border border-dashed">
-          <p className="text-sm text-muted-foreground text-center">
-            👆 Select at least one placement for this package
-          </p>
-        </div>
-      )}
+      {/* Selection status */}
+      <div className="flex items-center justify-between p-3 bg-secondary/20 rounded-lg">
+        <p className="text-sm font-medium text-foreground">
+          {pkg.placementIds.length === 0 ? (
+            "No placements selected"
+          ) : (
+            <>
+              <span className="text-primary font-bold">{pkg.placementIds.length}</span> placement
+              {pkg.placementIds.length !== 1 ? "s" : ""} selected
+            </>
+          )}
+        </p>
+        {pkg.placementIds.length > 0 && (
+          <Badge variant="secondary">{pkg.placementIds.length}</Badge>
+        )}
+      </div>
     </div>
   );
 }

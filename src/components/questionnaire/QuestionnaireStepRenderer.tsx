@@ -102,6 +102,7 @@ export function QuestionnaireStepRenderer({
         return (
           <PackageBuilderStep
             initialPackages={formData.packages}
+            fundraisingGoal={formData.fundraisingGoal ? Number(formData.fundraisingGoal) : undefined}
             onValueChange={(packages) =>
               onFormDataChange({ ...formData, packages })
             }

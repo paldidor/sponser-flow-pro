@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { useGeocoding } from '@/hooks/useGeocoding';
 
 interface BusinessProfile {
   id: string;
@@ -35,13 +33,14 @@ interface BusinessProfile {
 export const useBusinessProfile = () => {
   const [profile, setProfile] = useState<BusinessProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-  const { geocodeLocation } = useGeocoding();
 
   const fetchProfile = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
       const { data, error } = await supabase
         .from('business_profiles')
@@ -51,176 +50,147 @@ export const useBusinessProfile = () => {
 
       if (error) throw error;
       setProfile(data);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching business profile:', error);
-      toast({
-        title: 'Error loading profile',
-        description: error.message,
-        variant: 'destructive',
-      });
     } finally {
       setLoading(false);
     }
   };
 
-  const createProfile = async (profileData: Partial<BusinessProfile>) => {
+  const geocodeLocation = async (city: string, state: string, zipCode: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No authenticated user');
+      console.log('🗺️ Geocoding location:', { city, state, zipCode });
+      
+      const { data, error } = await supabase.functions.invoke('geocode-location', {
+        body: { city, state, zipCode },
+      });
 
-      const insertData: any = {
-        user_id: user.id,
-        business_name: profileData.business_name || '',
-        industry: profileData.industry || '',
-        city: profileData.city || '',
-        state: profileData.state || '',
-        ...profileData,
-      };
-
-      const { data, error } = await supabase
-        .from('business_profiles')
-        .insert([insertData])
-        .select()
-        .single();
-
-      if (error) throw error;
-      setProfile(data);
-
-      // ✅ Geocode location if zip_code provided but coordinates missing
-      if (data && !(data as any).location_lat && (profileData.zip_code || profileData.city)) {
-        console.log('🗺️ Geocoding business location...');
-        const coords = await geocodeLocation(
-          profileData.city || '',
-          profileData.state || '',
-          profileData.zip_code
-        );
-
-        if (coords) {
-          // Update profile with coordinates
-          const { data: updatedData } = await supabase
-            .from('business_profiles')
-            .update({
-              location_lat: coords.latitude,
-              location_lon: coords.longitude,
-            })
-            .eq('id', data.id)
-            .select()
-            .single();
-
-          if (updatedData) {
-            setProfile(updatedData);
-          }
-        }
+      if (error) {
+        console.error('Geocoding error:', error);
+        return null;
       }
 
-      return { data, error: null };
-    } catch (error: any) {
-      console.error('Error creating business profile:', error);
-      toast({
-        title: 'Error creating profile',
-        description: error.message,
-        variant: 'destructive',
-      });
-      return { data: null, error };
+      if (!data?.latitude || !data?.longitude) {
+        console.warn('Invalid geocoding response');
+        return null;
+      }
+
+      console.log('✅ Geocoded successfully:', data);
+      return {
+        latitude: data.latitude,
+        longitude: data.longitude,
+      };
+    } catch (error) {
+      console.error('Geocoding failed:', error);
+      return null;
     }
+  };
+
+  const createProfile = async (profileData: Partial<BusinessProfile>) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    console.log('Creating business profile with data:', profileData);
+
+    // Geocode location if provided
+    let locationData = {};
+    if (profileData.city && profileData.state && profileData.zip_code) {
+      const geocoded = await geocodeLocation(
+        profileData.city,
+        profileData.state,
+        profileData.zip_code
+      );
+      
+      if (geocoded) {
+        locationData = {
+          location_lat: geocoded.latitude,
+          location_lon: geocoded.longitude,
+        };
+      }
+    }
+
+    const { data, error } = await supabase
+      .from('business_profiles')
+      .insert({
+        user_id: user.id,
+        business_name: profileData.business_name,
+        industry: profileData.industry,
+        city: profileData.city,
+        state: profileData.state,
+        zip_code: profileData.zip_code,
+        ...locationData,
+        current_onboarding_step: 'profile_created',
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating business profile:', error);
+      throw error;
+    }
+
+    console.log('Business profile created:', data);
+    setProfile(data);
+    return data;
   };
 
   const updateProfile = async (updates: Partial<BusinessProfile>) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No authenticated user');
-
-      const { data, error } = await supabase
-        .from('business_profiles')
-        .update(updates)
-        .eq('user_id', user.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      setProfile(data);
-
-      // ✅ Geocode if location fields updated but coordinates still missing
-      if (data && !(data as any).location_lat && (updates.zip_code || updates.city || updates.state)) {
-        console.log('🗺️ Geocoding updated location...');
-        const coords = await geocodeLocation(
-          data.city || '',
-          data.state || '',
-          (data as any).zip_code
-        );
-
-        if (coords) {
-          const { data: updatedData } = await supabase
-            .from('business_profiles')
-            .update({
-              location_lat: coords.latitude,
-              location_lon: coords.longitude,
-            })
-            .eq('id', data.id)
-            .select()
-            .single();
-
-          if (updatedData) {
-            setProfile(updatedData);
-          }
-        }
-      }
-
-      return { data, error: null };
-    } catch (error: any) {
-      console.error('Error updating business profile:', error);
-      toast({
-        title: 'Error updating profile',
-        description: error.message,
-        variant: 'destructive',
-      });
-      return { data: null, error };
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
     }
+
+    console.log('Updating business profile with data:', updates);
+
+    const { data, error } = await supabase
+      .from('business_profiles')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating business profile:', error);
+      throw error;
+    }
+
+    console.log('Business profile updated:', data);
+    setProfile(data);
+    return data;
   };
 
   const completeOnboarding = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No authenticated user');
-
-      const { data, error } = await supabase
-        .from('business_profiles')
-        .update({
-          onboarding_completed: true,
-          current_onboarding_step: 'completed',
-        })
-        .eq('user_id', user.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Verify the update persisted
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const { data: verifyData } = await supabase
-        .from('business_profiles')
-        .select('onboarding_completed, current_onboarding_step')
-        .eq('user_id', user.id)
-        .single();
-
-      console.log('[useBusinessProfile] Onboarding completion verification:', verifyData);
-
-      if (!verifyData?.onboarding_completed || verifyData?.current_onboarding_step !== 'completed') {
-        throw new Error('Onboarding completion verification failed');
-      }
-
-      setProfile(data);
-      return { data, error: null };
-    } catch (error: any) {
-      console.error('Error completing onboarding:', error);
-      toast({
-        title: 'Error completing onboarding',
-        description: error.message,
-        variant: 'destructive',
-      });
-      return { data: null, error };
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
     }
+
+    const { data, error } = await supabase
+      .from('business_profiles')
+      .update({
+        onboarding_completed: true,
+        current_onboarding_step: 'completed',
+      })
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error completing onboarding:', error);
+      throw error;
+    }
+
+    console.log('[useBusinessProfile] Onboarding completed:', data);
+    setProfile(data);
+    return data;
   };
 
   useEffect(() => {
